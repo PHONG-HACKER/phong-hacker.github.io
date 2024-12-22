@@ -1,13 +1,15 @@
 ---
 layout: page
 title: About me
-subtitle: Why you'd want to go on a date with me
+subtitle: A little about Phong
 ---
 
-My name is Inigo Montoya. I have the following qualities:
+My name is Phong Thuong Nguyen. Why you should follow me on scratch:
 
+ 
 - I rock a great mustache
-- I'm extremely loyal to my family
+- "I am the best scratcher in the world"
+- I never copy Griffpatch
 
 What else do you need?
 
