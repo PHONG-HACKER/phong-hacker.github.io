@@ -1,8 +1,8 @@
-// Easter egg: secret code check + the Star Catcher mini game
+// Easter egg: secret code check + the Cat Star Catcher mini game
 (function () {
   var SECRET = "U1RBUkRVU1Q="; // the code, lightly scrambled so it isn't plain text here
   var UNLOCK_KEY = "phong-easter-egg-unlocked";
-  var BEST_KEY = "phong-star-catcher-best";
+  var BEST_KEY = "phong-cat-star-catcher-best";
 
   function load(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
   function save(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
@@ -59,22 +59,21 @@
       bgStars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.4 + 0.3, s: Math.random() * 0.6 + 0.2 });
     }
 
-    var rocket, things, score, lives, spawnTimer, speed, running, keys = {}, lastTime, hurtFlash, pops;
+    var cat, stars, score, spawnTimer, speed, running, paused = false, keys = {}, lastTime, pops, missed;
 
     function reset() {
-      rocket = { x: W / 2, y: H - 50, w: 44, h: 54, target: W / 2 };
-      things = []; pops = [];
-      score = 0; lives = 3; spawnTimer = 0; speed = 2.2; hurtFlash = 0;
+      cat = { x: W / 2, y: H - 46, target: W / 2 };
+      stars = []; pops = []; missed = null;
+      score = 0; spawnTimer = 0; speed = 2;
     }
 
     function spawn() {
-      var bad = Math.random() < Math.min(0.18 + score * 0.006, 0.45);
-      things.push({
-        x: 20 + Math.random() * (W - 40), y: -20,
-        r: bad ? 14 + Math.random() * 8 : 13,
-        vy: speed * (0.8 + Math.random() * 0.6),
-        bad: bad, spin: Math.random() * Math.PI
-      });
+      // Keep each new star close enough to the last one that the cat can reach it
+      var last = stars.length ? stars[stars.length - 1].x : cat.x;
+      var reach = 140 + Math.max(0, 260 - score * 4);
+      var x = last + (Math.random() * 2 - 1) * reach;
+      x = Math.max(24, Math.min(W - 24, x));
+      stars.push({ x: x, y: -20, r: 13, vy: speed * (0.85 + Math.random() * 0.3), spin: Math.random() * Math.PI });
     }
 
     function drawStar(x, y, r, rot) {
@@ -92,47 +91,50 @@
       ctx.restore();
     }
 
-    function drawAsteroid(x, y, r, rot) {
+    function drawCat() {
+      var x = cat.x, y = cat.y;
       ctx.save();
-      ctx.translate(x, y); ctx.rotate(rot);
-      ctx.beginPath();
-      for (var k = 0; k < 9; k++) {
-        var a = (Math.PI * 2 / 9) * k;
-        var rad = r * (k % 2 ? 0.8 : 1);
-        ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
-      }
-      ctx.closePath();
-      ctx.shadowColor = "#ff3b3b"; ctx.shadowBlur = 14;
-      ctx.fillStyle = "#c2412f"; ctx.fill();
-      ctx.fillStyle = "#8a2a1f";
-      ctx.beginPath(); ctx.arc(-r * 0.3, -r * 0.2, r * 0.22, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(r * 0.3, r * 0.25, r * 0.16, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-    }
-
-    function drawRocket() {
-      var x = rocket.x, y = rocket.y;
-      ctx.save();
-      // flame
-      ctx.fillStyle = "rgba(255,160,40," + (0.6 + Math.random() * 0.4) + ")";
-      ctx.beginPath(); ctx.moveTo(x - 9, y + 20); ctx.lineTo(x, y + 34 + Math.random() * 10); ctx.lineTo(x + 9, y + 20); ctx.fill();
-      // fins
-      ctx.fillStyle = "#d45cff";
-      ctx.beginPath(); ctx.moveTo(x - 12, y + 4); ctx.lineTo(x - 22, y + 22); ctx.lineTo(x - 10, y + 20); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(x + 12, y + 4); ctx.lineTo(x + 22, y + 22); ctx.lineTo(x + 10, y + 20); ctx.fill();
-      // body
       ctx.shadowColor = "#a98bff"; ctx.shadowBlur = 14;
-      ctx.fillStyle = "#eae6ff";
-      ctx.beginPath();
-      ctx.moveTo(x, y - 27);
-      ctx.quadraticCurveTo(x + 15, y - 8, x + 12, y + 22);
-      ctx.lineTo(x - 12, y + 22);
-      ctx.quadraticCurveTo(x - 15, y - 8, x, y - 27);
-      ctx.fill();
-      // window
+      // tail
+      ctx.strokeStyle = "#f2a64a"; ctx.lineWidth = 7; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(x + 18, y + 30); ctx.quadraticCurveTo(x + 44, y + 22, x + 36, y - 2); ctx.stroke();
+      // body
+      ctx.fillStyle = "#f2a64a";
+      ctx.beginPath(); ctx.ellipse(x, y + 26, 24, 18, 0, 0, Math.PI * 2); ctx.fill();
+      // paws up, ready to catch
+      ctx.beginPath(); ctx.ellipse(x - 24, y - 4, 7, 12, -0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x + 24, y - 4, 7, 12, 0.4, 0, Math.PI * 2); ctx.fill();
+      // ears
+      ctx.beginPath(); ctx.moveTo(x - 20, y - 8); ctx.lineTo(x - 15, y - 30); ctx.lineTo(x - 4, y - 14); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x + 20, y - 8); ctx.lineTo(x + 15, y - 30); ctx.lineTo(x + 4, y - 14); ctx.fill();
+      // head
+      ctx.beginPath(); ctx.arc(x, y - 4, 19, 0, Math.PI * 2); ctx.fill();
       ctx.shadowBlur = 0;
-      ctx.fillStyle = "#4aa8ff";
-      ctx.beginPath(); ctx.arc(x, y - 4, 6, 0, Math.PI * 2); ctx.fill();
+      // inner ears
+      ctx.fillStyle = "#ffc8d8";
+      ctx.beginPath(); ctx.moveTo(x - 16, y - 12); ctx.lineTo(x - 14, y - 24); ctx.lineTo(x - 8, y - 15); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x + 16, y - 12); ctx.lineTo(x + 14, y - 24); ctx.lineTo(x + 8, y - 15); ctx.fill();
+      // stripes
+      ctx.strokeStyle = "#c97a26"; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(x - 5, y - 22); ctx.lineTo(x - 4, y - 15); ctx.moveTo(x + 5, y - 22); ctx.lineTo(x + 4, y - 15); ctx.stroke();
+      // eyes (look up at the stars)
+      ctx.fillStyle = "#1a0d3d";
+      ctx.beginPath(); ctx.ellipse(x - 7, y - 7, 3.2, 4.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x + 7, y - 7, 3.2, 4.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(x - 6, y - 9, 1.2, 0, Math.PI * 2); ctx.arc(x + 8, y - 9, 1.2, 0, Math.PI * 2); ctx.fill();
+      // nose + mouth
+      ctx.fillStyle = "#ff7aa2";
+      ctx.beginPath(); ctx.moveTo(x - 2.5, y); ctx.lineTo(x + 2.5, y); ctx.lineTo(x, y + 3); ctx.fill();
+      ctx.strokeStyle = "#1a0d3d"; ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(x, y + 3); ctx.quadraticCurveTo(x - 3, y + 7, x - 6, y + 4);
+      ctx.moveTo(x, y + 3); ctx.quadraticCurveTo(x + 3, y + 7, x + 6, y + 4); ctx.stroke();
+      // whiskers
+      ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x - 9, y + 1); ctx.lineTo(x - 22, y - 2); ctx.moveTo(x - 9, y + 3); ctx.lineTo(x - 22, y + 5);
+      ctx.moveTo(x + 9, y + 1); ctx.lineTo(x + 22, y - 2); ctx.moveTo(x + 9, y + 3); ctx.lineTo(x + 22, y + 5);
+      ctx.stroke();
       ctx.restore();
     }
 
@@ -153,57 +155,53 @@
       ctx.font = "bold 22px sans-serif";
       ctx.fillStyle = "#fff"; ctx.textAlign = "left";
       ctx.fillText("⭐ " + score, 14, 32);
-      ctx.textAlign = "right";
-      ctx.fillText("❤️".repeat(lives), W - 14, 32);
-      ctx.textAlign = "left";
     }
 
     function update(dt) {
-      // move rocket
-      if (keys.left) rocket.target -= 7 * dt;
-      if (keys.right) rocket.target += 7 * dt;
-      rocket.target = Math.max(22, Math.min(W - 22, rocket.target));
-      rocket.x += (rocket.target - rocket.x) * Math.min(1, 0.25 * dt);
+      if (keys.left) cat.target -= 8 * dt;
+      if (keys.right) cat.target += 8 * dt;
+      cat.target = Math.max(30, Math.min(W - 30, cat.target));
+      cat.x += (cat.target - cat.x) * Math.min(1, 0.3 * dt);
 
       spawnTimer -= dt;
       if (spawnTimer <= 0) {
         spawn();
-        spawnTimer = Math.max(14, 42 - score * 0.6);
+        spawnTimer = Math.max(30, 70 - score * 0.8);
       }
-      speed = 2.2 + score * 0.05;
+      speed = Math.min(6.5, 2 + score * 0.06);
 
-      for (var i = things.length - 1; i >= 0; i--) {
-        var t = things[i];
+      for (var i = stars.length - 1; i >= 0; i--) {
+        var t = stars[i];
         t.y += t.vy * dt; t.spin += 0.03 * dt;
-        var dx = t.x - rocket.x, dy = t.y - rocket.y;
-        if (Math.abs(dx) < t.r + 14 && Math.abs(dy) < t.r + 24) {
-          things.splice(i, 1);
-          if (t.bad) {
-            lives--; hurtFlash = 12;
-            if (lives <= 0) return gameOver();
-          } else {
-            score++;
-            pops.push({ x: t.x, y: t.y, life: 30 });
-          }
+        // caught if it touches the cat's head or paws
+        if (Math.abs(t.x - cat.x) < t.r + 30 && t.y > cat.y - 34 && t.y < cat.y + 10) {
+          stars.splice(i, 1);
+          score++;
+          pops.push({ x: t.x, y: t.y, life: 30 });
           continue;
         }
-        if (t.y > H + 30) things.splice(i, 1);
+        // a star hit the ground: game over!
+        if (t.y > H - 6) {
+          missed = t;
+          return gameOver();
+        }
       }
       pops.forEach(function (p) { p.life -= dt; p.y -= 0.8 * dt; });
       pops = pops.filter(function (p) { return p.life > 0; });
-      if (hurtFlash > 0) hurtFlash -= dt;
     }
 
     function draw(dt) {
       drawBackground(dt);
-      things.forEach(function (t) {
-        if (t.bad) drawAsteroid(t.x, t.y, t.r, t.spin); else drawStar(t.x, t.y, t.r, t.spin);
-      });
-      drawRocket();
+      stars.forEach(function (t) { drawStar(t.x, t.y, t.r, t.spin); });
+      drawCat();
       ctx.font = "bold 18px sans-serif"; ctx.fillStyle = "#ffe44d"; ctx.textAlign = "center";
       pops.forEach(function (p) { ctx.globalAlpha = p.life / 30; ctx.fillText("+1", p.x, p.y); });
       ctx.globalAlpha = 1; ctx.textAlign = "left";
-      if (hurtFlash > 0) { ctx.fillStyle = "rgba(255,40,40," + hurtFlash / 30 + ")"; ctx.fillRect(0, 0, W, H); }
+      if (missed) {
+        // red ring around the star that got away
+        ctx.strokeStyle = "#ff5a5a"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(missed.x, missed.y, 22, 0, Math.PI * 2); ctx.stroke();
+      }
       drawHud();
     }
 
@@ -229,16 +227,35 @@
       draw(0);
       var newBest = score > best;
       if (newBest) { best = score; save(BEST_KEY, String(best)); }
-      overlayTitle.textContent = newBest ? "🏆 New best score!" : "Game over!";
+      overlayTitle.textContent = newBest ? "🏆 New best score!" : "Oh no, a star fell!";
       overlayText.textContent = "You caught " + score + " star" + (score === 1 ? "" : "s") + ". Best: " + best;
       startBtn.textContent = "↻ Play again";
       overlay.hidden = false;
     }
 
+    // Pause if you switch tabs, so a star doesn't fall while you're away
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden && running) {
+        running = false;
+        paused = true;
+        overlayTitle.textContent = "Paused";
+        overlayText.textContent = "Score: " + score;
+        startBtn.textContent = "▶ Keep playing";
+        overlay.hidden = false;
+      }
+    });
+    function resume() {
+      paused = false;
+      overlay.hidden = true;
+      running = true;
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
     // controls
     function pointerTo(clientX) {
       var rect = canvas.getBoundingClientRect();
-      rocket.target = (clientX - rect.left) * (W / rect.width);
+      cat.target = (clientX - rect.left) * (W / rect.width);
     }
     canvas.addEventListener("mousemove", function (e) { if (running) pointerTo(e.clientX); });
     canvas.addEventListener("touchstart", function (e) { if (running) { pointerTo(e.touches[0].clientX); e.preventDefault(); } }, { passive: false });
@@ -252,7 +269,7 @@
       if (e.key === "ArrowLeft" || e.key === "a") keys.left = false;
       if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
     });
-    startBtn.addEventListener("click", start);
+    startBtn.addEventListener("click", function () { if (paused) resume(); else start(); });
 
     reset();
     draw(0);
