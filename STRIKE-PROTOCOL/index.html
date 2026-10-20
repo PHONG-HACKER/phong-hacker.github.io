@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta charset="utf-8">
 <title>Strike Protocol</title>
 <style>
@@ -82,6 +82,25 @@
   .bigbtn:focus-visible{outline:2px solid #fff;outline-offset:2px}
   #overstats{font-size:15px;color:var(--dim);margin:10px 0 4px}
   #overstats b{color:var(--text)}
+  /* touch controls */
+  body{touch-action:none;overscroll-behavior:none}
+  #touchui .tbtn,#joy{position:fixed;z-index:6;pointer-events:auto;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+  .tbtn{display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(13,17,22,.55);
+    border:1px solid var(--line);color:var(--dim);font-size:12px;letter-spacing:.08em;width:60px;height:60px;font-weight:700}
+  .tbtn.on{background:rgba(255,184,77,.25);color:var(--text)}
+  #firebtn{width:100px;height:100px;right:28px;bottom:118px;font-size:16px;color:var(--accent);border-color:var(--accent)}
+  #jumpbtn{right:146px;bottom:104px}
+  #zoombtn{right:154px;bottom:198px}
+  #reloadbtn{right:48px;bottom:240px}
+  #swapbtn{right:244px;bottom:72px}
+  #buybtn{left:22px;top:96px}
+  #skillbtn{left:96px;top:96px}
+  #joy{left:30px;bottom:112px;width:134px;height:134px;border-radius:50%;background:rgba(13,17,22,.4);border:1px solid var(--line)}
+  #joyknob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;
+    background:rgba(255,255,255,.14);border:1px solid var(--dim)}
+  .xclose{position:absolute;top:10px;right:12px;background:none;border:1px solid var(--line);color:var(--dim);
+    border-radius:4px;width:30px;height:30px;cursor:pointer;font-size:14px;font-family:inherit}
+  .menu .row{cursor:pointer}
   [hidden]{display:none!important}
   @media (max-width:700px){
     #startmenu,#overmenu{min-width:0}
@@ -136,6 +155,17 @@
   </div>
 </div>
 
+<div id="touchui" hidden>
+  <div id="joy"><div id="joyknob"></div></div>
+  <div id="firebtn" class="tbtn">FIRE</div>
+  <div id="jumpbtn" class="tbtn">JUMP</div>
+  <div id="reloadbtn" class="tbtn">R</div>
+  <div id="zoombtn" class="tbtn">ZOOM</div>
+  <div id="swapbtn" class="tbtn">SWAP</div>
+  <div id="buybtn" class="tbtn">BUY</div>
+  <div id="skillbtn" class="tbtn">SKILL</div>
+</div>
+
 <div class="menu" id="startmenu">
   <h1>Strike Protocol</h1>
   <div class="sub">Tactical arena shooter · survive the waves, earn cash, level up</div>
@@ -159,6 +189,7 @@
 </div>
 
 <div class="menu" id="buymenu" hidden>
+  <button class="xclose" id="buyclose" aria-label="Close buy menu">✕</button>
   <h2>Buy Menu</h2>
   <div class="sub">Press a number to buy · <b id="buycash" style="color:var(--good)">$0</b> available</div>
   <div id="buyrows"></div>
@@ -166,6 +197,7 @@
 </div>
 
 <div class="menu" id="skillmenu" hidden>
+  <button class="xclose" id="skillclose" aria-label="Close skill menu">✕</button>
   <h2>Skills</h2>
   <div class="sub"><b id="spleft" style="color:var(--xp)">0</b> point(s) to spend</div>
   <div id="skillrows"></div>
@@ -195,6 +227,8 @@
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rand=(a,b)=>a+Math.random()*(b-a);
+const TOUCH=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+const joy={x:0,y:0,id:null,active:false};
 
 // ---------- audio (synth, no assets) ----------
 let AC=null;
@@ -800,6 +834,10 @@ function renderBuy(){
     const d=document.createElement('div');
     d.className='row'+(it.dim?' owned':'')+(!it.can?' cant':'');
     d.innerHTML='<span><span class="key">'+it.key+'</span>'+it.label+'</span><span class="price">'+it.tag+'</span>';
+    d.addEventListener('click',()=>{
+      if(it.can){ const m=G.money; it.act(); if(G.money<m) SFX.buy(); renderBuy(); refreshHUD(); }
+      else SFX.deny();
+    });
     rows.appendChild(d);
   });
 }
@@ -812,6 +850,13 @@ function renderSkills(){
     d.className='row'+(can?'':' cant');
     d.innerHTML='<span><span class="key">'+(i+1)+'</span>'+s.name+' <span style="color:var(--dim);font-size:12px">'+s.desc+'</span></span>'+
       '<span class="price" style="color:var(--xp)">'+lv+'/'+s.max+'</span>';
+    d.addEventListener('click',()=>{
+      if(G.sp>0&&G.skills[s.id]<s.max){
+        G.skills[s.id]++; G.sp--; SFX.buy();
+        if(s.id==='vit') G.hp+=20;
+        renderSkills(); refreshHUD();
+      } else SFX.deny();
+    });
     rows.appendChild(d);
   });
 }
@@ -889,6 +934,56 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{ keys[e.code]=false; });
 
+// ---------- touch controls (iPad / phones) ----------
+if(TOUCH){
+  const joyEl=$('joy'), knob=$('joyknob');
+  function joyPos(t){
+    const r=joyEl.getBoundingClientRect();
+    let dx=(t.clientX-(r.left+r.width/2))/(r.width/2);
+    let dy=(t.clientY-(r.top+r.height/2))/(r.height/2);
+    const m=Math.hypot(dx,dy); if(m>1){dx/=m;dy/=m;}
+    joy.x=dx; joy.y=dy;
+    knob.style.transform='translate('+(dx*36)+'px,'+(dy*36)+'px)';
+  }
+  joyEl.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];joy.id=t.identifier;joy.active=true;joyPos(t);},{passive:false});
+  joyEl.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===joy.id)joyPos(t);},{passive:false});
+  const joyEnd=e=>{for(const t of e.changedTouches)if(t.identifier===joy.id){joy.id=null;joy.active=false;joy.x=joy.y=0;knob.style.transform='translate(0,0)';}};
+  joyEl.addEventListener('touchend',joyEnd); joyEl.addEventListener('touchcancel',joyEnd);
+  // drag anywhere on the view to aim
+  let lookId=null,lookX=0,lookY=0;
+  el.addEventListener('touchstart',e=>{
+    const t=e.changedTouches[0];
+    if(lookId===null){lookId=t.identifier;lookX=t.clientX;lookY=t.clientY;}
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches) if(t.identifier===lookId){
+      const sens=G.zoomed?.0012:.0042;
+      player.yaw-=(t.clientX-lookX)*sens;
+      player.pitch=clamp(player.pitch-(t.clientY-lookY)*sens,-1.45,1.45);
+      lookX=t.clientX; lookY=t.clientY;
+    }
+  },{passive:false});
+  const lookEnd=e=>{for(const t of e.changedTouches)if(t.identifier===lookId)lookId=null;};
+  el.addEventListener('touchend',lookEnd); el.addEventListener('touchcancel',lookEnd);
+  // buttons
+  function bindBtn(id,down,up){
+    const b=$(id);
+    b.addEventListener('touchstart',e=>{e.preventDefault();b.classList.add('on');down();},{passive:false});
+    b.addEventListener('touchend',e=>{e.preventDefault();b.classList.remove('on');up&&up();},{passive:false});
+    b.addEventListener('touchcancel',()=>{b.classList.remove('on');up&&up();});
+  }
+  bindBtn('firebtn',()=>{mouseDown=true;},()=>{mouseDown=false;});
+  bindBtn('jumpbtn',()=>{ if(G.running&&!G.over&&player.grounded){player.vy=5.4;player.grounded=false;} });
+  bindBtn('reloadbtn',()=>startReload());
+  bindBtn('zoombtn',()=>{ if(WEAPONS[G.cur].zoom) G.zoomed=!G.zoomed; else SFX.deny(); });
+  bindBtn('swapbtn',()=>{ const o=G.cur===G.slots.secondary?G.slots.primary:G.slots.secondary; if(o)switchTo(o); });
+  bindBtn('buybtn',()=>{ menuOpen==='buy'?closeMenus():openMenu('buy'); });
+  bindBtn('skillbtn',()=>{ menuOpen==='skill'?closeMenus():openMenu('skill'); });
+}
+$('buyclose').addEventListener('click',closeMenus);
+$('skillclose').addEventListener('click',closeMenus);
+
 function switchTo(w){
   if(!G.owned[w]||G.cur===w) return;
   G.cur=w; G.reloading=0; G.zoomed=false; G.burstLeft=0; G.fireCd=Math.max(G.fireCd,.25);
@@ -922,7 +1017,7 @@ function fireShot(){
   gunHolder.position.z=-.43;
   const muzzle=gunHolder.localToWorld(new THREE.Vector3(0,0,GUN_CACHE[G.cur].userData.tip));
   burst(muzzle,0xffd9a0,2,1,.14,.06,0);
-  const moving=(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD)&&!keys.ShiftLeft;
+  const moving=((keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD)&&!keys.ShiftLeft)||joy.active;
   const spread=w.spread*(moving?1.8:1)*(G.zoomed?.15:1);
   const origin=camera.getWorldPosition(new THREE.Vector3());
   const enemyParts=[]; enemies.forEach(e=>enemyParts.push(...e.parts));
@@ -992,7 +1087,7 @@ function damagePlayer(dmg){
 function gameOver(){
   G.over=true; closeMenus();
   document.exitPointerLock&&document.exitPointerLock();
-  $('pausemenu').hidden=true; $('bossbar').hidden=true;
+  $('pausemenu').hidden=true; $('bossbar').hidden=true; $('touchui').hidden=true;
   const acc=G.shotsFired?Math.round(G.shotsHit/G.shotsFired*100):0;
   $('overstats').innerHTML='Wave <b>'+G.wave+'</b> · Kills <b>'+G.kills+'</b> · Level <b>'+G.level+'</b> · Accuracy <b>'+acc+'%</b>';
   $('overmenu').hidden=false;
@@ -1039,7 +1134,7 @@ function endWave(){
 
 // ---------- main loop ----------
 const clock=new THREE.Clock();
-function isPaused(){ return G.running&&!G.over&&(menuOpen||!locked); }
+function isPaused(){ return G.running&&!G.over&&(menuOpen||(!locked&&!TOUCH)); }
 function syncCamera(){
   const bobY=Math.sin(bobT*2)*.03*bobAmt;
   camera.position.set(player.x,player.y+bobY,player.z);
@@ -1080,10 +1175,11 @@ function update(dt){
   G.time+=dt;
   // ----- movement -----
   let movingNow=false;
-  if(locked&&!menuOpen){
+  if((locked||TOUCH)&&!menuOpen){
     let mx=0,mz=0;
     if(keys.KeyW)mz-=1; if(keys.KeyS)mz+=1; if(keys.KeyA)mx-=1; if(keys.KeyD)mx+=1;
-    const len=Math.hypot(mx,mz)||1;
+    if(joy.active){ mx+=joy.x; mz+=joy.y; }
+    const len=Math.max(1,Math.hypot(mx,mz));
     movingNow=(mx!==0||mz!==0)&&player.grounded;
     const spd=(keys.ShiftLeft?3.2:6.4)*speedMul()*(G.zoomed?.55:1)*(WEAPONS[G.cur].moveMul||1);
     const sin=Math.sin(player.yaw),cos=Math.cos(player.yaw);
@@ -1179,7 +1275,7 @@ function update(dt){
         tracer(gunTip,pPos.clone().add(new THREE.Vector3(rand(-.4,.4),rand(-.3,.3),rand(-.4,.4))),0xff7a6b);
         burst(gunTip,0xffd9a0,1,0,.12,.05,0);
         noiseBurst(.06,.06,1200);
-        const moveBonus=(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD)?.18:0;
+        const moveBonus=(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||joy.active)?.18:0;
         const hitChance=clamp(.75-dist*.012-moveBonus,.15,.8);
         if(Math.random()<hitChance) damagePlayer(t.dmg*(1+G.wave*.04));
       } else e.cd=.4;
@@ -1213,6 +1309,7 @@ function resetGame(meta){
   player.x=0; player.z=26; player.y=EYE; player.yaw=Math.PI; player.pitch=0;
   setGunModel(); closeMenus();
   $('overmenu').hidden=true; $('startmenu').hidden=true; $('bossbar').hidden=true;
+  $('touchui').hidden=!TOUCH;
   startCombat();
   openMenu('buy'); // shop while paused; wave begins when the menu closes
   refreshHUD();
@@ -1230,7 +1327,7 @@ $('retrybtn').addEventListener('click',()=>{
 });
 $('menubtn').addEventListener('click',()=>{
   G.running=false; G.over=false;
-  $('overmenu').hidden=true; $('bossbar').hidden=true;
+  $('overmenu').hidden=true; $('bossbar').hidden=true; $('touchui').hidden=true;
   $('startmenu').hidden=false;
 });
 $('resumebtn').addEventListener('click',()=>{ lockPointer(); });
