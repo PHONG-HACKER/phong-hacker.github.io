@@ -1,0 +1,131 @@
+/* Galaxy theme */
+
+/* Deep-space background with nebula clouds */
+html, body {
+  background-color: #0b0820;
+}
+body {
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(140, 60, 220, 0.35), transparent 55%),
+    radial-gradient(ellipse at 85% 30%, rgba(40, 110, 230, 0.30), transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(220, 70, 170, 0.25), transparent 55%),
+    linear-gradient(180deg, #05040f 0%, #0b0820 50%, #140a2e 100%);
+  background-attachment: fixed;
+  color: #e6e1ff;
+}
+
+/* Twinkling star layers */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-repeat: repeat;
+}
+body::before {
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+    radial-gradient(1px 1px at 90px 120px, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 160px 60px, #cfe6ff, transparent),
+    radial-gradient(1px 1px at 230px 180px, #fff, transparent),
+    radial-gradient(1px 1px at 40px 200px, #f6d9ff, transparent),
+    radial-gradient(1.5px 1.5px at 280px 20px, #fff, transparent);
+  background-size: 300px 220px;
+  opacity: 0.8;
+  animation: twinkle 4s ease-in-out infinite alternate;
+}
+body::after {
+  background-image:
+    radial-gradient(2px 2px at 70px 80px, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 300px 250px, #bfe0ff, transparent),
+    radial-gradient(2px 2px at 420px 140px, #ffd6fb, transparent),
+    radial-gradient(1.5px 1.5px at 180px 380px, #fff, transparent);
+  background-size: 500px 450px;
+  opacity: 0.6;
+  animation: twinkle 6s ease-in-out infinite alternate-reverse;
+}
+@keyframes twinkle {
+  from { opacity: 0.35; }
+  to   { opacity: 0.95; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none; }
+}
+
+/* Keep page content above the stars */
+header, main, footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Glassy navbar and footer */
+.navbar-custom,
+footer {
+  background: rgba(18, 12, 46, 0.75) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.navbar-custom {
+  border-bottom: 1px solid rgba(160, 120, 255, 0.35);
+}
+footer {
+  border-top: 1px solid rgba(160, 120, 255, 0.35);
+}
+
+/* Dropdown menu (My Games) */
+.navbar-custom .dropdown-menu {
+  background: rgba(22, 14, 56, 0.95);
+  border: 1px solid rgba(160, 120, 255, 0.4);
+}
+.navbar-custom .dropdown-item,
+.navbar-custom .nav-item .dropdown-menu .dropdown-item {
+  color: #e6e1ff !important;
+  background: transparent;
+}
+.navbar-custom .dropdown-item:hover,
+.navbar-custom .dropdown-item:focus {
+  background: rgba(140, 90, 255, 0.3) !important;
+  color: #fff !important;
+}
+.navbar-custom .navbar-toggler {
+  border-color: rgba(200, 180, 255, 0.5);
+}
+.navbar-custom .navbar-toggler-icon {
+  filter: invert(1);
+}
+
+/* Glowing headings */
+h1, h2, h3, h4, h5, h6,
+.intro-header .page-heading h1 {
+  color: #f3eeff;
+  text-shadow: 0 0 12px rgba(170, 120, 255, 0.6), 0 0 28px rgba(90, 140, 255, 0.35);
+}
+.intro-header .page-heading .page-subheading,
+.intro-header .page-heading hr.small {
+  color: #c9bfff;
+  border-color: #a98bff;
+}
+
+/* Avatar glow */
+.navbar-custom .avatar-container .avatar-img-border {
+  box-shadow: 0 0 14px rgba(180, 120, 255, 0.8);
+}
+
+/* Main content card */
+main > .row > div {
+  background: rgba(20, 14, 50, 0.55);
+  border: 1px solid rgba(160, 120, 255, 0.25);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 0 40px rgba(110, 70, 220, 0.25);
+}
+@media (max-width: 767px) {
+  main > .row > div { padding: 1rem; border-radius: 12px; }
+}
+
+a { transition: color 0.2s, text-shadow 0.2s; }
+a:hover { text-shadow: 0 0 8px rgba(240, 166, 255, 0.7); }
+
+::selection { background: #7b4dff; color: #fff; }
