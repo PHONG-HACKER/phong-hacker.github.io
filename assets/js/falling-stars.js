@@ -10,12 +10,13 @@
   var STARS_PER_SIDE = 9;
   var SIDE_WIDTH = 14; // percent of the screen width on each side
 
-  function setUpStar(star) {
+  // Pick a new spot on the star's side. Only position and size change here:
+  // changing the animation timing while it runs makes the stars speed up.
+  function moveStar(star) {
     var onLeft = star.dataset.side === "left";
     var pos = Math.random() * SIDE_WIDTH;
     star.style.left = (onLeft ? pos : 100 - SIDE_WIDTH + pos) + "%";
     star.style.fontSize = (10 + Math.random() * 16) + "px";
-    star.style.animationDuration = (6 + Math.random() * 7) + "s, " + (1 + Math.random() * 1.5) + "s";
   }
 
   ["left", "right"].forEach(function (side) {
@@ -24,11 +25,14 @@
       star.className = "falling-star";
       star.textContent = "★";
       star.dataset.side = side;
-      setUpStar(star);
-      // Start at a random point so the stars don't all fall together
-      star.style.animationDelay = (-Math.random() * 12) + "s, 0s";
+      moveStar(star);
+      // Each star keeps its own speed forever, and starts at a random point
+      // so the stars don't all fall together
+      var fall = 6 + Math.random() * 7;
+      star.style.animationDuration = fall + "s, " + (1 + Math.random() * 1.5) + "s";
+      star.style.animationDelay = (-Math.random() * fall) + "s, 0s";
       star.addEventListener("animationiteration", function (e) {
-        if (e.animationName === "star-fall") setUpStar(e.target);
+        if (e.animationName === "star-fall") moveStar(e.target);
       });
       layer.appendChild(star);
     }
