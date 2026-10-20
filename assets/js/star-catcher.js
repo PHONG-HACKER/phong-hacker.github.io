@@ -59,11 +59,22 @@
       bgStars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.4 + 0.3, s: Math.random() * 0.6 + 0.2 });
     }
 
+    // Cat pictures from Twemoji (CC-BY 4.0, https://github.com/twitter/twemoji)
+    var TWEMOJI = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/";
+    function catPic(code) {
+      var img = new Image();
+      img.onload = function () { img.ready = true; if (!running) draw(0); };
+      img.src = TWEMOJI + code + ".svg";
+      return img;
+    }
+    var catImgs = { normal: catPic("1f431"), happy: catPic("1f638"), shocked: catPic("1f640") };
+    var happyTimer = 0;
+
     var cat, stars, score, spawnTimer, speed, running, paused = false, keys = {}, lastTime, pops, missed;
 
     function reset() {
       cat = { x: W / 2, y: H - 46, target: W / 2 };
-      stars = []; pops = []; missed = null;
+      stars = []; pops = []; missed = null; happyTimer = 0;
       score = 0; spawnTimer = 0; speed = 2;
     }
 
@@ -91,7 +102,7 @@
       ctx.restore();
     }
 
-    function drawCat() {
+    function drawCatFallback() {
       var x = cat.x, y = cat.y;
       ctx.save();
       ctx.shadowColor = "#a98bff"; ctx.shadowBlur = 14;
@@ -138,6 +149,29 @@
       ctx.restore();
     }
 
+    function drawCat() {
+      var img = missed ? catImgs.shocked : (happyTimer > 0 ? catImgs.happy : catImgs.normal);
+      if (!img.ready) img = catImgs.normal;
+      if (!img.ready) return drawCatFallback();
+      var x = cat.x, y = cat.y;
+      var tilt = Math.max(-0.35, Math.min(0.35, (cat.target - cat.x) / 120));
+      var bounce = happyTimer > 0 ? Math.sin(happyTimer / 12 * Math.PI) * 6 : 0;
+      ctx.save();
+      ctx.translate(x, y - bounce);
+      ctx.rotate(tilt);
+      ctx.shadowColor = "rgba(255, 215, 90, 0.8)"; ctx.shadowBlur = 18;
+      // paws reaching up to catch
+      ctx.fillStyle = "#FFCC4D";
+      ctx.beginPath(); ctx.ellipse(-30, -14, 8, 12, -0.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(30, -14, 8, 12, 0.5, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#F4ABBA";
+      ctx.beginPath(); ctx.arc(-31, -18, 3, 0, Math.PI * 2); ctx.arc(31, -18, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowColor = "rgba(255, 215, 90, 0.8)"; ctx.shadowBlur = 18;
+      ctx.drawImage(img, -34, -36, 68, 68);
+      ctx.restore();
+    }
+
     function drawBackground(dt) {
       var g = ctx.createLinearGradient(0, 0, 0, H);
       g.addColorStop(0, "#07051a"); g.addColorStop(1, "#1a0d3d");
@@ -177,6 +211,7 @@
         if (Math.abs(t.x - cat.x) < t.r + 30 && t.y > cat.y - 34 && t.y < cat.y + 10) {
           stars.splice(i, 1);
           score++;
+          happyTimer = 12;
           pops.push({ x: t.x, y: t.y, life: 30 });
           continue;
         }
@@ -186,6 +221,7 @@
           return gameOver();
         }
       }
+      if (happyTimer > 0) happyTimer -= dt;
       pops.forEach(function (p) { p.life -= dt; p.y -= 0.8 * dt; });
       pops = pops.filter(function (p) { return p.life > 0; });
     }
