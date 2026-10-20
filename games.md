@@ -32,3 +32,6 @@ Welcome to my games collection! These are games I've created using AI to help me
     <span class="game-play">▶ Play</span>
   </a>
 </div>
+
+<!-- 🥚 You found a clue! The secret code is STARDUST -->
+<p class="secret-whisper">Psst… you found it! The secret code is STARDUST</p>

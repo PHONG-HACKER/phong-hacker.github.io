@@ -202,3 +202,89 @@ a:hover { text-shadow: 0 0 8px rgba(240, 166, 255, 0.7); }
   from { opacity: 0.6; }
   to   { opacity: 1; }
 }
+
+/* Easter egg clue on the My Games page: invisible until highlighted */
+.secret-whisper {
+  margin-top: 3rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgba(20, 14, 50, 0.01);
+  user-select: text;
+}
+.secret-whisper::selection { background: #ffe44d; color: #1a0d3d; }
+
+/* Secret page */
+.secret-box { text-align: center; }
+.secret-intro { font-size: 1.15rem; line-height: 1.7; }
+.secret-form { margin: 1.75rem auto 1rem; max-width: 460px; }
+.secret-form label { display: block; font-weight: 700; margin-bottom: 0.5rem; }
+.secret-row { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+.secret-row input {
+  flex: 1 1 200px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(170, 130, 255, 0.6);
+  background: rgba(10, 6, 30, 0.7);
+  color: #fff;
+  font-size: 1.05rem;
+  text-align: center;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.secret-row input:focus { outline: 2px solid #f0a6ff; outline-offset: 2px; }
+.secret-row button,
+.game-overlay button {
+  padding: 0.6rem 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7b4dff, #d45cff);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 0 0 14px rgba(200, 110, 255, 0.6);
+}
+.secret-row button:hover,
+.game-overlay button:hover { filter: brightness(1.15); }
+.secret-msg { min-height: 1.5em; margin-top: 0.75rem; font-weight: 700; }
+.secret-msg.good { color: #8dffb0; }
+.secret-msg.bad { color: #ff9a9a; }
+.shake { animation: shake 0.4s; }
+@keyframes shake {
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+.secret-hint { margin-top: 1rem; color: #cfc7f5; }
+.secret-hint summary { cursor: pointer; color: #9fd3ff; }
+
+/* Star Catcher game */
+.game-zone { margin-top: 2.5rem; text-align: center; }
+.game-help { color: #cfc7f5; }
+.game-frame {
+  position: relative;
+  max-width: 640px;
+  margin: 1rem auto 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(170, 130, 255, 0.5);
+  box-shadow: 0 0 30px rgba(140, 90, 255, 0.4);
+}
+.game-frame canvas { display: block; width: 100%; height: auto; touch-action: none; }
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(7, 5, 26, 0.7);
+}
+.game-overlay[hidden] { display: none; }
+.game-overlay-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 0 14px rgba(170, 120, 255, 0.8);
+}
