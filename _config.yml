@@ -21,9 +21,7 @@ author: Some Person
 
 navbar-links:
   About Me: "/"
-  My Games:
-    - Helium Rising: "https://phong-hacker.github.io/Helium-Rising-Claude/"
-    - Neon Cat Runner: "https://phong-hacker.github.io/cat/"
+  My Games: "/games/"
 
 ################
 # --- Logo --- #
