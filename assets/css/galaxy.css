@@ -182,7 +182,7 @@ a:hover { text-shadow: 0 0 8px rgba(240, 166, 255, 0.7); }
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 0;
+  z-index: 5; /* in front of the page, behind the menu bar */
 }
 .falling-star {
   position: absolute;
