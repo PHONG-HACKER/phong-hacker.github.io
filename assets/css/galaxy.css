@@ -175,3 +175,30 @@ a:hover { text-shadow: 0 0 8px rgba(240, 166, 255, 0.7); }
   font-weight: 700;
   box-shadow: 0 0 14px rgba(200, 110, 255, 0.6);
 }
+
+/* Falling yellow stars on the sides */
+.falling-stars {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.falling-star {
+  position: absolute;
+  top: -40px;
+  color: #ffe44d;
+  text-shadow: 0 0 6px #ffd700, 0 0 14px #ffc400, 0 0 24px rgba(255, 200, 0, 0.7);
+  animation-name: star-fall, star-glow;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: normal, alternate;
+}
+@keyframes star-fall {
+  from { transform: translateY(0) rotate(0deg); }
+  to   { transform: translateY(calc(100vh + 80px)) rotate(360deg); }
+}
+@keyframes star-glow {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
