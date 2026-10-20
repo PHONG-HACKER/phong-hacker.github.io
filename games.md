@@ -7,6 +7,12 @@ permalink: /games/
 Welcome to my games collection! These are games I've created using AI to help me code and bring my ideas to life. I'm always working on improving my games, fixing bugs, and adding exciting new features! I usually release updates on Saturdays, so be sure to check back for new content and improvements!
 
 <div class="game-grid">
+  <a class="game-card" href="https://phong-hacker.github.io/NEON-SERPENT/">
+    <span class="game-icon">🐍</span>
+    <span class="game-title">Neon Serpent</span>
+    <span class="game-desc">Classic snake with a cyber twist! Draft a power-up every 20 seconds while dodging firewalls, glitch zones and a tracer drone.</span>
+    <span class="game-play">▶ Play</span>
+  </a>
   <a class="game-card" href="https://phong-hacker.github.io/Helium-Rising-Claude/">
     <span class="game-icon">🎈</span>
     <span class="game-title">Helium Rising</span>
