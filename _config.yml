@@ -22,6 +22,7 @@ author: Some Person
 navbar-links:
   About Me: "/"
   My Games: "/games/"
+  My Animations: "/animations/"
 
 ################
 # --- Logo --- #

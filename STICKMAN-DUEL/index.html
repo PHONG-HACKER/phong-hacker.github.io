@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stickman Flipbook Duel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Shantell+Sans:wght@700&display=swap">
+<style>
+/* Layout: one centered column; the notebook page sits on a dark desk, flipbook controls under it */
+:root{
+  --desk:#14123a; --desk2:#221d5c; --paper:#F3EEDF; --ink:#2B2B30; --blue:#2A5BD7; --red:#E0412F;
+  --text:#ece8ff; --muted:#b9b2e6; --line:rgba(170,130,255,.45);
+  --f-hand:"Shantell Sans", "Comic Sans MS", system-ui, sans-serif;
+  --f-body:"Patrick Hand", "Comic Sans MS", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100vh;background:radial-gradient(120% 80% at 50% 0%, var(--desk2), var(--desk));color:var(--text);font:20px/1.4 var(--f-body);
+  padding-block:24px 40px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
+h1{margin:0;font:700 clamp(28px,5vw,44px)/1.1 var(--f-hand);text-wrap:balance}
+a{color:var(--muted)}
+a:hover,a:focus-visible{color:var(--text)}
+.book{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;border-radius:6px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.5);background:var(--paper);cursor:pointer}
+canvas{display:block;width:100%;height:100%}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+button{font:inherit;font-size:20px;color:var(--text);background:rgba(123,77,255,.25);border:1px solid var(--line);border-radius:999px;padding:6px 18px;cursor:pointer;min-width:48px}
+button:hover{background:rgba(123,77,255,.45)}
+button:focus-visible,input:focus-visible{outline:3px solid #f0a6ff;outline-offset:2px}
+#play{background:linear-gradient(90deg,#7b4dff,#d45cff);border:0;min-width:110px;font-weight:700}
+input[type=range]{flex:1 1 220px;min-width:0;accent-color:#d45cff}
+.count{font-variant-numeric:tabular-nums;color:var(--muted);min-width:9ch;text-align:right}
+.speed{display:flex;align-items:center;gap:8px;color:var(--muted)}
+select{font:inherit;font-size:18px;color:var(--text);background:var(--desk2);border:1px solid var(--line);border-radius:10px;padding:4px 8px}
+.tip{margin:0;color:var(--muted);font-size:17px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Stickman Flipbook Duel</h1>
+    <a href="https://phong-hacker.github.io/animations/">← Back to My Animations</a>
+  </header>
+  <div class="book" id="book"><canvas id="cv" width="1920" height="1080" aria-label="Flipbook animation of two stickmen fighting"></canvas></div>
+  <div class="controls">
+    <button id="play" type="button">▶ Play</button>
+    <button id="prev" type="button" aria-label="Previous page">◀</button>
+    <button id="next" type="button" aria-label="Next page">▶</button>
+    <input id="scrub" type="range" min="1" max="300" value="1" aria-label="Page">
+    <span class="count" id="count">1 / 300</span>
+    <label class="speed" for="speed">Speed
+      <select id="speed"><option value="6">Slow</option><option value="12" selected>Normal</option><option value="24">Fast</option></select>
+    </label>
+  </div>
+  <p class="tip">300 hand-drawn pages at 12 pages a second. Tap the page or press Space to play and pause. Use the arrow keys to flip one page at a time.</p>
+</div>
+<script>
+(function () {
+  var FPS = 12, GND = 850, D = Math.PI / 180, TOTAL = 300;
+  var C = { ground: '#F3EEDF', main: '#2A5BD7', second: '#2B2B30', accent: '#E0412F' };
+  C.desk = mixc(C.ground, C.second, .2); C.under = mixc(C.ground, C.second, .1);
+  var HAND = '"Shantell Sans", "Comic Sans MS", sans-serif', BODY = '"Patrick Hand", "Comic Sans MS", sans-serif';
+  var L = { t: 118, hr: 30, ua: 60, fa: 56, th: 70, sh: 68 };
+  var P = {
+    stand: { lean: 6, aF: [35, 105], aB: [15, 125], lF: [18, 0], lB: [-16, 0] },
+    stand2: { lean: 9, aF: [42, 98], aB: [22, 118], lF: [24, -12], lB: [-14, 6] },
+    run: { lean: 26, aF: [62, 70], aB: [-50, 60], lF: [60, -80], lB: [-45, -25] },
+    punch: { lean: 18, aF: [92, 0], aB: [20, 130], lF: [40, -10], lB: [-38, 8] },
+    kick: { lean: -22, aF: [70, 70], aB: [-50, 50], lF: [100, 0], lB: [-4, 0] },
+    hit: { lean: -26, aF: [-20, 40], aB: [-55, 30], lF: [28, -10], lB: [-30, 20] },
+    block: { lean: -4, aF: [70, 110], aB: [55, 120], lF: [34, -8], lB: [-40, 6] },
+    crouch: { lean: 28, aF: [50, 90], aB: [10, 110], lF: [70, -110], lB: [-20, -60] },
+    tuck: { lean: 10, aF: [110, 60], aB: [-40, 80], lF: [95, -120], lB: [50, -120] },
+    cast: { lean: 14, aF: [95, -5], aB: [85, 5], lF: [42, -8], lB: [-42, 6] },
+    windup: { lean: -14, aF: [-40, 60], aB: [-70, 40], lF: [34, -10], lB: [-34, 10] },
+    upper: { lean: 8, aF: [168, -10], aB: [-30, 60], lF: [10, 0], lB: [-40, -30] },
+    charge: { lean: 0, aF: [150, 25], aB: [-150, -25], lF: [34, 0], lB: [-34, 0] },
+    shield: { lean: -6, aF: [90, 30], aB: [75, 55], lF: [40, -6], lB: [-48, 4] },
+    dash: { lean: 50, aF: [100, 0], aB: [-80, 10], lF: [30, -40], lB: [-70, -10] },
+    fly: { lean: -40, aF: [-60, 30], aB: [-100, 20], lF: [40, -30], lB: [10, -40] },
+    ko: { lean: -88, aF: [-110, -10], aB: [-80, 10], lF: [92, 0], lB: [82, -6] },
+    win: { lean: 4, aF: [172, -8], aB: [30, 110], lF: [16, 0], lB: [-18, 0] }
+  };
+
+  /* ---------- drawing helpers ---------- */
+  function mb(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function lerp(a, b, u) { return a + (b - a) * u; }
+  var E = { io: function (u) { return u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; }, out: function (u) { return 1 - Math.pow(1 - u, 3); }, inn: function (u) { return u * u * u; }, lin: function (u) { return u; } };
+  function hx(h) { h = h.replace('#', ''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
+  function mixc(a, b, u) { var A = hx(a), B = hx(b); return 'rgb(' + [0, 1, 2].map(function (i) { return Math.round(lerp(A[i], B[i], u)); }).join(',') + ')'; }
+  function mix(a, b, u) { var o = {}; for (var k in a) o[k] = typeof a[k] === 'number' ? lerp(a[k], b[k], u) : [lerp(a[k][0], b[k][0], u), lerp(a[k][1], b[k][1], u)]; return o; }
+  function pt(o, ang, len, dir) { return [o[0] + Math.sin(ang * D) * len * dir, o[1] + Math.cos(ang * D) * len]; }
+  function joints(s, dir) {
+    var p = s.p, hip = [0, 0], sl = Math.sin(p.lean * D), cl = Math.cos(p.lean * D);
+    var sh = [sl * L.t * dir, -cl * L.t], hd = [sh[0] + sl * (L.hr + 12) * dir, sh[1] - cl * (L.hr + 12)];
+    var eF = pt(sh, p.aF[0], L.ua, dir), hF = pt(eF, p.aF[0] + p.aF[1], L.fa, dir);
+    var eB = pt(sh, p.aB[0], L.ua, dir), hB = pt(eB, p.aB[0] + p.aB[1], L.fa, dir);
+    var kF = pt(hip, p.lF[0], L.th, dir), fF = pt(kF, p.lF[0] + p.lF[1], L.sh, dir);
+    var kB = pt(hip, p.lB[0], L.th, dir), fB = pt(kB, p.lB[0] + p.lB[1], L.sh, dir);
+    var low = Math.max(0, fF[1], fB[1], kF[1], kB[1], sh[1], hd[1] + L.hr);
+    var ox = s.x, oy = GND - low - (s.lift || 0), J = { hip: hip, sh: sh, hd: hd, eF: eF, hF: hF, eB: eB, hB: hB, kF: kF, fF: fF, kB: kB, fB: fB };
+    for (var k in J) J[k] = [J[k][0] + ox, J[k][1] + oy];
+    return J;
+  }
+  function sline(c, a, b, r, w) {
+    var j = w * .3 + 1.5, A = c.globalAlpha;
+    for (var k = 0; k < 2; k++) {
+      c.lineWidth = k ? w * .45 : w; c.globalAlpha = k ? A * .55 : A;
+      var o = k ? 3 : 0;
+      c.beginPath(); c.moveTo(a[0] + (r() - .5) * j + o, a[1] + (r() - .5) * j);
+      c.quadraticCurveTo((a[0] + b[0]) / 2 + (r() - .5) * j * 2.5, (a[1] + b[1]) / 2 + (r() - .5) * j * 2.5, b[0] + (r() - .5) * j, b[1] + (r() - .5) * j + o);
+      c.stroke();
+    }
+    c.globalAlpha = A;
+  }
+  function scircle(c, x, y, R, r, w) {
+    var A = c.globalAlpha, s = r() * 6.28;
+    for (var k = 0; k < 2; k++) {
+      c.lineWidth = k ? w * .45 : w; c.globalAlpha = k ? A * .55 : A; c.beginPath();
+      for (var i = 0; i <= 22; i++) { var a = s + i / 20 * 6.28, q = R * (1 + (r() - .5) * .08) + k * 3; if (i) c.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q); else c.moveTo(x + Math.cos(a) * q, y + Math.sin(a) * q); }
+      c.stroke();
+    }
+    c.globalAlpha = A;
+  }
+  function dot(c, p, R) { c.beginPath(); c.arc(p[0], p[1], R, 0, 6.29); c.fill(); }
+  function man(c, s, dir, col, seed, alpha) {
+    var J = joints(s, dir), r = mb(seed);
+    c.save(); c.globalAlpha = alpha == null ? 1 : alpha; var A = c.globalAlpha;
+    c.strokeStyle = col; c.fillStyle = col; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.globalAlpha = A * .7;
+    sline(c, J.sh, J.eB, r, 9); sline(c, J.eB, J.hB, r, 9); sline(c, J.hip, J.kB, r, 9); sline(c, J.kB, J.fB, r, 9); dot(c, J.hB, 8);
+    c.globalAlpha = A;
+    sline(c, J.hip, J.sh, r, 11); sline(c, J.hip, J.kF, r, 10); sline(c, J.kF, J.fF, r, 10);
+    sline(c, J.sh, J.eF, r, 10); sline(c, J.eF, J.hF, r, 10); dot(c, J.hF, 9);
+    c.globalAlpha = A * .22; dot(c, J.hd, L.hr); c.globalAlpha = A;
+    scircle(c, J.hd[0], J.hd[1], L.hr, r, 8);
+    var bx = J.hd[0] - dir * L.hr * .9, by = J.hd[1] - 8, w = Math.sin(seed * .7) * 10;
+    c.lineWidth = 6; c.beginPath(); c.moveTo(J.hd[0] - L.hr, by); c.lineTo(J.hd[0] + L.hr, by - 2); c.stroke();
+    c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(bx - dir * 30, by - 4 + w, bx - dir * 58, by + 10 + w); c.stroke();
+    c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(bx - dir * 26, by + 10 - w, bx - dir * 48, by + 26 - w * .5); c.stroke();
+    c.fillStyle = C.second; dot(c, [J.hd[0] + dir * 13, J.hd[1] + 4], 4.5);
+    c.restore(); return J;
+  }
+  function st(a, b, e, u) { return { p: mix(P[a.p], P[b.p], e), x: lerp(a.x, b.x, e), lift: lerp(a.l || 0, b.l || 0, e) + (b.arc ? Math.sin(Math.PI * u) * b.arc : 0) }; }
+  function track(K, t) {
+    if (t <= K[0].t) return st(K[0], K[0], 0, 0);
+    for (var i = 0; i < K.length - 1; i++) { if (t < K[i + 1].t) { var a = K[i], b = K[i + 1], u = (t - a.t) / (b.t - a.t); return st(a, b, E[b.e || 'io'](u), u); } }
+    var z = K[K.length - 1]; return st(z, z, 0, 0);
+  }
+  function burst(c, x, y, R, r, fill) {
+    c.save(); c.fillStyle = fill || C.accent; c.strokeStyle = C.second; c.lineWidth = 5; c.lineJoin = 'round'; c.beginPath();
+    for (var i = 0; i < 24; i++) { var a = i / 24 * 6.283 + r() * .12, q = (i % 2 ? R * .48 : R) * (.82 + r() * .36); if (i) c.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q); else c.moveTo(x + Math.cos(a) * q, y + Math.sin(a) * q); }
+    c.closePath(); c.globalAlpha = .8; c.fill(); c.globalAlpha = 1; c.stroke(); c.restore();
+  }
+  function fire(c, x, y, R, r, dir) {
+    c.save(); c.lineCap = 'round'; c.strokeStyle = C.accent;
+    for (var i = 0; i < 5; i++) { var d = i - 2, len = R * (1.4 + r() * 1.1); c.globalAlpha = .75; c.lineWidth = Math.max(3, R * .32 - Math.abs(d) * R * .08);
+      c.beginPath(); c.moveTo(x, y + d * R * .35); c.quadraticCurveTo(x - dir * len * .5, y + d * R * .55 + (r() - .5) * 18, x - dir * len, y + d * R * .25 + (r() - .5) * 26); c.stroke(); }
+    c.globalAlpha = .45; c.fillStyle = C.accent; c.beginPath(); c.arc(x, y, R, 0, 6.29); c.fill();
+    c.globalAlpha = 1; scircle(c, x, y, R, r, Math.max(3, R * .14));
+    c.strokeStyle = C.second; c.lineWidth = 3; c.beginPath();
+    for (var k = 0; k < 14; k++) { var a = k * .9 + r() * .3, q = R * .6 * (k / 14); if (k) c.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q); else c.moveTo(x, y); }
+    c.stroke(); c.restore();
+  }
+  function bolt(c, a, b, r, col, w) {
+    var pts = [a], n = 8, dx = b[0] - a[0], dy = b[1] - a[1], L2 = Math.hypot(dx, dy) || 1, nx = -dy / L2, ny = dx / L2;
+    for (var i = 1; i < n; i++) { var o = (r() - .5) * Math.min(70, L2 * .25); pts.push([a[0] + dx * i / n + nx * o, a[1] + dy * i / n + ny * o]); }
+    pts.push(b); c.save(); c.lineJoin = 'miter'; c.lineCap = 'round';
+    [[col, w], [C.ground, w * .35]].forEach(function (s) { c.strokeStyle = s[0]; c.lineWidth = s[1]; c.beginPath(); pts.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); c.stroke(); });
+    c.restore();
+  }
+  function dust(c, x, y, p, r) {
+    if (p < 0 || p > 1) return; c.save(); c.strokeStyle = C.second; c.globalAlpha = (1 - p) * .7;
+    for (var i = 0; i < 4; i++) scircle(c, x + (i - 1.5) * 34 * (1 + p), y - 12 - p * 26 - (i % 2) * 10, 9 + p * 22, r, 3);
+    c.restore();
+  }
+  function speed(c, x, y, len, dir, r, col) {
+    c.save(); c.strokeStyle = col || C.second; c.lineWidth = 3; c.globalAlpha = .6; c.lineCap = 'round';
+    for (var i = 0; i < 5; i++) { var yy = y + (i - 2) * 26 + (r() - .5) * 8, x0 = x - dir * (20 + r() * 30); c.beginPath(); c.moveTo(x0, yy); c.lineTo(x0 - dir * len * (.5 + r() * .5), yy); c.stroke(); }
+    c.restore();
+  }
+  function smoke(c, x, y, p, r) {
+    if (p < 0) return; c.save(); c.strokeStyle = C.second; c.fillStyle = C.under;
+    for (var i = 0; i < 3; i++) { var q = (p + i / 3) % 1, R = 10 + q * 26, sx = x + Math.sin(q * 6 + i) * 14, sy = y - q * 160; c.globalAlpha = (1 - q) * .6; c.beginPath(); c.arc(sx, sy, R, 0, 6.29); c.fill(); scircle(c, sx, sy, R, r, 3); }
+    c.restore();
+  }
+  function beam(c, x1, x2, y, h, r) {
+    var s = x1 < x2 ? 1 : -1, n = Math.max(2, Math.ceil(Math.abs(x2 - x1) / 40)), top = [], bot = [];
+    for (var i = 0; i <= n; i++) { var x = x1 + (x2 - x1) * i / n; top.push([x, y - h / 2 + (r() - .5) * 14]); bot.push([x, y + h / 2 + (r() - .5) * 14]); }
+    var path = function (E2) { c.beginPath(); E2.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); };
+    c.save(); c.fillStyle = C.accent; c.globalAlpha = .55; path(top); for (var j = bot.length - 1; j >= 0; j--) c.lineTo(bot[j][0], bot[j][1]); c.closePath(); c.fill();
+    c.globalAlpha = 1; c.strokeStyle = C.second; c.lineWidth = 4; path(top); c.stroke(); path(bot); c.stroke();
+    c.strokeStyle = C.accent; c.lineWidth = 3; c.beginPath(); for (var k = 0; k < n; k++) { var xx = x1 + (x2 - x1) * (k + r() * .5) / n; c.moveTo(xx, y - h * .38); c.lineTo(xx + s * 22, y + h * .38); } c.stroke();
+    c.strokeStyle = C.ground; c.lineWidth = h * .18; c.beginPath(); c.moveTo(x1, y + (r() - .5) * 6); c.lineTo(x2, y + (r() - .5) * 6); c.stroke();
+    c.restore();
+  }
+  function bubble(c, x, y, R, r, col, dir) {
+    c.save(); c.fillStyle = col; c.globalAlpha = .14; c.beginPath(); c.ellipse(x, y, R * .45, R, 0, 0, 6.29); c.fill();
+    c.strokeStyle = col; c.lineCap = 'round';
+    for (var k = 0; k < 3; k++) { c.globalAlpha = 1 - k * .3; c.lineWidth = 7 - k * 2; c.beginPath(); c.ellipse(x + dir * k * 10 + (r() - .5) * 4, y, R * (.45 - k * .06), R * (1 - k * .1), 0, -1.45, 1.45, dir < 0); c.stroke(); }
+    c.restore();
+  }
+  function star(c, x, y, R, col) { c.save(); c.strokeStyle = col; c.lineWidth = 4; c.lineCap = 'round'; c.beginPath(); for (var i = 0; i < 4; i++) { var a = i * .785; c.moveTo(x - Math.cos(a) * R, y - Math.sin(a) * R); c.lineTo(x + Math.cos(a) * R, y + Math.sin(a) * R); } c.stroke(); c.restore(); }
+
+  /* ---------- words ---------- */
+  // Sound-effect word: x,y is its top-left like the original layout; it pops in big for one page.
+  function sfx(c, w, tf) {
+    if (tf < w.a - 1e-6 || tf >= w.b) return;
+    var size = w.size || 112;
+    c.save(); c.font = '700 ' + size + 'px ' + HAND; c.textAlign = 'center'; c.textBaseline = 'middle';
+    var tw = c.measureText(w.s).width;
+    c.translate(w.x + tw / 2, w.y + size / 2); c.rotate((w.rot || 0) * D);
+    var sc = tf - w.a < .09 ? 1.25 : 1; c.scale(sc, sc);
+    c.lineJoin = 'round'; c.lineWidth = 8; c.strokeStyle = C.second; c.strokeText(w.s, 0, 0);
+    c.fillStyle = w.col === 'blue' ? C.main : w.col === 'ink' ? C.ground : C.accent; c.fillText(w.s, 0, 0);
+    c.restore();
+  }
+  function title(c, big, small, showSmall) {
+    c.save(); c.textAlign = 'center'; c.textBaseline = 'top'; c.fillStyle = C.second;
+    c.save(); c.translate(960, 110 + 70); c.rotate(-2 * D); c.font = '700 132px ' + HAND; c.textBaseline = 'middle'; c.fillText(big, 0, 0); c.restore();
+    if (showSmall) { c.font = '44px ' + BODY; c.fillStyle = mixc(C.second, C.ground, .25); c.fillText(small, 960, 268); }
+    c.restore();
+  }
+  function tag(c, s, x, y, col, r) {
+    c.save(); c.translate(x, y + 30); c.rotate(-3 * D); c.font = '48px ' + BODY; c.textAlign = 'center'; c.textBaseline = 'middle';
+    var w = c.measureText(s).width + 52, h = 64; c.fillStyle = col; c.fillText(s, 0, 2);
+    c.strokeStyle = col; c.lineWidth = 4; c.beginPath();
+    c.moveTo(-w / 2 + 14, -h / 2 + (r() - .5) * 4); c.quadraticCurveTo(0, -h / 2 - 4, w / 2 - 10, -h / 2);
+    c.quadraticCurveTo(w / 2 + 6, 0, w / 2 - 12, h / 2); c.quadraticCurveTo(0, h / 2 + 5, -w / 2 + 10, h / 2 - 2);
+    c.quadraticCurveTo(-w / 2 - 6, 0, -w / 2 + 16, -h / 2 + 2); c.stroke();
+    c.restore();
+  }
+
+  /* ---------- the page ---------- */
+  function page(c, g) {
+    var r = mb(g * 7919 + 13), seed = g * 131 + 7;
+    var fr = { g: g, r: r, seed: seed, dx: (r() - .5) * 6, dy: (r() - .5) * 6, rot: (r() - .5) * .005 };
+    c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1;
+    c.fillStyle = C.desk; c.fillRect(0, 0, 1920, 1080);
+    c.fillStyle = C.ground; c.strokeStyle = C.second; c.lineWidth = 2;
+    for (var i = 4; i >= 1; i--) { c.fillRect(70 + i * 4, 40 + i * 5, 1780, 1000); c.globalAlpha = .3; c.strokeRect(70 + i * 4, 40 + i * 5, 1780, 1000); c.globalAlpha = 1; }
+    c.translate(960 + fr.dx, 540 + fr.dy); c.rotate(fr.rot); c.translate(-960, -540);
+    c.fillRect(70, 40, 1780, 1000);
+    c.strokeStyle = C.main; c.globalAlpha = .17; c.lineWidth = 2; c.beginPath();
+    for (var y = 150; y < 1030; y += 56) { c.moveTo(70, y); c.lineTo(1850, y); }
+    c.stroke();
+    c.strokeStyle = C.accent; c.globalAlpha = .35; c.beginPath(); c.moveTo(232, 40); c.lineTo(232, 1040); c.stroke();
+    c.globalAlpha = 1; c.fillStyle = C.desk; [250, 540, 830].forEach(function (y) { c.beginPath(); c.arc(140, y, 18, 0, 6.29); c.fill(); });
+    var rr = mb(seed); c.strokeStyle = C.second; c.lineCap = 'round';
+    sline(c, [290, GND + 4], [990, GND - 2], rr, 5); sline(c, [960, GND - 2], [1680, GND + 3], rr, 5);
+    c.lineWidth = 3; c.beginPath();
+    for (var x = 330; x < 1660; x += 150) { var q = x + rr() * 40; c.moveTo(q, GND + 2); c.lineTo(q - 8, GND - 14); c.moveTo(q + 8, GND + 2); c.lineTo(q + 10, GND - 12); }
+    c.stroke();
+    return fr;
+  }
+  function pageEnd(c, fr) {
+    c.save(); c.translate(1770, 1018); c.rotate(-4 * D); c.font = '46px ' + BODY; c.textAlign = 'right'; c.textBaseline = 'alphabetic';
+    c.fillStyle = mixc(C.second, C.ground, .35); c.fillText(String(fr.g + 1), 0, 0); c.restore();
+    var s = 46 + fr.r() * 34, X = 1850, Y = 1040;
+    c.globalAlpha = 1; c.fillStyle = C.under; c.beginPath(); c.moveTo(X - s, Y); c.lineTo(X, Y - s); c.lineTo(X, Y); c.closePath(); c.fill();
+    c.fillStyle = C.ground; c.strokeStyle = C.second; c.lineWidth = 2; c.beginPath(); c.moveTo(X - s, Y); c.lineTo(X, Y - s); c.lineTo(X - s * .92, Y - s * .92); c.closePath(); c.fill(); c.globalAlpha = .6; c.stroke(); c.globalAlpha = 1;
+  }
+  function pair(c, BK, RK) {
+    return function (tt, a, sd) { return [man(c, track(BK, tt), 1, C.main, sd, a), man(c, track(RK, tt), -1, C.accent, sd + 5, a)]; };
+  }
+
+  /* ---------- the six scenes ---------- */
+  function bob(x, off) { var K = []; for (var i = 0; i < 9; i++) K.push({ t: i * .5 + off - .5, p: i % 2 ? 'stand2' : 'stand', x: x }); return K; }
+  var SCENES = [
+    { dur: 3, B: bob(640, 0), R: bob(1280, .25), draw: function (c, tf, fr, J) {
+      if (tf >= 1.25) { burst(c, 960, 590, 95 + mb(fr.seed + 3)() * 10, mb(fr.seed + 3), C.second); }
+      if (tf >= 1.9) { var rb = mb(fr.seed + 9); bolt(c, [J[0].hd[0] + 40, J[0].hd[1]], [860, 560], rb, C.main, 7); bolt(c, [J[1].hd[0] - 40, J[1].hd[1]], [1060, 560], rb, C.accent, 7); }
+      title(c, 'Blue vs Red', 'Round one. Fight.', tf >= .5);
+      var rt = mb(fr.seed + 21); tag(c, 'Blue', 640, 880, C.main, rt); tag(c, 'Red', 1280, 880, C.accent, rt);
+      sfx(c, { s: 'VS', x: 885, y: 540, size: 90, rot: -6, col: 'ink', a: 1.25, b: 9 }, tf);
+    } },
+    { dur: 4,
+      B: [{ t: 0, p: 'stand', x: 640 }, { t: .4, p: 'crouch', x: 640 }, { t: .9, p: 'run', x: 860, e: 'lin' }, { t: 1.1, p: 'punch', x: 900, e: 'out' },
+        { t: 1.5, p: 'stand', x: 880 }, { t: 1.85, p: 'block', x: 880 }, { t: 2.1, p: 'hit', x: 830, e: 'out' }, { t: 2.6, p: 'stand', x: 860 },
+        { t: 2.85, p: 'stand2', x: 870 }, { t: 3, p: 'kick', x: 890, e: 'out' }, { t: 3.2, p: 'kick', x: 890 }, { t: 3.6, p: 'stand', x: 660, arc: 110 }, { t: 4, p: 'stand', x: 640 }],
+      R: [{ t: 0, p: 'stand', x: 1280 }, { t: .5, p: 'stand2', x: 1260 }, { t: .9, p: 'run', x: 1100, e: 'lin' }, { t: 1.1, p: 'hit', x: 1100, e: 'out' },
+        { t: 1.35, p: 'hit', x: 1140 }, { t: 1.65, p: 'stand', x: 1110 }, { t: 1.85, p: 'stand2', x: 1090 }, { t: 2, p: 'kick', x: 1060, e: 'out' },
+        { t: 2.3, p: 'stand', x: 1070 }, { t: 2.9, p: 'stand2', x: 1070 }, { t: 3.05, p: 'hit', x: 1120, e: 'out' }, { t: 3.3, p: 'hit', x: 1150 },
+        { t: 3.7, p: 'stand', x: 1270, arc: 80 }, { t: 4, p: 'stand', x: 1280 }],
+      before: function (c, tf, fr, r, S) { if (tf > .45 && tf < 1.05) { speed(c, track(S.B, tf).x - 30, 640, 160, 1, r, C.main); speed(c, track(S.R, tf).x + 30, 640, 160, -1, r, C.accent); } },
+      draw: function (c, tf, fr, J, r) {
+        if (tf >= 1.08 && tf < 1.42) burst(c, J[0].hF[0] + 20, J[0].hF[1], 70, r, C.accent);
+        if (tf >= 1.98 && tf < 2.3) burst(c, J[1].fF[0] - 10, J[1].fF[1], 60, r, C.main);
+        if (tf >= 2.98 && tf < 3.35) burst(c, J[0].fF[0] + 20, J[0].fF[1], 75, r, C.accent);
+        dust(c, 860, GND, (tf - 1.1) / .5, r); dust(c, 1100, GND, (tf - 1.1) / .5, r);
+        dust(c, 660, GND, (tf - 3.6) / .4, r); dust(c, 1270, GND, (tf - 3.7) / .3, r);
+        sfx(c, { s: 'POW', x: 1020, y: 330, rot: -10, a: 1.08, b: 1.5 }, tf);
+        sfx(c, { s: 'BLOCK', x: 640, y: 360, rot: 8, col: 'blue', a: 1.98, b: 2.4 }, tf);
+        sfx(c, { s: 'WHAM', x: 1060, y: 300, rot: -6, a: 2.98, b: 3.45 }, tf);
+      } },
+    { dur: 4,
+      B: [{ t: 0, p: 'stand', x: 640 }, { t: 1.15, p: 'stand2', x: 640 }, { t: 1.3, p: 'crouch', x: 640 }, { t: 1.45, p: 'tuck', x: 650, l: 330, e: 'out' },
+        { t: 1.75, p: 'tuck', x: 660, l: 330 }, { t: 1.95, p: 'crouch', x: 680, l: 0, e: 'inn' }, { t: 2.3, p: 'stand', x: 660 }, { t: 2.8, p: 'stand2', x: 650 },
+        { t: 3.3, p: 'stand', x: 645 }, { t: 4, p: 'stand', x: 640 }],
+      R: [{ t: 0, p: 'stand', x: 1280 }, { t: .3, p: 'windup', x: 1300 }, { t: 1, p: 'windup', x: 1305 }, { t: 1.1, p: 'cast', x: 1260, e: 'out' },
+        { t: 1.7, p: 'cast', x: 1260 }, { t: 2.1, p: 'stand', x: 1280 }, { t: 3, p: 'stand2', x: 1280 }, { t: 4, p: 'stand', x: 1280 }],
+      before: function (c, tf, fr, r) {
+        if (tf < 2.08) return;
+        c.save(); c.fillStyle = C.second; c.globalAlpha = .45; c.beginPath(); c.arc(150, 650, 36, 0, 6.29); c.fill();
+        c.globalAlpha = .8; c.strokeStyle = C.second; c.lineWidth = 3; c.beginPath();
+        for (var i = 0; i < 9; i++) { var a = i * .7, q = 20 + (i % 3) * 12; c.moveTo(150, 650); c.lineTo(150 + Math.cos(a) * q * 1.6, 650 + Math.sin(a) * q * 1.6); }
+        c.stroke(); c.restore();
+        smoke(c, 150, 620, tf * .9, r);
+      },
+      draw: function (c, tf, fr, J, r) {
+        if (tf >= .3 && tf < 1.1) fire(c, J[1].hF[0], J[1].hF[1], 10 + 30 * (tf - .3) / .8, r, 1);
+        if (tf >= 1.1 && tf < 2.08) { var x = 1110 - 1000 * (tf - 1.1), y = lerp(615, 650, tf - 1.1); fire(c, x, y, 46, r, -1); speed(c, x + 120, y, 140, -1, r, C.accent); }
+        if (tf >= 2.08 && tf < 2.45) burst(c, 165, 650, 80, r, C.accent);
+        if (tf >= 1.3 && tf < 1.5) dust(c, 640, GND, (tf - 1.3) / .4, r);
+        if (tf >= 1.95 && tf < 2.4) dust(c, 680, GND, (tf - 1.95) / .45, r);
+        sfx(c, { s: 'FWOOSH', x: 930, y: 330, rot: -5, a: 1.1, b: 1.65 }, tf);
+        sfx(c, { s: 'POOF', x: 250, y: 440, size: 90, rot: 7, col: 'ink', a: 2.08, b: 2.7 }, tf);
+      } },
+    { dur: 4,
+      B: [{ t: 0, p: 'stand', x: 640 }, { t: .4, p: 'crouch', x: 640 }, { t: 1, p: 'crouch', x: 640 }, { t: 1.17, p: 'dash', x: 1200, e: 'lin' },
+        { t: 1.25, p: 'crouch', x: 1210 }, { t: 1.35, p: 'upper', x: 1230, e: 'out' }, { t: 1.8, p: 'upper', x: 1230 }, { t: 2.2, p: 'stand', x: 1200 },
+        { t: 2.6, p: 'crouch', x: 1190 }, { t: 3.2, p: 'crouch', x: 640, arc: 160 }, { t: 3.5, p: 'stand', x: 640 }, { t: 4, p: 'stand', x: 640 }],
+      R: [{ t: 0, p: 'stand', x: 1280 }, { t: 1, p: 'stand2', x: 1280 }, { t: 1.25, p: 'stand2', x: 1275 }, { t: 1.35, p: 'hit', x: 1280, e: 'out' },
+        { t: 1.55, p: 'fly', x: 1350, l: 220, e: 'out' }, { t: 1.85, p: 'fly', x: 1430, l: 300 }, { t: 2.25, p: 'crouch', x: 1470, l: 0, e: 'inn' },
+        { t: 2.6, p: 'stand', x: 1450 }, { t: 3.2, p: 'stand2', x: 1360 }, { t: 3.7, p: 'stand2', x: 1300 }, { t: 4, p: 'stand', x: 1280 }],
+      before: function (c, tf, fr, r) {
+        if (tf < 1.08 || tf >= 1.45) return;
+        var a = .4 * (1 - (tf - 1.08) / .4);
+        [760, 880, 1000, 1120].forEach(function (x, i) { man(c, { p: P.dash, x: x, lift: 0 }, 1, C.main, fr.seed + i * 17, a * (.5 + i * .15)); });
+        bolt(c, [650, 700], [1190, 690], r, C.main, 12); bolt(c, [660, 600], [1180, 610], r, C.main, 7);
+      },
+      draw: function (c, tf, fr, J, r) {
+        if (tf >= .4 && tf < 1.08) {
+          for (var i = 0; i < 4; i++) {
+            var ang = r() * 6.28, R0 = 90 + r() * 40, cx = J[0].hip[0], cy = J[0].hip[1] - 40;
+            bolt(c, [cx + Math.cos(ang) * R0, cy + Math.sin(ang) * R0], [cx + Math.cos(ang + .5) * (R0 + 50), cy + Math.sin(ang + .5) * (R0 + 50)], r, C.main, 6);
+          }
+        }
+        if (tf >= 1.35 && tf < 1.75) { burst(c, 1300, 500, 95, r, C.main); bolt(c, [J[0].hF[0], J[0].hF[1]], [1340, 430], r, C.main, 8); }
+        if (tf >= 1.8 && tf < 2.6) speed(c, J[1].hip[0] - 60, J[1].hip[1] - 60, 120, 1, r, C.accent);
+        dust(c, 640, GND, (tf - 1.05) / .4, r); dust(c, 1470, GND, (tf - 2.25) / .45, r); dust(c, 640, GND, (tf - 3.2) / .4, r);
+        sfx(c, { s: 'ZAP', x: 820, y: 430, rot: -8, col: 'blue', a: 1.08, b: 1.35 }, tf);
+        sfx(c, { s: 'KRAK', x: 1300, y: 250, rot: 6, a: 1.35, b: 1.9 }, tf);
+      } },
+    { dur: 5,
+      B: [{ t: 0, p: 'stand', x: 640 }, { t: 1.1, p: 'stand2', x: 640 }, { t: 1.3, p: 'shield', x: 640, e: 'out' }, { t: 3.4, p: 'shield', x: 590, e: 'lin' },
+        { t: 3.6, p: 'crouch', x: 600 }, { t: 4.3, p: 'stand', x: 630 }, { t: 5, p: 'stand', x: 640 }],
+      R: [{ t: 0, p: 'stand', x: 1280 }, { t: .4, p: 'charge', x: 1280 }, { t: 1.3, p: 'charge', x: 1280 }, { t: 1.45, p: 'cast', x: 1260, e: 'out' },
+        { t: 3.4, p: 'cast', x: 1260 }, { t: 3.55, p: 'hit', x: 1310, e: 'out' }, { t: 4, p: 'stand', x: 1290 }, { t: 5, p: 'stand', x: 1280 }],
+      before: function (c, tf, fr, r, S) {
+        var sx = track(S.B, tf).x + 130;
+        if (tf >= 1.45 && tf < 3.4) beam(c, 1110, lerp(1110, sx, E.out(Math.min(1, (tf - 1.45) / .2))), 615, 62 + Math.sin(tf * 12) * 12, r);
+      },
+      draw: function (c, tf, fr, J, r, S) {
+        var bx = track(S.B, tf).x, sx = bx + 130;
+        if (tf >= .4 && tf < 1.45) fire(c, J[1].hd[0], J[1].hd[1] - 95, 10 + 45 * Math.min(1, (tf - .4) / .9), r, -1);
+        if (tf >= 1.3 && tf < 3.45) bubble(c, sx + (tf > 1.65 ? (r() - .5) * 8 : 0), 640, 150, r, C.main, 1);
+        if (tf >= 1.65 && tf < 3.4) {
+          for (var i = 0; i < 3; i++) { var a = -1.2 + r() * 2.4; bolt(c, [sx + 10, 615], [sx + 40 + Math.cos(a) * 90, 615 + Math.sin(a) * 110], r, C.accent, 4); }
+          star(c, sx + 30, 615, 26, C.second);
+          dust(c, bx - 20, GND, (tf * 2) % 1, r);
+        }
+        if (tf >= 3.4 && tf < 3.9) burst(c, sx + 20, 610, 150 + (tf - 3.4) * 90, r, C.accent);
+        if (tf >= 3.5) smoke(c, sx + 20, 640, tf * .8, r);
+        sfx(c, { s: 'VWOOM', x: 880, y: 350, rot: -4, a: 1.45, b: 2.1 }, tf);
+        sfx(c, { s: 'BOOM', x: 560, y: 270, size: 170, rot: -8, a: 3.4, b: 4.1 }, tf);
+      } },
+    { dur: 5,
+      B: [{ t: 0, p: 'stand', x: 640 }, { t: .3, p: 'charge', x: 640 }, { t: 1.3, p: 'charge', x: 640 }, { t: 1.45, p: 'crouch', x: 640 },
+        { t: 1.8, p: 'dash', x: 880, e: 'lin' }, { t: 2.2, p: 'punch', x: 900 }, { t: 2.35, p: 'crouch', x: 920 }, { t: 2.5, p: 'upper', x: 980, e: 'out' },
+        { t: 2.9, p: 'upper', x: 980 }, { t: 3.3, p: 'win', x: 950 }, { t: 5, p: 'win', x: 950 }],
+      R: [{ t: 0, p: 'stand', x: 1280 }, { t: .3, p: 'charge', x: 1280 }, { t: 1.3, p: 'charge', x: 1280 }, { t: 1.45, p: 'crouch', x: 1280 },
+        { t: 1.8, p: 'dash', x: 1040, e: 'lin' }, { t: 2.2, p: 'punch', x: 1020 }, { t: 2.5, p: 'hit', x: 1060, e: 'out' },
+        { t: 2.75, p: 'fly', x: 1260, l: 240, e: 'out' }, { t: 3.1, p: 'ko', x: 1480, l: 0, e: 'inn' }, { t: 5, p: 'ko', x: 1480 }],
+      before: function (c, tf, fr, r, S) { if (tf >= 1.45 && tf < 1.8) { speed(c, track(S.B, tf).x - 40, 660, 200, 1, r, C.main); speed(c, track(S.R, tf).x + 40, 660, 200, -1, r, C.accent); } },
+      draw: function (c, tf, fr, J, r) {
+        if (tf >= .3 && tf < 1.45) {
+          for (var i = 0; i < 3; i++) {
+            var ang = r() * 6.28, cx = J[0].hip[0], cy = J[0].hip[1] - 50;
+            bolt(c, [cx + Math.cos(ang) * 110, cy + Math.sin(ang) * 130], [cx + Math.cos(ang + .45) * 165, cy + Math.sin(ang + .45) * 185], r, C.main, 6);
+            var fa = -2.6 + r() * 2.1; fire(c, J[1].hip[0] + Math.cos(fa) * 110, J[1].hip[1] - 50 + Math.sin(fa) * 140, 14 + r() * 8, r, (i % 2) ? 1 : -1);
+          }
+        }
+        if (tf >= 1.8 && tf < 2.3) burst(c, 960, 610, 120 + Math.sin(tf * 9) * 10, r, C.second);
+        if (tf >= 2.5 && tf < 2.85) burst(c, 1110, 470, 95, r, C.main);
+        dust(c, 880, GND, (tf - 1.8) / .4, r); dust(c, 1040, GND, (tf - 1.8) / .4, r); dust(c, 1480, GND, (tf - 3.1) / .5, r);
+        if (tf >= 3.2) { var h = J[1].hd; for (var k = 0; k < 3; k++) { var a = tf * 5 + k * 2.09; star(c, h[0] + Math.cos(a) * 56, h[1] - 48 + Math.sin(a) * 16, 13, C.accent); } }
+        sfx(c, { s: 'CLASH', x: 780, y: 300, rot: -5, col: 'ink', a: 1.8, b: 2.3 }, tf);
+        sfx(c, { s: 'KAPOW', x: 1120, y: 250, rot: 8, col: 'blue', a: 2.5, b: 2.95 }, tf);
+        if (tf >= 3.4) title(c, 'The End', 'Blue wins', tf >= 3.7);
+      } }
+  ];
+  var start = 0; SCENES.forEach(function (S) { S.f0 = start; S.n = Math.round(S.dur * FPS); start += S.n; });
+
+  /* ---------- draw one page ---------- */
+  var cv = document.getElementById('cv'), c = cv.getContext('2d');
+  function drawFrame(g) {
+    var S = SCENES[SCENES.length - 1];
+    for (var i = 0; i < SCENES.length; i++) if (g < SCENES[i].f0 + SCENES[i].n) { S = SCENES[i]; break; }
+    var tf = (g - S.f0) / FPS, fr = page(c, g), r = mb(fr.seed + 1), two = pair(c, S.B, S.R);
+    if (S.before) S.before(c, tf, fr, r, S);
+    two(tf - 1 / FPS, .1, fr.seed - 131);      // onion skin: the last page shows through the paper
+    var J = two(tf, 1, fr.seed);
+    S.draw(c, tf, fr, J, r, S);
+    pageEnd(c, fr);
+  }
+
+  /* ---------- player ---------- */
+  var frame = 0, playing = false, fps = FPS, last = 0, acc = 0;
+  var playBtn = document.getElementById('play'), scrub = document.getElementById('scrub'), count = document.getElementById('count');
+  function show(g) {
+    frame = (g + TOTAL) % TOTAL; drawFrame(frame);
+    scrub.value = frame + 1; count.textContent = (frame + 1) + ' / ' + TOTAL;
+  }
+  function setPlaying(p) { playing = p; playBtn.textContent = p ? '❚❚ Pause' : '▶ Play'; last = 0; acc = 0; if (p) requestAnimationFrame(tick); }
+  function tick(now) {
+    if (!playing) return;
+    if (last) { acc += (now - last) / 1000; var step = 1 / fps, moved = false; while (acc >= step) { acc -= step; frame++; moved = true; } if (moved) show(frame); }
+    last = now; requestAnimationFrame(tick);
+  }
+  playBtn.addEventListener('click', function () { setPlaying(!playing); });
+  document.getElementById('book').addEventListener('click', function () { setPlaying(!playing); });
+  document.getElementById('prev').addEventListener('click', function () { setPlaying(false); show(frame - 1); });
+  document.getElementById('next').addEventListener('click', function () { setPlaying(false); show(frame + 1); });
+  scrub.addEventListener('input', function () { setPlaying(false); show(+scrub.value - 1); });
+  document.getElementById('speed').addEventListener('change', function (e) { fps = +e.target.value; });
+  document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+    if (e.code === 'Space') { e.preventDefault(); setPlaying(!playing); }
+    else if (e.key === 'ArrowLeft') { setPlaying(false); show(frame - 1); }
+    else if (e.key === 'ArrowRight') { setPlaying(false); show(frame + 1); }
+  });
+  show(0);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { show(frame); });
+})();
+</script>
+</body>
+</html>
