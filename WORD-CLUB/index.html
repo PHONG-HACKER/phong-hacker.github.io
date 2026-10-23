@@ -62,6 +62,14 @@ h2{font:700 1.25rem/1.2 var(--f-display);margin:0;text-wrap:balance}
 .settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .field select,.field input[type=number]{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 10px;width:100%}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.level{border:2px solid var(--line);background:var(--bg);border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-width:0}
+.level:hover{border-color:var(--muted)}
+.level[aria-pressed="true"]{border-color:var(--honey);background:var(--honey-soft)}
+.level .bees{display:flex;gap:3px}
+.level b{font:700 1.15rem/1.1 var(--f-display)}
+.level small{color:var(--muted);font-size:.85rem}
+@media (max-width:520px){.levels{grid-template-columns:1fr}.level{flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:12px}}
 .seg{display:flex;background:var(--sunk);border-radius:10px;padding:3px}
 .seg button{flex:1;border:0;background:none;padding:7px 8px;border-radius:8px;font-weight:700;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px #0002}
@@ -148,7 +156,7 @@ h2{font:700 1.25rem/1.2 var(--f-display);margin:0;text-wrap:balance}
   <header class="top">
     <div class="brand">
       <svg width="40" height="44" viewBox="0 0 40 44" aria-hidden="true"><path d="M20 2 37 12v20L20 42 3 32V12z" fill="var(--honey)"/><path d="M12 19h16M11 25h18" stroke="var(--stage)" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="13" r="3" fill="var(--stage)"/></svg>
-      <div><h1>Word Club</h1><small>Two Bee list · 150 words</small></div>
+      <div><h1>Word Club</h1><small id="levelTag">Two Bee list · 150 words</small></div>
     </div>
     <nav class="tabs" role="tablist">
       <button role="tab" id="tab-play" aria-selected="true">Bee</button>
@@ -159,6 +167,10 @@ h2{font:700 1.25rem/1.2 var(--f-display);margin:0;text-wrap:balance}
   <!-- HOME -->
   <main id="home" class="stack">
     <section class="card stack">
+      <h2>Choose your bee</h2>
+      <div class="levels" id="levels"></div>
+    </section>
+    <section class="card stack">
       <div class="row" style="justify-content:space-between"><h2>Your progress</h2><button class="btn ghost" id="reset">Reset progress</button></div>
       <div class="meter" id="meter"></div>
       <div class="legend" id="legend"></div>
@@ -168,7 +180,7 @@ h2{font:700 1.25rem/1.2 var(--f-display);margin:0;text-wrap:balance}
       <div class="settings">
         <div class="field"><label class="label" for="pool">Words</label>
           <select id="pool">
-            <option value="all">All 150 words</option>
+            <option value="all" id="poolAll">All 150 words</option>
             <option value="notMastered">Not mastered yet</option>
             <option value="missed">Words I missed</option>
             <option value="new">Words I haven't tried</option>
@@ -249,7 +261,7 @@ h2{font:700 1.25rem/1.2 var(--f-display);margin:0;text-wrap:balance}
 
   <!-- STUDY -->
   <main id="study" class="stack" hidden>
-    <div class="row" style="justify-content:space-between"><h2>Study list</h2>
+    <div class="row" style="justify-content:space-between"><h2 id="studyTitle">Study list</h2>
       <div class="seg" id="studyFilter" style="min-width:280px"><button data-v="all" aria-pressed="true">All</button><button data-v="miss" aria-pressed="false">Missed</button><button data-v="new" aria-pressed="false">New</button><button data-v="ok" aria-pressed="false">Mastered</button></div></div>
     <input class="search" id="search" placeholder="Search the list" aria-label="Search words">
     <div class="list" id="list"></div>
@@ -258,7 +270,7 @@ h2{font:700 1.25rem/1.2 var(--f-display);margin:0;text-wrap:balance}
 
 <script>
 // [word, part of speech, language of origin, definition, sentence, pronunciation guide]
-const WORDS = [
+const TWO_BEE = [
 ["fascism","noun","Italian","a political system led by a dictator with total power, which forcibly silences opposition and puts the nation above individuals","Students learned how fascism spread across Europe in the 1930s.","FASH-iz-um"],
 ["lunar","adjective","Latin","of or relating to the moon","The astronauts collected rocks from the lunar surface.","LOO-ner"],
 ["Senegal","proper noun","Wolof, by way of French","a country on the west coast of Africa whose capital is Dakar","My pen pal lives in Dakar, the capital of Senegal.","sen-ih-GAWL"],
@@ -410,8 +422,314 @@ const WORDS = [
 ["adrenaline","noun","Latin","a hormone your body releases when you are scared or excited that makes your heart beat faster","Adrenaline rushed through me at the top of the roller coaster.","uh-DREN-uh-lin"],
 ["insurrection","noun","Latin","a violent uprising against an authority or government","The king's soldiers put down the insurrection.","in-suh-REK-shun"],
 ];
+const ONE_BEE = [
+["rod", "noun", "English", "a thin, straight stick or bar", "Grandpa held his fishing rod over the pond.", "ROD"],
+["rabbit", "noun", "English", "a small animal with long ears, soft fur, and a short fluffy tail", "The rabbit hopped into the garden to nibble the lettuce.", "RAB-it"],
+["bunny", "noun", "English", "a child's word for a rabbit", "The bunny wiggled its nose at us.", "BUN-ee"],
+["voice", "noun", "Latin, by way of French", "the sound a person makes when speaking or singing", "She has a beautiful singing voice.", "VOYS"],
+["lizard", "noun", "Latin, by way of French", "a reptile with a long body, four legs, and a long tail", "A lizard sunned itself on the warm rock.", "LIZ-erd"],
+["seal", "noun", "English", "a sea animal with flippers and thick fur that lives in cold waters", "The seal balanced a ball on its nose.", "SEEL"],
+["friend", "noun", "English", "a person you know well and like", "My best friend sits next to me at lunch.", "FREND"],
+["peach", "noun", "Latin, by way of French", "a round, juicy fruit with fuzzy skin and a large pit", "I ate a sweet, juicy peach.", "PEECH"],
+["indoors", "adverb", "English", "inside a building", "We played games indoors because it was raining.", "in-DORZ"],
+["flock", "noun", "English", "a group of birds or sheep", "A flock of geese flew south for the winter.", "FLOK"],
+["sparkle", "verb", "English", "to shine with small flashes of light", "The snow seemed to sparkle in the sunlight.", "SPAR-kul"],
+["soared", "verb", "Latin, by way of French", "flew high in the air", "The eagle soared above the mountains.", "SORD"],
+["foolish", "adjective", "Latin, by way of French", "not wise or sensible; silly", "It was foolish to leave my bike out in the rain.", "FOO-lish"],
+["illness", "noun", "Old Norse and English", "a sickness of the body or mind", "She missed school because of an illness.", "IL-nis"],
+["pennies", "noun", "English", "coins worth one cent each", "I saved all my pennies in a jar.", "PEN-eez"],
+["crunch", "verb", "English", "to crush food noisily with your teeth", "I love to crunch on fresh carrots.", "KRUNCH"],
+["sick", "adjective", "English", "not feeling well; ill", "I stayed home because I was sick.", "SIK"],
+["beans", "noun", "English", "seeds or pods of certain plants that are eaten as food", "We had rice and beans for dinner.", "BEENZ"],
+["shy", "adjective", "English", "nervous or uncomfortable around other people", "The shy puppy hid behind its mother.", "SHY"],
+["fine", "adjective", "Latin, by way of French", "good or acceptable; also very thin", "I feel fine after a good night's sleep.", "FYN"],
+["gentle", "adjective", "Latin, by way of French", "kind, soft, and careful", "Be gentle when you pet the kitten.", "JEN-tul"],
+["speak", "verb", "English", "to say words; to talk", "Please speak louder so everyone can hear.", "SPEEK"],
+["nurse", "noun", "Latin, by way of French", "a person trained to care for sick or injured people", "The nurse checked my temperature.", "NURS"],
+["fire", "noun", "English", "the heat, light, and flames given off when something burns", "We roasted marshmallows over the fire.", "FYR"],
+["body", "noun", "English", "the whole physical form of a person or animal", "Exercise keeps your body strong.", "BOD-ee"],
+["ginger", "noun", "Sanskrit, by way of Greek and Latin", "a spicy root used in cooking; also an orange-brown color", "Mom added ginger to the soup.", "JIN-jer"],
+["safety", "noun", "Latin, by way of French", "the state of being protected from danger", "Wear a helmet for safety when you ride.", "SAYF-tee"],
+["company", "noun", "Latin, by way of French", "a business; also guests, or being with others", "My aunt works for a company that makes toys.", "KUM-puh-nee"],
+["charming", "adjective", "Latin, by way of French", "very pleasant and delightful", "We stayed in a charming little inn.", "CHAR-ming"],
+["fear", "noun", "English", "the feeling of being afraid", "He has a fear of spiders.", "FEER"],
+["truck", "noun", "Greek, by way of Latin", "a large vehicle used to carry heavy loads", "The truck delivered sand to the playground.", "TRUK"],
+["breeze", "noun", "Spanish", "a light, gentle wind", "A cool breeze blew in from the ocean.", "BREEZ"],
+["whale", "noun", "English", "a very large sea mammal that breathes through a blowhole", "We saw a whale spray water into the air.", "WAYL"],
+["sound", "noun", "Latin, by way of French", "something you hear", "The sound of thunder scared the dog.", "SOWND"],
+["market", "noun", "Latin", "a place where people buy and sell goods", "We bought fresh tomatoes at the market.", "MAR-kit"],
+["half", "noun", "English", "one of two equal parts of something", "I gave my sister half of my sandwich.", "HAF"],
+["inside", "adverb", "English", "in or into a room or building", "Come inside before it gets dark.", "in-SYD"],
+["carve", "verb", "English", "to cut something into a shape", "We will carve a pumpkin for Halloween.", "KARV"],
+["cottage", "noun", "English, from French", "a small, cozy house, often in the country", "The cottage had a garden full of roses.", "KOT-ij"],
+["mouth", "noun", "English", "the opening in the face used for eating and speaking", "Don't talk with food in your mouth.", "MOWTH"],
+["sweater", "noun", "English", "a warm knitted top worn over a shirt", "I wore my red sweater on the chilly day.", "SWET-er"],
+["tangy", "adjective", "English", "having a sharp, strong taste", "The lemonade was sweet and tangy.", "TANG-ee"],
+["relax", "verb", "Latin", "to rest and become calm", "I like to relax in a warm bath.", "rih-LAKS"],
+["wind", "noun", "English", "moving air", "The wind blew my hat off my head.", "WIND"],
+["spray", "verb", "Dutch", "to scatter liquid in tiny drops", "Dad will spray the plants with water.", "SPRAY"],
+["cloak", "noun", "Latin, by way of French", "a loose cape worn over clothes", "The wizard wore a long purple cloak.", "KLOHK"],
+["swift", "adjective", "English", "moving very fast", "The swift runner won the race.", "SWIFT"],
+["grandfather", "noun", "English and French", "the father of your mother or father", "My grandfather tells the best stories.", "GRAND-fah-ther"],
+["humble", "adjective", "Latin, by way of French", "not proud; modest", "The champion stayed humble after winning.", "HUM-bul"],
+["guide", "noun", "French", "a person who shows others the way", "Our guide led us through the museum.", "GYD"],
+["down", "adverb", "English", "toward a lower place", "The ball rolled down the hill.", "DOWN"],
+["pearls", "noun", "Latin, by way of French", "smooth, shiny gems that form inside oysters", "Grandma wore a necklace of pearls.", "PURLZ"],
+["footprints", "noun", "English", "marks left by feet on the ground", "We followed the footprints in the snow.", "FOOT-prints"],
+["stars", "noun", "English", "bright points of light in the night sky", "We counted the stars from the backyard.", "STARZ"],
+["claws", "noun", "English", "sharp, curved nails on an animal's feet", "The cat scratched the post with its claws.", "KLAWZ"],
+["yellow", "adjective", "English", "having the color of lemons or the sun", "She wore a bright yellow raincoat.", "YEL-oh"],
+["even", "adjective", "English", "flat and smooth; also able to be divided by two with nothing left over", "Four is an even number.", "EE-vun"],
+["riddle", "noun", "English", "a puzzling question that takes clever thinking to answer", "Can you solve this riddle?", "RID-ul"],
+["alive", "adjective", "English", "living; not dead", "The plant is still alive even after the frost.", "uh-LYV"],
+["ran", "verb", "English", "moved quickly on foot; the past tense of run", "The dog ran after the ball.", "RAN"],
+["feed", "verb", "English", "to give food to", "It is my job to feed the fish.", "FEED"],
+["earth", "noun", "English", "the planet we live on; also soil", "Earth is the third planet from the sun.", "URTH"],
+["darkness", "noun", "English", "the state of having no light", "The owl hunted in the darkness.", "DARK-nis"],
+["lovely", "adjective", "English", "beautiful or very pleasant", "What a lovely day for a picnic!", "LUV-lee"],
+["stout", "adjective", "French", "thick, sturdy, or strong", "The old tree had a stout trunk.", "STOWT"],
+["silly", "adjective", "English", "funny and not serious", "My brother made a silly face.", "SIL-ee"],
+["always", "adverb", "English", "at all times; every time", "I always brush my teeth before bed.", "AWL-wayz"],
+["most", "adjective", "English", "the greatest amount", "She ate the most pancakes at breakfast.", "MOHST"],
+["cabin", "noun", "Latin, by way of French", "a small, simple house, often made of wood", "We stayed in a log cabin by the lake.", "KAB-in"],
+["sprout", "verb", "English", "to begin to grow", "The seeds will sprout in a few days.", "SPROWT"],
+["wrong", "adjective", "Old Norse", "not correct", "I got one answer wrong on the quiz.", "RAWNG"],
+["return", "verb", "Latin, by way of French", "to come or go back", "Please return your library books on time.", "rih-TURN"],
+["easy", "adjective", "Latin, by way of French", "not hard to do", "The first puzzle was easy.", "EE-zee"],
+["medium", "adjective", "Latin", "in the middle; not large or small", "I ordered a medium popcorn.", "MEE-dee-um"],
+["hospital", "noun", "Latin", "a place where sick or injured people get care", "The doctor works at the hospital.", "HOS-pih-tul"],
+["shift", "verb", "English", "to move or change position", "Shift your chair so I can sit down.", "SHIFT"],
+["grumpily", "adverb", "English", "in a cranky, bad-tempered way", "He grumpily got out of bed.", "GRUM-pih-lee"],
+["beasts", "noun", "Latin, by way of French", "large or wild animals", "The forest was full of wild beasts.", "BEESTS"],
+["tallest", "adjective", "English", "higher than all the others", "The giraffe is the tallest animal.", "TAWL-ist"],
+["frazzled", "adjective", "English", "tired and stressed", "Mom felt frazzled after the long day.", "FRAZ-uld"],
+["sloth", "noun", "English", "a slow-moving animal that hangs upside down in trees", "The sloth slept in the tree all day.", "SLAWTH"],
+["total", "noun", "Latin", "the whole amount", "The total for our lunch was ten dollars.", "TOH-tul"],
+["wings", "noun", "Old Norse", "body parts that birds, bats, and insects use to fly", "The butterfly opened its wings.", "WINGZ"],
+["shoot", "verb", "English", "to send something quickly toward a target; also a new plant stem", "Watch me shoot the ball into the hoop.", "SHOOT"],
+["hello", "interjection", "English", "a word used to greet someone", "Say hello to your grandma.", "heh-LOH"],
+["groan", "verb", "English", "to make a low, unhappy sound", "The students groan when they hear about homework.", "GROHN"],
+["mist", "noun", "English", "tiny drops of water floating in the air", "A morning mist covered the lake.", "MIST"],
+["shadows", "noun", "English", "dark shapes made when something blocks light", "Our shadows grew long in the evening sun.", "SHAD-ohz"],
+["steps", "noun", "English", "stairs; also movements of the feet in walking", "Climb the steps to the front door.", "STEPS"],
+["path", "noun", "English", "a narrow trail for walking", "We hiked along the path in the woods.", "PATH"],
+["remember", "verb", "Latin, by way of French", "to keep in your mind or bring back to mind", "Remember to bring your lunch.", "rih-MEM-ber"],
+["whistle", "verb", "English", "to make a high sound by blowing through your lips", "Can you whistle a song?", "WIS-ul"],
+["paper", "noun", "Greek, by way of Latin", "a thin material used for writing and printing", "Write your name at the top of the paper.", "PAY-per"],
+["rich", "adjective", "English", "having a lot of money; also full of flavor", "The rich king lived in a castle.", "RICH"],
+["mossy", "adjective", "English", "covered with moss", "We sat on a mossy log.", "MAW-see"],
+["crack", "noun", "English", "a thin line where something has broken", "There is a crack in the window.", "KRAK"],
+["shell", "noun", "English", "a hard outer covering of an animal, egg, or nut", "I found a pink shell on the beach.", "SHEL"],
+["come", "verb", "English", "to move toward someone or something", "Come here and look at this!", "KUM"],
+["distance", "noun", "Latin, by way of French", "the amount of space between two places", "The distance to school is one mile.", "DIS-tuns"],
+["late", "adjective", "English", "after the expected time", "I was late for the bus.", "LAYT"],
+["house", "noun", "English", "a building where people live", "Our house has a red door.", "HOWS"],
+["seventy", "noun", "English", "the number 70", "My grandma just turned seventy.", "SEV-un-tee"],
+["spiders", "noun", "English", "small creatures with eight legs that spin webs", "Spiders spun webs in the corner of the barn.", "SPY-derz"],
+["tusk", "noun", "English", "a very long, pointed tooth of an elephant, walrus, or boar", "The elephant's tusk was long and white.", "TUSK"],
+["truth", "noun", "English", "what is real and true", "Always tell the truth.", "TROOTH"],
+["afraid", "adjective", "Latin, by way of French", "feeling fear; scared", "My sister is afraid of the dark.", "uh-FRAYD"],
+["shine", "verb", "English", "to give off bright light", "The sun will shine all day.", "SHYN"],
+["smoothly", "adverb", "English", "without bumps or problems", "The plane landed smoothly.", "SMOOTH-lee"],
+["dirt", "noun", "Old Norse", "loose soil or earth", "The puppy dug a hole in the dirt.", "DURT"],
+["bamboo", "noun", "Malay, by way of Dutch", "a tall, fast-growing grass with hollow, woody stems", "Pandas love to eat bamboo.", "bam-BOO"],
+["hiking", "verb", "English", "taking a long walk in nature", "We went hiking in the mountains.", "HY-king"],
+["drink", "verb", "English", "to swallow a liquid", "Drink plenty of water on hot days.", "DRINK"],
+["parade", "noun", "Latin, by way of French", "a group of people marching in a public celebration", "We watched the parade on Main Street.", "puh-RAYD"],
+["library", "noun", "Latin", "a place with books people can read or borrow", "I borrowed three books from the library.", "LY-brair-ee"],
+["year", "noun", "English", "a period of twelve months", "My birthday comes once a year.", "YEER"],
+["shivering", "verb", "English", "shaking because of cold or fear", "We were shivering at the bus stop.", "SHIV-er-ing"],
+["pump", "noun", "German or Dutch", "a machine that moves air or liquid", "Use the pump to fill your bike tire.", "PUMP"],
+["still", "adjective", "English", "not moving", "Stay still while I take your picture.", "STIL"],
+["yarn", "noun", "English", "long strands of twisted fiber used for knitting", "The kitten played with a ball of yarn.", "YARN"],
+["result", "noun", "Latin", "something that happens because of something else", "The result of the race was a tie.", "rih-ZULT"],
+["winter", "noun", "English", "the coldest season of the year", "We build snowmen in winter.", "WIN-ter"],
+["hopped", "verb", "English", "jumped on one or both feet", "The frog hopped onto the lily pad.", "HOPT"],
+["dangle", "verb", "Scandinavian", "to hang loosely and swing", "My feet dangle when I sit on the tall chair.", "DANG-gul"],
+["mustard", "noun", "Latin, by way of French", "a yellow, tangy sauce made from seeds", "I like mustard on my hot dog.", "MUS-terd"],
+["apple", "noun", "English", "a round fruit with red, green, or yellow skin", "An apple a day keeps the doctor away.", "AP-ul"],
+["entire", "adjective", "Latin, by way of French", "whole; complete", "I read the entire book in one day.", "en-TYR"],
+["hurt", "verb", "French", "to cause pain or injury", "I hurt my knee when I fell.", "HURT"],
+["beware", "verb", "English", "to be careful of something dangerous", "Beware of the dog!", "bih-WAIR"],
+["money", "noun", "Latin, by way of French", "coins and bills used to buy things", "I saved my money to buy a new game.", "MUN-ee"],
+["sharp", "adjective", "English", "having a thin edge or point that can cut", "Be careful, the knife is sharp.", "SHARP"],
+["heart", "noun", "English", "the organ that pumps blood through the body", "Your heart beats faster when you run.", "HART"],
+["holiday", "noun", "English", "a special day of celebration or rest", "Thanksgiving is my favorite holiday.", "HOL-ih-day"],
+["barge", "noun", "Latin, by way of French", "a long, flat-bottomed boat used to carry goods", "The barge carried coal down the river.", "BARJ"],
+["pancake", "noun", "English", "a flat, round cake cooked in a pan", "I poured syrup on my pancake.", "PAN-kayk"],
+["cliffs", "noun", "English", "high, steep walls of rock", "Seagulls nested on the cliffs.", "KLIFS"],
+["frozen", "adjective", "English", "turned into ice; very cold", "We skated on the frozen pond.", "FROH-zun"],
+["good", "adjective", "English", "pleasing, helpful, or well done", "You did a good job on your project.", "GOOD"],
+["finish", "verb", "Latin, by way of French", "to come to the end of something", "Finish your homework before dinner.", "FIN-ish"],
+["lead", "verb", "English", "to guide or go in front of others", "The coach will lead the team onto the field.", "LEED"],
+["dive", "verb", "English", "to jump headfirst into water", "Watch me dive into the pool!", "DYV"],
+["morning", "noun", "English", "the early part of the day", "I eat breakfast every morning.", "MOR-ning"],
+["peer", "verb", "English", "to look closely, as if something is hard to see", "We peer through the window at the snow.", "PEER"],
+["source", "noun", "Latin, by way of French", "the place something comes from", "The sun is a source of energy.", "SORS"],
+["trouble", "noun", "Latin, by way of French", "a problem or difficulty", "The puppy got into trouble for chewing shoes.", "TRUB-ul"],
+["knit", "verb", "English", "to make cloth by looping yarn with long needles", "Grandma will knit me a scarf.", "NIT"],
+["chips", "noun", "English", "thin, crispy slices of fried potato", "We ate chips and salsa at the party.", "CHIPS"],
+["thirsty", "adjective", "English", "needing something to drink", "I was thirsty after soccer practice.", "THUR-stee"],
+["bush", "noun", "English", "a plant with many branches that is smaller than a tree", "A bird built a nest in the bush.", "BUSH"],
+["leg", "noun", "Old Norse", "the body part used for standing and walking", "I scraped my leg on the slide.", "LEG"],
+["narrow", "adjective", "English", "not wide", "The narrow bridge fit only one person at a time.", "NAIR-oh"],
+];
+const THREE_BEE = [
+["generosity", "noun", "Latin", "the quality of being kind and willing to give", "Her generosity helped the whole neighborhood.", "jen-uh-ROS-ih-tee"],
+["sauntered", "verb", "origin uncertain", "walked in a slow, relaxed way", "He sauntered into class as if he had all day.", "SAWN-terd"],
+["undulating", "adjective", "Latin", "moving or shaped like gentle waves", "We drove through undulating hills of wheat.", "UN-juh-lay-ting"],
+["auditory", "adjective", "Latin", "relating to hearing", "The auditory nerve carries sound signals to the brain.", "AW-dih-tor-ee"],
+["Gloucester", "proper noun", "English", "a city in England, and a fishing city in Massachusetts", "Fishing boats crowded the harbor in Gloucester.", "GLOS-ter"],
+["lactobacillus", "noun", "Latin", "a kind of helpful bacteria found in yogurt and in the digestive system", "Yogurt contains lactobacillus, which helps digestion.", "lak-toh-buh-SIL-us"],
+["apologetic", "adjective", "Greek", "showing that you are sorry", "He gave an apologetic smile after bumping into me.", "uh-pol-uh-JET-ik"],
+["stomatopods", "noun", "Greek", "mantis shrimp and related sea creatures with powerful striking claws", "Stomatopods can punch hard enough to crack shells.", "STOH-muh-tuh-podz"],
+["preconception", "noun", "Latin", "an idea formed before having real knowledge", "She had a preconception that math would be boring.", "pree-kun-SEP-shun"],
+["self-sufficient", "adjective", "English and Latin", "able to provide for yourself without help from others", "The farm family was almost completely self-sufficient.", "self-suh-FISH-unt"],
+["hypothesis", "noun", "Greek", "an idea that can be tested by an experiment", "Our hypothesis was that plants grow faster in sunlight.", "hy-POTH-ih-sis"],
+["embankment", "noun", "French and English", "a raised wall of earth or stone that holds back water or carries a road", "The train ran along the river embankment.", "em-BANK-munt"],
+["phantasmal", "adjective", "Greek", "ghostly or unreal, like a vision", "A phantasmal light floated over the swamp.", "fan-TAZ-mul"],
+["acolyte", "noun", "Greek, by way of Latin", "a helper in a religious service; also a devoted follower", "The acolyte lit the candles before the service.", "AK-uh-lyt"],
+["burnished", "adjective", "French", "polished until shiny", "The burnished copper pot gleamed on the stove.", "BUR-nisht"],
+["shar-pei", "noun", "Chinese", "a Chinese breed of dog with loose, wrinkly skin", "The shar-pei puppy was covered in wrinkles.", "shar-PAY"],
+["unconscious", "adjective", "Latin", "not awake or aware", "The boxer was knocked unconscious for a moment.", "un-KON-shus"],
+["frequency", "noun", "Latin", "how often something happens; also the number of waves per second", "The frequency of storms increases in summer.", "FREE-kwun-see"],
+["annelids", "noun", "Latin", "segmented worms, such as earthworms and leeches", "Earthworms are annelids that help keep soil healthy.", "AN-uh-lidz"],
+["diffidence", "noun", "Latin", "shyness caused by a lack of confidence", "His diffidence kept him from raising his hand.", "DIF-ih-duns"],
+["palazzo", "noun", "Italian", "a large, grand building, such as a palace, in Italy", "The tourists toured a beautiful palazzo in Venice.", "puh-LAHT-soh"],
+["eureka", "interjection", "Greek", "a cry of joy when you discover something", "\"Eureka!\" she shouted when she solved the puzzle.", "yoo-REE-kuh"],
+["leprosy", "noun", "Greek", "a long-lasting infectious disease that affects the skin and nerves", "Leprosy can now be cured with medicine.", "LEP-ruh-see"],
+["propeller", "noun", "Latin", "spinning blades that move a boat or an airplane", "The airplane's propeller began to spin.", "pruh-PEL-er"],
+["newt", "noun", "English", "a small salamander that lives both on land and in water", "We spotted a newt in the pond.", "NOOT"],
+["generator", "noun", "Latin", "a machine that makes electricity", "We used a generator when the power went out.", "JEN-uh-ray-ter"],
+["alleviate", "verb", "Latin", "to make pain or a problem less severe", "Ice can alleviate the swelling.", "uh-LEE-vee-ayt"],
+["lemmings", "noun", "Norwegian", "small Arctic rodents with short tails", "Lemmings live in burrows under the snow.", "LEM-ingz"],
+["arsonists", "noun", "Latin", "people who set fires on purpose to cause damage", "The police caught the arsonists who burned the barn.", "AR-suh-nists"],
+["lapels", "noun", "English", "the folded flaps on the front of a jacket", "He pinned a flower to one of his lapels.", "luh-PELZ"],
+["trenchant", "adjective", "French", "sharp and clear in thought or speech", "The critic wrote a trenchant review.", "TREN-chunt"],
+["mortar", "noun", "Latin, by way of French", "a paste used to hold bricks together; also a bowl for grinding", "The mason spread mortar between the bricks.", "MOR-ter"],
+["Pennsylvania", "proper noun", "Latin, named for William Penn", "a state in the northeastern United States", "The Liberty Bell is in Pennsylvania.", "pen-sul-VAYN-yuh"],
+["Tripoli", "proper noun", "Greek", "the capital city of Libya", "Tripoli sits on the coast of the Mediterranean Sea.", "TRIP-uh-lee"],
+["chickadee", "noun", "English, imitating its call", "a small songbird with a black cap and bib", "A chickadee landed on the bird feeder.", "CHIK-uh-dee"],
+["Delaware", "proper noun", "English, named for Lord De La Warr", "a small state on the east coast of the United States", "Delaware was the first state to approve the Constitution.", "DEL-uh-wair"],
+["persistent", "adjective", "Latin", "continuing firmly in spite of difficulty", "The persistent puppy kept begging for treats.", "per-SIS-tunt"],
+["arachnid", "noun", "Greek", "an animal with eight legs, such as a spider or scorpion", "A scorpion is an arachnid, not an insect.", "uh-RAK-nid"],
+["protectorate", "noun", "Latin", "a country controlled and protected by a stronger country", "The island was once a British protectorate.", "pruh-TEK-ter-it"],
+["despondent", "adjective", "Latin", "very sad and without hope", "He was despondent after losing his dog.", "dih-SPON-dunt"],
+["sentinels", "noun", "Italian, by way of French", "guards who keep watch", "Sentinels stood at the castle gate.", "SEN-tih-nulz"],
+["enigmatic", "adjective", "Greek", "mysterious and hard to understand", "The Mona Lisa has an enigmatic smile.", "en-ig-MAT-ik"],
+["comprehensible", "adjective", "Latin", "able to be understood", "The teacher made the hard lesson comprehensible.", "kom-prih-HEN-suh-bul"],
+["hemisphere", "noun", "Greek", "half of a sphere, especially half of the Earth", "Australia is in the Southern Hemisphere.", "HEM-ih-sfeer"],
+["frankincense", "noun", "French", "a sweet-smelling tree resin burned as incense", "The wise men brought gold, frankincense, and myrrh.", "FRANK-in-sens"],
+["yakuza", "noun", "Japanese", "organized crime gangs in Japan", "The movie was about a detective who fought the yakuza.", "yah-KOO-zuh"],
+["consulate", "noun", "Latin", "an office in a foreign city where a country's officials help its citizens", "We went to the consulate to renew a passport.", "KON-suh-lit"],
+["reluctance", "noun", "Latin", "unwillingness to do something", "She agreed to sing, but with reluctance.", "rih-LUK-tuns"],
+["Eritrea", "proper noun", "Italian, from Greek", "a country in northeast Africa on the Red Sea", "The capital of Eritrea is Asmara.", "air-ih-TREE-uh"],
+["curriculum", "noun", "Latin", "the subjects taught in a school or course", "Coding is now part of our school's curriculum.", "kuh-RIK-yuh-lum"],
+["bogong moth", "noun", "an Australian Aboriginal language, and English", "a brown Australian moth that migrates long distances to cool mountain caves", "Each spring the bogong moth flies hundreds of miles to the mountains.", "BOH-gong MAWTH"],
+["prospective", "adjective", "Latin", "likely to happen or to become something in the future", "Prospective students toured the campus.", "pruh-SPEK-tiv"],
+["diplomatically", "adverb", "Greek, by way of French", "in a tactful, polite way", "She diplomatically settled the argument.", "dip-luh-MAT-ik-lee"],
+["decisively", "adverb", "Latin", "in a quick and firm way", "The captain acted decisively during the storm.", "dih-SY-siv-lee"],
+["increments", "noun", "Latin", "small amounts by which something increases", "The ruler is marked in increments of one inch.", "IN-kruh-munts"],
+["affinities", "noun", "Latin, by way of French", "natural likings or connections", "The twins share affinities for music and art.", "uh-FIN-ih-teez"],
+["inanimate", "adjective", "Latin", "not alive", "A rock is an inanimate object.", "in-AN-ih-mit"],
+["irrelevant", "adjective", "Latin", "not connected to what is being discussed", "His comment was irrelevant to the lesson.", "ih-REL-uh-vunt"],
+["finesse", "noun", "French", "great skill and delicacy", "The chef decorated the cake with finesse.", "fih-NES"],
+["electrolytes", "noun", "Greek", "minerals in the body, like sodium and potassium, that carry electric charges", "Sports drinks replace electrolytes lost in sweat.", "ih-LEK-truh-lyts"],
+["echolocation", "noun", "Greek and Latin", "finding objects by sending out sounds and listening for the echoes", "Bats use echolocation to catch insects at night.", "ek-oh-loh-KAY-shun"],
+["mayonnaise", "noun", "French", "a thick, creamy sauce made from egg yolks and oil", "I spread mayonnaise on my sandwich.", "MAY-uh-nayz"],
+["cuisine", "noun", "French", "a style of cooking from a certain place", "We love Thai cuisine.", "kwih-ZEEN"],
+["sensilla", "noun", "Latin", "tiny sense organs, often hairs, on insects and other small animals", "An ant's antennae are covered with sensilla.", "sen-SIL-uh"],
+["irascibility", "noun", "Latin", "the tendency to get angry easily", "The old man's irascibility scared the neighborhood kids.", "ih-ras-uh-BIL-ih-tee"],
+["Presbyterian", "adjective", "Greek, by way of Latin", "relating to a Protestant church governed by elected elders", "They were married in a Presbyterian church.", "prez-bih-TEER-ee-un"],
+["mewling", "verb", "English", "crying weakly, like a baby or a kitten", "The mewling kittens waited for their mother.", "MYOO-ling"],
+["Krio", "proper noun", "an English-based Creole", "the most widely spoken language of Sierra Leone", "Many people in Freetown speak Krio.", "KREE-oh"],
+["bioluminescence", "noun", "Greek and Latin", "light made by living things, such as fireflies", "The waves glowed with bioluminescence at night.", "by-oh-loo-mih-NES-uns"],
+["salicylic acid", "noun", "Latin and French", "a chemical used in medicines and skin treatments", "The cream contains salicylic acid to treat acne.", "sal-ih-SIL-ik AS-id"],
+["brazier", "noun", "French", "a metal container for holding burning coals", "The guards warmed their hands over a brazier.", "BRAY-zher"],
+["blithely", "adverb", "English", "in a cheerful, carefree way", "She blithely skipped down the street.", "BLYTH-lee"],
+["trichobothria", "noun", "Greek", "long, fine hairs on spiders that sense movements in the air", "Spiders use trichobothria to feel the wingbeats of a fly.", "trik-oh-BOTH-ree-uh"],
+["glycerin", "noun", "Greek, by way of French", "a thick, sweet, clear liquid used in soaps and lotions", "The soap was made with glycerin.", "GLIS-er-in"],
+["perpendicular", "adjective", "Latin", "meeting another line at a right angle", "The two streets are perpendicular to each other.", "pur-pun-DIK-yuh-ler"],
+["torrential", "adjective", "Latin", "falling or flowing fast and heavily", "Torrential rain flooded the streets.", "taw-REN-shul"],
+["dominion", "noun", "Latin", "control or power over something; also a ruled territory", "The king had dominion over the land.", "duh-MIN-yun"],
+["inaugurate", "verb", "Latin", "to formally begin something, or to swear someone into office", "The country will inaugurate a new president in January.", "in-AW-gyuh-rayt"],
+["panoramic", "adjective", "Greek", "showing a wide, complete view", "The tower offers a panoramic view of the city.", "pan-uh-RAM-ik"],
+["solenodon", "noun", "Greek", "a rare, shrewlike mammal from Cuba and Hispaniola with a venomous bite", "The solenodon is one of the few mammals with venom.", "soh-LEN-uh-don"],
+["procession", "noun", "Latin", "a line of people or vehicles moving forward in an orderly way", "The wedding procession walked down the aisle.", "pruh-SESH-un"],
+["forsythia", "noun", "New Latin, named for William Forsyth", "a shrub covered in bright yellow flowers in early spring", "The forsythia bloomed bright yellow in March.", "for-SITH-ee-uh"],
+["Sierra Leone", "proper noun", "Portuguese", "a country on the west coast of Africa", "Freetown is the capital of Sierra Leone.", "see-AIR-uh lee-OHN"],
+["tenuous", "adjective", "Latin", "very weak or slight", "He had only a tenuous grip on the rope.", "TEN-yoo-us"],
+["unrelenting", "adjective", "English and French", "never stopping or easing", "The unrelenting heat lasted all week.", "un-rih-LEN-ting"],
+["reassurance", "noun", "Latin, by way of French", "words or actions that remove doubts and fears", "She gave her little brother a hug for reassurance.", "ree-uh-SHUR-uns"],
+["embodiment", "noun", "English", "a perfect example of a quality or idea", "The firefighter was the embodiment of courage.", "em-BOD-ee-munt"],
+["thrummed", "verb", "English", "made a steady humming or strumming sound", "Rain thrummed on the tin roof.", "THRUMD"],
+["cul-de-sac", "noun", "French", "a street that is closed at one end", "We live on a quiet cul-de-sac.", "KUL-duh-sak"],
+["odorant", "noun", "Latin", "a substance that gives off a smell", "Gas companies add an odorant so leaks can be smelled.", "OH-der-unt"],
+["vibrometer", "noun", "Latin and Greek", "an instrument that measures vibrations", "The engineer used a vibrometer to test the bridge.", "vy-BROM-ih-ter"],
+["conflagration", "noun", "Latin", "a large, destructive fire", "The conflagration destroyed half the forest.", "kon-fluh-GRAY-shun"],
+["eponymous", "adjective", "Greek", "named after a particular person", "The band released its eponymous first album.", "ih-PON-uh-mus"],
+["innocuous", "adjective", "Latin", "harmless; not likely to offend", "The snake looked scary but was innocuous.", "ih-NOK-yoo-us"],
+["asymmetric", "adjective", "Greek", "not the same on both sides", "The artist painted an asymmetric design.", "ay-sih-MET-rik"],
+["wallowing", "verb", "English", "rolling around in mud or water; also giving in to a feeling", "The pigs were wallowing in the mud.", "WOL-oh-ing"],
+["modish", "adjective", "Latin, by way of French", "fashionable and stylish", "She wore a modish hat to the party.", "MOH-dish"],
+["arugula", "noun", "Italian", "a leafy green with a peppery taste, used in salads", "The salad was topped with arugula.", "uh-ROO-guh-luh"],
+["censers", "noun", "French", "containers for burning incense", "Smoke rose from the censers during the ceremony.", "SEN-serz"],
+["Aphrodite", "proper noun", "Greek", "the Greek goddess of love and beauty", "Aphrodite was said to have risen from the sea.", "af-ruh-DY-tee"],
+["butane", "noun", "Latin", "a gas used as fuel in lighters and camp stoves", "The camping stove runs on butane.", "BYOO-tayn"],
+["juniper", "noun", "Latin", "an evergreen shrub with berry-like cones", "The juniper bush smelled fresh and piney.", "JOO-nih-per"],
+["vibrissae", "noun", "Latin", "stiff whiskers on an animal's face, used for sensing", "A cat's vibrissae help it feel its way in the dark.", "vy-BRIS-ee"],
+["saxophone", "noun", "French and Greek, named for Adolphe Sax", "a curved brass instrument played with a reed", "He played a jazz tune on his saxophone.", "SAK-suh-fohn"],
+["Amharic", "proper noun", "Amharic", "the official working language of Ethiopia", "My friend's grandmother speaks Amharic.", "am-HAIR-ik"],
+["legation", "noun", "Latin", "a diplomatic office in a foreign country, ranking below an embassy", "The diplomats met at the legation.", "lih-GAY-shun"],
+["éclair", "noun", "French", "a long pastry filled with cream and topped with chocolate", "I bought a chocolate éclair at the bakery.", "ay-KLAIR"],
+["appetizing", "adjective", "Latin, by way of French", "looking or smelling good to eat", "The fresh bread smelled appetizing.", "AP-ih-ty-zing"],
+["chitinous", "adjective", "Greek, by way of French", "made of chitin, the tough material in insect shells", "Beetles have a chitinous outer shell.", "KY-tih-nus"],
+["psychological", "adjective", "Greek", "relating to the mind and behavior", "Stress can have psychological effects.", "sy-kuh-LOJ-ih-kul"],
+["doberman", "noun", "German, named for Louis Dobermann", "a large, sleek dog breed often used as a guard dog", "The doberman guarded the gate.", "DOH-ber-mun"],
+["conspicuous", "adjective", "Latin", "easy to see or notice", "His bright orange hat was conspicuous in the crowd.", "kun-SPIK-yoo-us"],
+["alabaster", "noun", "Greek, by way of Latin", "a smooth white stone used for carving", "The statue was carved from alabaster.", "AL-uh-bas-ter"],
+["quiche", "noun", "French", "a baked pie filled with eggs, cheese, and vegetables", "We had spinach quiche for brunch.", "KEESH"],
+["approximation", "noun", "Latin", "a value or idea that is close but not exact", "Three is an approximation of pi.", "uh-prok-sih-MAY-shun"],
+["assemblage", "noun", "French", "a collection of people or things", "An assemblage of birds gathered at the lake.", "uh-SEM-blij"],
+["credenza", "noun", "Italian", "a long, low cabinet used for storage", "The TV sits on a wooden credenza.", "krih-DEN-zuh"],
+["porpoises", "noun", "Latin, by way of French", "small whales related to dolphins, with rounded snouts", "Porpoises swam alongside our boat.", "POR-puh-siz"],
+["kerosene", "noun", "Greek", "an oil burned as fuel in lamps and heaters", "The cabin was lit by a kerosene lamp.", "KAIR-uh-seen"],
+["crocheted", "verb", "French", "made with yarn and a hooked needle", "Grandma crocheted a blanket for the baby.", "kroh-SHAYD"],
+["subscription", "noun", "Latin", "an agreement to pay regularly to receive something", "I have a subscription to a science magazine.", "sub-SKRIP-shun"],
+["Cappadocia", "proper noun", "Greek, from Persian", "a region in central Turkey known for its rock towers and hot-air balloons", "Hot-air balloons floated over Cappadocia at sunrise.", "kap-uh-DOH-shuh"],
+["Bildungsroman", "noun", "German", "a novel about a young person growing up", "The book is a Bildungsroman about a girl in Paris.", "BIL-doongz-roh-mahn"],
+["foliage", "noun", "Latin, by way of French", "the leaves of plants or trees", "The autumn foliage turned red and gold.", "FOH-lee-ij"],
+["neurological", "adjective", "Greek", "relating to the nerves and the brain", "The doctor ran neurological tests.", "noor-uh-LOJ-ih-kul"],
+["a capella", "adverb", "Italian", "sung without musical instruments", "The choir sang a capella.", "ah kuh-PEL-uh"],
+["imperial", "adjective", "Latin", "relating to an empire or an emperor", "The imperial palace was guarded by soldiers.", "im-PEER-ee-ul"],
+["thermotaxis", "noun", "Greek", "movement of a living thing toward or away from heat", "Some worms show thermotaxis by crawling toward warmth.", "thur-moh-TAK-sis"],
+["pulmonary", "adjective", "Latin", "relating to the lungs", "The pulmonary artery carries blood to the lungs.", "PUL-muh-nair-ee"],
+["ampulla", "noun", "Latin", "a small flask; also a swollen part of a tube in the body", "The priest poured oil from an ampulla.", "am-PUL-uh"],
+["cerulean", "adjective", "Latin", "deep sky blue", "The lake was a beautiful cerulean color.", "suh-ROO-lee-un"],
+["euphemism", "noun", "Greek", "a gentle word used in place of a harsh or unpleasant one", "\"Passed away\" is a euphemism for \"died.\"", "YOO-fuh-miz-um"],
+["prosciutto", "noun", "Italian", "thinly sliced, dry-cured Italian ham", "The pizza was topped with prosciutto.", "proh-SHOO-toh"],
+["authority", "noun", "Latin", "the power to give orders or make decisions", "The principal has the authority to close the school.", "uh-THOR-ih-tee"],
+["influenza", "noun", "Italian", "a contagious illness that causes fever and aches; the flu", "Many students were absent with influenza.", "in-floo-EN-zuh"],
+["gauntlets", "noun", "French", "heavy gloves, especially ones worn with armor", "The knight pulled on his gauntlets.", "GAWNT-lits"],
+["calibrate", "verb", "Arabic, by way of French", "to adjust an instrument so it measures correctly", "We had to calibrate the scale before weighing.", "KAL-ih-brayt"],
+["phenomenon", "noun", "Greek", "a fact or event that can be observed", "A rainbow is a natural phenomenon.", "fih-NOM-uh-non"],
+["settee", "noun", "English", "a small sofa", "Grandma sat on the settee by the window.", "seh-TEE"],
+["canter", "verb", "English, from Canterbury", "to run at a speed between a trot and a gallop", "The horse began to canter across the field.", "KAN-ter"],
+["ototoxic", "adjective", "Greek", "harmful to the ears or to hearing", "Some medicines can be ototoxic.", "oh-tuh-TOK-sik"],
+["cataract", "noun", "Greek", "a clouding of the lens of the eye; also a large waterfall", "Grandpa had surgery to remove a cataract.", "KAT-uh-rakt"],
+["seminal", "adjective", "Latin", "strongly influencing later work", "The scientist wrote a seminal paper on DNA.", "SEM-ih-nul"],
+["spes phthisica", "noun", "Latin", "a hopeful, cheerful mood once thought to affect people with tuberculosis", "Old novels describe spes phthisica in sick characters.", "SPAYS TIZ-ih-kuh"],
+["sputum", "noun", "Latin", "mucus coughed up from the lungs", "The doctor tested a sample of sputum.", "SPYOO-tum"],
+["quizzically", "adverb", "English", "in a puzzled, questioning way", "The dog tilted its head quizzically.", "KWIZ-ih-kul-ee"],
+["endothermy", "noun", "Greek", "the ability of an animal to make its own body heat", "Endothermy lets birds stay active in the cold.", "EN-doh-thur-mee"],
+["pathologically", "adverb", "Greek", "in an extreme or abnormal way, as if caused by illness", "He was pathologically afraid of germs.", "path-uh-LOJ-ik-lee"],
+["Addis Ababa", "proper noun", "Amharic", "the capital city of Ethiopia", "Addis Ababa means \"new flower\" in Amharic.", "AD-is AB-uh-buh"],
+["mysticetes", "noun", "Greek", "baleen whales, such as blue whales and humpback whales", "Mysticetes filter tiny food out of the water.", "MIS-tuh-seets"],
+];
+const LEVELS = {1:{name:"One Bee", sub:"Starter words", words:ONE_BEE}, 2:{name:"Two Bee", sub:"Middle words", words:TWO_BEE}, 3:{name:"Three Bee", sub:"Hardest words", words:THREE_BEE}};
+let WORDS = TWO_BEE;
 // How the speech voice should say a few tricky words
-const SAY_AS = {"piñata":"pin yah tuh","duende":"dwen day","romerillo":"romeh reeyo","Aeolus":"Eeolus","dachshund":"docks hoond","schnauzer":"shnowzer"};
+const SAY_AS = {"lead":"leed","Gloucester":"Gloster","Bildungsroman":"Bildungs roman","spes phthisica":"spays tizzicka","mysticetes":"mistuh seets","trichobothria":"trick oh bothria","Krio":"Kree oh","vibrissae":"vy brissy","shar-pei":"shar pay","Cappadocia":"Cappa doe sha","a capella":"ah capella","piñata":"pin yah tuh","duende":"dwen day","romerillo":"romeh reeyo","Aeolus":"Eeolus","dachshund":"docks hoond","schnauzer":"shnowzer"};
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -467,7 +785,7 @@ function speak(text, r){
 }
 // The trailing pause keeps Chrome from clipping a short word's last sound ("kelp" heard as "kell")
 const sayWord = (w, r) => speak((SAY_AS[w] || w) + ". . ", r);
-const spelledOut = w => norm(w).split("").map(c=>c.toUpperCase()).join(", ");
+const spelledOut = w => norm(w).split("").map(c=>c===" "?"space":c==="-"?"hyphen":c.toUpperCase()).join(", ");
 
 /* ---------- sounds: bee bell for a miss, chime for correct ---------- */
 let actx;
@@ -505,6 +823,12 @@ const sounds = (t, w) => { const a=norm(t), b=norm(w); return lev(a,b) <= Math.m
 function parse(raw, target){
   const text = raw.replace(/double[\s-]+(u|you|yu)\b/gi," w ");
   const toks = text.split(/[\s\-.,!?;:"]+/).filter(Boolean);
+  const tt = norm(target).split(/[\s-]+/).filter(Boolean), n = tt.length;
+  if(n>1){ // "a capella", "cul-de-sac": merge the spoken phrase into one word before and after the spelling
+    const joined = a => a.map(norm).join(""), whole = tt.join("");
+    if(toks.length>=n && sounds(joined(toks.slice(0,n)), whole)) toks.splice(0,n,whole);
+    if(toks.length>n && sounds(joined(toks.slice(-n)), whole)) toks.splice(toks.length-n,n,whole);
+  }
   const items = toks.map(t=>{
     const lc = norm(t).replace(/'/g,"");
     const L = LETTERS[lc] || (/^[a-z]$/.test(lc) ? lc : null);
@@ -541,10 +865,23 @@ let session = null;      // {queue, pos, correct, attempted, streak, best, sudde
 let cur = null;          // current word entry
 let phase = "idle";      // idle | rec | result
 let rec = null, finalText = "", interimText = "", autoTimer = null, lastAttempt = null;
-const prefs = Object.assign({order:"shuffle", mode: SR ? "voice":"type", rate:.85, sudden:false, pool:"all", showLetters:true}, store.prefs);
+const prefs = Object.assign({order:"shuffle", mode: SR ? "voice":"type", rate:.85, sudden:false, pool:"all", showLetters:true, level:2}, store.prefs);
+WORDS = (LEVELS[prefs.level]||LEVELS[2]).words;
+const HEX = `<svg width="18" height="20" viewBox="0 0 40 44" aria-hidden="true"><path d="M20 2 37 12v20L20 42 3 32V12z" fill="var(--honey)"/><path d="M12 19h16M11 25h18" stroke="var(--stage)" stroke-width="4" stroke-linecap="round"/></svg>`;
+function setLevel(v){
+  prefs.level = v; WORDS = LEVELS[v].words; savePrefs(); renderHome();
+}
 
 /* ---------- home ---------- */
 function renderHome(){
+  const L = LEVELS[prefs.level];
+  $("#levelTag").textContent = `${L.name} list · ${WORDS.length} words`;
+  $("#poolAll").textContent = `All ${WORDS.length} words`;
+  $("#startAt").max = WORDS.length;
+  $("#levels").innerHTML = [1,2,3].map(v=>{
+    const lv=LEVELS[v], ok=lv.words.filter(w=>status(w[0])==="ok").length;
+    return `<button class="level" data-v="${v}" aria-pressed="${v===prefs.level}"><span class="bees">${HEX.repeat(v)}</span><b>${lv.name}</b><small>${lv.sub} · ${ok}/${lv.words.length} mastered</small></button>`;
+  }).join("");
   const counts = {ok:0,miss:0,new:0};
   WORDS.forEach(w=>counts[status(w[0])]++);
   const pct = n => (n/WORDS.length*100)+"%";
@@ -564,11 +901,12 @@ function poolIdx(){
     const st=status(WORDS[i][0]);
     return prefs.pool==="all" || (prefs.pool==="new"&&st==="new") || (prefs.pool==="missed"&&st==="miss") || (prefs.pool==="notMastered"&&st!=="ok");
   });
-  if(prefs.order==="list"){ const from = Math.max(1, Math.min(150, +$("#startAt").value||1))-1; idx = idx.filter(i=>i>=from); }
+  if(prefs.order==="list"){ const from = Math.max(1, Math.min(WORDS.length, +$("#startAt").value||1))-1; idx = idx.filter(i=>i>=from); }
   return idx;
 }
 function updatePoolCount(){ const n=poolIdx().length; $("#poolCount").textContent = n ? `${n} word${n===1?"":"s"} in this round` : "No words match. Pick a different set."; $("#start").disabled = !n; }
 const savePrefs = ()=>{ store.prefs = prefs; save(); };
+$("#levels").onclick = e=>{ const b=e.target.closest(".level"); if(b) setLevel(+b.dataset.v); };
 $("#order").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; prefs.order=b.dataset.v; savePrefs(); renderHome(); };
 $("#mode").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; if(b.dataset.v==="voice" && !SR) return; prefs.mode=b.dataset.v; savePrefs(); setSeg("#mode",prefs.mode); };
 $("#pool").onchange = e=>{ prefs.pool=e.target.value; savePrefs(); updatePoolCount(); };
@@ -745,7 +1083,7 @@ function judge(letters, p){
 function showResult(letters, ok, p){
   $("#answerZone").hidden = true;
   const z=$("#resultZone"); z.hidden=false; z.className="result "+(ok?"good":"bad");
-  const target = norm(cur.w);
+  const target = norm(cur.w).replace(/[^a-z]/g,"");
   const marks = letters.split("").map((c,i)=>c===target[i]?"good":"bad");
   const last = session.pos >= session.queue.length-1 || (!ok && session.sudden);
   const reminder = p && prefs.mode==="voice" && (!p.lead.length || !p.trail.length) ? `<div class="sub">Tip: say the word before and after you spell it, just like on stage.</div>` : "";
@@ -839,6 +1177,7 @@ function wireList(root){
   });
 }
 function renderStudy(){
+  $("#studyTitle").textContent = `Study list · ${LEVELS[prefs.level].name}`;
   const q = norm($("#search").value.trim());
   const idx = WORDS.map((w,i)=>i).filter(i=>(!q||norm(WORDS[i][0]).includes(q)) && (studyFilter==="all"||status(WORDS[i][0])===studyFilter));
   $("#list").innerHTML = idx.length ? idx.map(itemHTML).join("") : `<div style="padding:20px;color:var(--muted)">No words here yet.</div>`;
