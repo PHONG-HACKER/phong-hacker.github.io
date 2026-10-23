@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Word Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=Zilla+Slab:wght@600;700&display=swap">
+<style>
+/* Layout: one centered stage column; pronouncer card on top, speller's mic at the bottom, like the bee stage */
+:root{
+  --bg:#f3f5fb; --surface:#ffffff; --sunk:#e9edf8; --ink:#17214d; --muted:#596389; --line:#d9dff0;
+  --honey:#f2a516; --honey-soft:#fdeccb; --honey-ink:#6d4500; --stage:#1d2b6b; --on-stage:#ffffff;
+  --good:#1d8657; --good-soft:#dcf3e8; --bad:#c3354a; --bad-soft:#fbe1e5;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-tile:"Zilla Slab", Rockwell, Georgia, serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1330; --surface:#151d41; --sunk:#1b2550; --ink:#eef0fb; --muted:#a2aad0; --line:#2a3566;
+  --honey:#ffbd38; --honey-soft:#3b3014; --honey-ink:#ffd889; --stage:#26378a; --on-stage:#ffffff;
+  --good:#3cc489; --good-soft:#123a2a; --bad:#ff6c80; --bad-soft:#41182124; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1330; --surface:#151d41; --sunk:#1b2550; --ink:#eef0fb; --muted:#a2aad0; --line:#2a3566;
+  --honey:#ffbd38; --honey-soft:#3b3014; --honey-ink:#ffd889; --stage:#26378a; --on-stage:#ffffff;
+  --good:#3cc489; --good-soft:#123a2a; --bad:#ff6c80; --bad-soft:#41182124; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--honey);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px 14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{font:800 1.6rem/1 var(--f-display);margin:0;letter-spacing:-.02em}
+.brand small{display:block;font:600 .72rem/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.tabs{display:flex;background:var(--sunk);border-radius:999px;padding:4px;gap:2px}
+.tabs button{border:0;background:none;padding:7px 16px;border-radius:999px;font-weight:700;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #0002}
+h2{font:700 1.25rem/1.2 var(--f-display);margin:0;text-wrap:balance}
+.label{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:700}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--stage);border-color:var(--stage);color:var(--on-stage)}
+.btn.honey{background:var(--honey);border-color:var(--honey);color:#2a1b00}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:default}
+
+/* home */
+.meter{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--sunk)}
+.meter i{display:block;height:100%}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+.legend b{color:var(--ink);font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field select,.field input[type=number]{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 10px;width:100%}
+.seg{display:flex;background:var(--sunk);border-radius:10px;padding:3px}
+.seg button{flex:1;border:0;background:none;padding:7px 8px;border-radius:8px;font-weight:700;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px #0002}
+.check{display:flex;gap:10px;align-items:flex-start}
+.check input{width:20px;height:20px;accent-color:var(--stage);margin-top:2px}
+.how ol{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.notice{border-radius:10px;padding:10px 14px;background:var(--honey-soft);color:var(--honey-ink);font-size:.92rem}
+
+/* round */
+.roundbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.placard{background:#fff;color:#111;border:2px solid #111;border-radius:6px;padding:4px 12px 2px;font:700 1.5rem/1.1 var(--f-tile);text-align:center;min-width:72px;position:relative;box-shadow:0 2px 0 #0003}
+.placard::before{content:"";position:absolute;left:50%;top:-12px;width:28px;height:12px;border:2px solid var(--muted);border-bottom:0;border-radius:14px 14px 0 0;transform:translateX(-50%)}
+.placard span{display:block;font:700 .55rem/1 var(--f-body);letter-spacing:.14em;color:#555}
+.roundbar .meta{flex:1;min-width:160px}
+.roundbar .meta b{font-variant-numeric:tabular-nums}
+.pronouncer{background:var(--stage);color:var(--on-stage);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px}
+.pronouncer .label{color:#c8d0ff}
+.hear{display:flex;align-items:center;gap:14px}
+.hear button.big{width:64px;height:64px;border-radius:50%;border:0;background:var(--honey);color:#2a1b00;display:grid;place-items:center;flex:none}
+.hear .h{font:700 1.35rem/1.2 var(--f-display)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:1px solid #ffffff40;background:#ffffff14;color:#fff;border-radius:999px;padding:7px 13px;font-weight:700;font-size:.92rem}
+.chips button:hover{background:#ffffff26}
+.chips button.on{background:#fff;color:var(--stage)}
+.info{background:#ffffff14;border-radius:10px;padding:12px 14px;min-height:48px}
+.info .k{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c8d0ff}
+.info p{margin:4px 0 0;font-size:1.05rem}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface);color:var(--muted);font-size:.88rem;min-width:0}
+.step b{display:block;font:700 .95rem/1.2 var(--f-display);color:var(--ink)}
+.step.active{border-color:var(--honey);background:var(--honey-soft);color:var(--honey-ink)}
+.step.done{border-color:var(--good);background:var(--good-soft);color:var(--good)}
+.tiles{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:56px;align-items:center}
+.tile{width:44px;height:52px;border-radius:8px;background:var(--surface);border:2px solid var(--line);border-bottom-width:4px;display:grid;place-items:center;font:700 1.6rem/1 var(--f-tile);text-transform:uppercase;animation:pop .18s ease-out}
+.tile.good{border-color:var(--good);background:var(--good-soft);color:var(--good)}
+.tile.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.tile.ghost{border-style:dashed;color:var(--muted);animation:none}
+@keyframes pop{from{transform:scale(.6);opacity:.2}to{transform:none;opacity:1}}
+.heard{text-align:center;color:var(--muted);font-size:.92rem;min-height:1.4em;overflow-wrap:anywhere}
+.miczone{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:4px}
+.mic{width:96px;height:96px;border-radius:50%;border:0;background:var(--stage);color:#fff;display:grid;place-items:center;position:relative;box-shadow:0 6px 18px #1d2b6b40}
+.mic.rec{background:var(--bad)}
+.mic.rec::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:3px solid var(--bad);animation:ring 1.3s ease-out infinite}
+@keyframes ring{from{transform:scale(.9);opacity:1}to{transform:scale(1.25);opacity:0}}
+.miccap{font-weight:700;text-align:center}
+.typebox{display:flex;gap:8px;width:100%;max-width:420px}
+.typebox input{flex:1;min-width:0;border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px;font:700 1.3rem/1 var(--f-tile);letter-spacing:.08em;text-transform:lowercase}
+.result{border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.result.good{background:var(--good-soft)}
+.result.bad{background:var(--bad-soft)}
+.result .verdict{font:800 1.6rem/1.1 var(--f-display)}
+.result.good .verdict{color:var(--good)}
+.result.bad .verdict{color:var(--bad)}
+.result .word{font:700 2.2rem/1.1 var(--f-tile)}
+.result .sub{color:var(--muted)}
+.detail{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;text-align:left;font-size:.95rem;max-width:560px}
+.detail dt{font-weight:700;color:var(--muted)}
+.detail dd{margin:0}
+
+/* study */
+.search{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 14px}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.item{border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item>button{width:100%;display:flex;align-items:center;gap:12px;border:0;background:none;padding:12px 16px;text-align:left}
+.item .n{font:600 .85rem var(--f-tile);color:var(--muted);width:34px;font-variant-numeric:tabular-nums}
+.item .w{font:700 1.15rem var(--f-tile);flex:1;min-width:0}
+.pill{font-size:.75rem;font-weight:700;border-radius:99px;padding:3px 9px;white-space:nowrap}
+.pill.new{background:var(--sunk);color:var(--muted)}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.miss{background:var(--bad-soft);color:var(--bad)}
+.item .more{padding:0 16px 14px 62px;display:flex;flex-direction:column;gap:8px}
+.speak{border:0;background:var(--honey);color:#2a1b00;border-radius:50%;width:34px;height:34px;display:grid;place-items:center;flex:none}
+@media (max-width:520px){
+  .item .more{padding-left:16px}
+  .steps{grid-template-columns:1fr}
+  .tile{width:36px;height:44px;font-size:1.3rem}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="40" height="44" viewBox="0 0 40 44" aria-hidden="true"><path d="M20 2 37 12v20L20 42 3 32V12z" fill="var(--honey)"/><path d="M12 19h16M11 25h18" stroke="var(--stage)" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="13" r="3" fill="var(--stage)"/></svg>
+      <div><h1>Word Club</h1><small>Two Bee list · 150 words</small></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" id="tab-play" aria-selected="true">Bee</button>
+      <button role="tab" id="tab-study" aria-selected="false">Study list</button>
+    </nav>
+  </header>
+
+  <!-- HOME -->
+  <main id="home" class="stack">
+    <section class="card stack">
+      <div class="row" style="justify-content:space-between"><h2>Your progress</h2><button class="btn ghost" id="reset">Reset progress</button></div>
+      <div class="meter" id="meter"></div>
+      <div class="legend" id="legend"></div>
+    </section>
+    <section class="card stack">
+      <h2>Start a round</h2>
+      <div class="settings">
+        <div class="field"><label class="label" for="pool">Words</label>
+          <select id="pool">
+            <option value="all">All 150 words</option>
+            <option value="notMastered">Not mastered yet</option>
+            <option value="missed">Words I missed</option>
+            <option value="new">Words I haven't tried</option>
+          </select></div>
+        <div class="field"><span class="label">Order</span>
+          <div class="seg" id="order"><button data-v="list" aria-pressed="false">List order</button><button data-v="shuffle" aria-pressed="true">Shuffled</button></div></div>
+        <div class="field"><label class="label" for="startAt">Start from word #</label><input id="startAt" type="number" min="1" max="150" value="1"></div>
+        <div class="field"><span class="label">Answer by</span>
+          <div class="seg" id="mode"><button data-v="voice" aria-pressed="true">Voice</button><button data-v="type" aria-pressed="false">Typing</button></div></div>
+        <div class="field"><label class="label" for="rate">Pronouncer speed</label><input id="rate" type="range" min="0.6" max="1.2" step="0.05" value="0.85"></div>
+        <div class="field"><label class="label" for="voice">Pronouncer voice</label><select id="voice"></select></div>
+        <label class="check"><input type="checkbox" id="sudden"><span><b>Bee rules</b><br><span style="color:var(--muted);font-size:.9rem">One misspelling ends the round</span></span></label>
+        <label class="check"><input type="checkbox" id="showLetters"><span><b>Show my letters</b><br><span style="color:var(--muted);font-size:.9rem">See each letter as you spell it</span></span></label>
+      </div>
+      <div class="notice" id="micNotice" hidden></div>
+      <div class="row"><button class="btn honey" id="start" style="padding:12px 26px;font-size:1.05rem">Start spelling</button><span id="poolCount" style="color:var(--muted)"></span></div>
+    </section>
+    <section class="card how">
+      <h2>How a turn works</h2>
+      <ol>
+        <li>The pronouncer says your word. Ask for the definition, a sentence, the origin, or a repeat as often as you like.</li>
+        <li>Tap the mic, say the word, spell it one letter at a time, then say the word again.</li>
+        <li>When you say the word the second time, your answer is judged. If the mic misheard a letter, tap <b>Appeal</b> to try again.</li>
+      </ol>
+    </section>
+  </main>
+
+  <!-- ROUND -->
+  <main id="round" class="stack" hidden>
+    <div class="roundbar">
+      <div class="placard"><span>WORD</span><div id="placardNo">1</div></div>
+      <div class="meta"><div><b id="posTxt"></b></div><div style="color:var(--muted)" id="scoreTxt"></div></div>
+      <button class="btn" id="endRound">End round</button>
+    </div>
+
+    <section class="pronouncer" aria-label="Pronouncer">
+      <span class="label">Pronouncer</span>
+      <div class="hear">
+        <button class="big" id="hearBtn" aria-label="Hear the word"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+        <div><div class="h">Listen to your word</div><div style="color:#c8d0ff;font-size:.92rem">Tap to hear it again. Or say "repeat" into the mic.</div></div>
+      </div>
+      <div class="chips" id="chips">
+        <button data-q="definition">Definition</button>
+        <button data-q="sentence">Sentence</button>
+        <button data-q="pos">Part of speech</button>
+        <button data-q="origin">Language of origin</button>
+        <button data-q="pron">Pronunciation guide</button>
+        <button data-q="slow">Say it slowly</button>
+      </div>
+      <div class="info" id="info"><div class="k">Ask the pronouncer</div><p>Tap a question above, or say "definition", "sentence", or "origin" into the mic.</p></div>
+    </section>
+
+    <section id="answerZone" class="stack">
+      <div class="steps" id="steps">
+        <div class="step" data-s="1"><b>1 · Say the word</b>so the judges know you heard it</div>
+        <div class="step" data-s="2"><b>2 · Spell it</b>one letter at a time</div>
+        <div class="step" data-s="3"><b>3 · Say it again</b>to lock in your answer</div>
+      </div>
+      <div class="tiles" id="tiles"></div>
+      <div class="heard" id="heard"></div>
+      <div class="miczone" id="voiceZone">
+        <button class="mic" id="micBtn" aria-label="Start speaking"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></button>
+        <div class="miccap" id="micCap">Tap the mic and start with the word</div>
+        <div class="row"><button class="btn" id="doneBtn" hidden>I'm done</button><button class="btn ghost" id="toTyping">Type instead</button></div>
+        <label class="check" style="font-size:.92rem"><input type="checkbox" id="showLettersRound"><span>Show my letters</span></label>
+      </div>
+      <div class="miczone" id="typeZone" hidden>
+        <form class="typebox" id="typeForm" autocomplete="off"><input id="typeIn" aria-label="Type your spelling" spellcheck="false" autocapitalize="off" autocorrect="off"><button class="btn primary">Submit</button></form>
+        <button class="btn ghost" id="toVoice">Use the mic instead</button>
+      </div>
+    </section>
+
+    <section id="resultZone" class="result" hidden></section>
+  </main>
+
+  <!-- SUMMARY -->
+  <main id="summary" class="stack" hidden></main>
+
+  <!-- STUDY -->
+  <main id="study" class="stack" hidden>
+    <div class="row" style="justify-content:space-between"><h2>Study list</h2>
+      <div class="seg" id="studyFilter" style="min-width:280px"><button data-v="all" aria-pressed="true">All</button><button data-v="miss" aria-pressed="false">Missed</button><button data-v="new" aria-pressed="false">New</button><button data-v="ok" aria-pressed="false">Mastered</button></div></div>
+    <input class="search" id="search" placeholder="Search the list" aria-label="Search words">
+    <div class="list" id="list"></div>
+  </main>
+</div>
+
+<script>
+// [word, part of speech, language of origin, definition, sentence, pronunciation guide]
+const WORDS = [
+["fascism","noun","Italian","a political system led by a dictator with total power, which forcibly silences opposition and puts the nation above individuals","Students learned how fascism spread across Europe in the 1930s.","FASH-iz-um"],
+["lunar","adjective","Latin","of or relating to the moon","The astronauts collected rocks from the lunar surface.","LOO-ner"],
+["Senegal","proper noun","Wolof, by way of French","a country on the west coast of Africa whose capital is Dakar","My pen pal lives in Dakar, the capital of Senegal.","sen-ih-GAWL"],
+["tractor","noun","Latin","a powerful vehicle with large rear wheels used to pull farm machinery","The farmer drove the tractor across the muddy field.","TRAK-ter"],
+["sniffling","verb","English","breathing in noisily through the nose, often because of a cold or crying","My little brother was sniffling all through the movie.","SNIF-ling"],
+["carrion","noun","Latin, by way of French","the decaying flesh of dead animals","Vultures circled high above, searching for carrion.","KAIR-ee-un"],
+["optometrist","noun","Greek","a professional who examines eyes and prescribes glasses or contact lenses","The optometrist said I need new glasses for reading.","op-TOM-ih-trist"],
+["persnickety","adjective","Scots","overly fussy about small details","Grandpa is persnickety about how the dishes are stacked.","per-SNIK-ih-tee"],
+["clever","adjective","English","quick to understand, learn, and come up with ideas","The clever fox found a way around the fence.","KLEV-er"],
+["hurdler","noun","English","an athlete who runs races while jumping over barriers","The hurdler cleared every barrier and won the race.","HURD-ler"],
+["fertilizer","noun","Latin","a substance added to soil to help plants grow","Dad spread fertilizer on the lawn in early spring.","FUR-tuh-ly-zer"],
+["stragglers","noun","English","people or animals who fall behind the rest of a group","The teacher waited at the gate for the stragglers.","STRAG-lerz"],
+["Polaroid","noun","trademark from Latin and Greek","a camera that prints a photo within minutes, or a photo taken with one","We shook the Polaroid picture while we waited for it to develop.","POH-luh-royd"],
+["dictionary","noun","Latin","a book or resource that lists words in alphabetical order with their meanings","Look up the word in the dictionary if you are unsure.","DIK-shuh-nair-ee"],
+["elliptical","adjective","Greek","shaped like an oval","Earth travels around the sun in an elliptical orbit.","ih-LIP-tih-kul"],
+["materialize","verb","Latin","to appear suddenly, or to become real","A rainbow seemed to materialize after the storm.","muh-TEER-ee-uh-lyz"],
+["examine","verb","Latin","to look at closely and carefully","The doctor will examine your sore throat.","ig-ZAM-in"],
+["staccato","adjective","Italian","played or spoken in short, sharp, separate sounds","The pianist played the notes in a quick staccato rhythm.","stuh-KAH-toh"],
+["initiation","noun","Latin","the act of admitting someone into a group, often with a ceremony","The new scouts attended their initiation around the campfire.","ih-nish-ee-AY-shun"],
+["tiptoed","verb","English","walked quietly on the tips of the toes","She tiptoed past the sleeping baby.","TIP-tohd"],
+["bellowed","verb","English","shouted in a deep, loud voice","The coach bellowed instructions from the sideline.","BEL-ohd"],
+["concentrate","verb","Latin","to focus all of your attention on something","It is hard to concentrate when the TV is on.","KON-sun-trayt"],
+["December","proper noun","Latin","the twelfth and last month of the year","We decorate the house in December.","dih-SEM-ber"],
+["iridium","noun","Greek","a hard, silvery-white metallic chemical element","Iridium is one of the densest metals on Earth.","ih-RID-ee-um"],
+["helium","noun","Greek","a light, colorless gas often used to fill balloons","The party balloons were filled with helium.","HEE-lee-um"],
+["compromise","noun","Latin","an agreement in which each side gives up part of what it wants","The twins reached a compromise about who got the window seat.","KOM-pruh-myz"],
+["collateral","noun","Latin","something valuable promised to a lender to guarantee that a loan will be repaid","The bank asked for the house as collateral for the loan.","kuh-LAT-er-ul"],
+["territory","noun","Latin","an area of land controlled by a ruler, a nation, or an animal","The wolf pack defended its territory.","TAIR-ih-tor-ee"],
+["cartridge","noun","French, from Italian","a container of ink, film, or other material that fits into a device","The printer needs a new ink cartridge.","KAR-trij"],
+["convertible","noun","Latin","a car with a roof that can be folded back or removed","We rode in a convertible with the top down.","kun-VUR-tuh-bul"],
+["schnauzer","noun","German","a German breed of dog with a wiry coat and bushy whiskers","Our schnauzer barks at every squirrel.","SHNOW-zer"],
+["basement","noun","English, from Greek roots","a floor of a building that is partly or fully below the ground","We store our camping gear in the basement.","BAYS-munt"],
+["beneath","preposition","English","directly below or underneath","The cat hid beneath the bed during the storm.","bih-NEETH"],
+["disappear","verb","Latin, by way of French","to pass out of sight; to vanish","The magician made the coin disappear.","dis-uh-PEER"],
+["property","noun","Latin","something owned, such as land, a building, or belongings","The sign said the woods were private property.","PROP-er-tee"],
+["reinstate","verb","Latin","to put back into a former position or condition","The school agreed to reinstate the art club.","ree-in-STAYT"],
+["geologist","noun","Greek","a scientist who studies rocks and the structure of the Earth","The geologist explained how the canyon formed.","jee-OL-uh-jist"],
+["suspension","noun","Latin","the springs and shock absorbers that support a vehicle; also, a temporary removal from a job, team, or school","The truck's suspension made the bumpy road feel smooth.","suh-SPEN-shun"],
+["synthetic","adjective","Greek","made by people from chemicals rather than found in nature","My jacket is made of synthetic fabric.","sin-THET-ik"],
+["kelp","noun","English","a large brown seaweed that grows in underwater forests","Sea otters wrap themselves in kelp while they sleep.","KELP"],
+["cemetery","noun","Greek","a place where the dead are buried","Old oak trees line the paths of the cemetery.","SEM-ih-tair-ee"],
+["quail","noun","French","a small, plump ground bird with a short tail","A family of quail ran across the trail.","KWAYL"],
+["glamorous","adjective","Scots","full of exciting beauty and charm","The actress wore a glamorous gown to the premiere.","GLAM-er-us"],
+["Halloween","proper noun","Scots","the evening of October 31, celebrated with costumes and trick-or-treating","I am dressing up as an astronaut for Halloween.","hal-uh-WEEN"],
+["ridiculous","adjective","Latin","so silly or unreasonable that it makes people laugh","The clown wore ridiculous shoes three feet long.","rih-DIK-yuh-lus"],
+["prejudice","noun","Latin","an unfair opinion formed without knowledge or reason","The book teaches us to stand up against prejudice.","PREJ-uh-dis"],
+["permit","noun","Latin","an official document that gives permission to do something","You need a permit to fish in this lake.","PUR-mit"],
+["lounge","noun","origin uncertain, possibly French","a comfortable room for sitting and relaxing","We waited in the airport lounge for our flight.","LOWNJ"],
+["indigo","noun","Greek, by way of Spanish and Portuguese","a deep blue-violet color, or the plant dye that produces it","The evening sky turned indigo after sunset.","IN-dih-goh"],
+["exploratory","adjective","Latin","done in order to discover or learn about something","The team sent an exploratory mission into the cave.","ik-SPLOR-uh-tor-ee"],
+["Japanese","adjective","English, from a Chinese name for Japan","relating to Japan, its people, or its language","We ate Japanese noodles for dinner.","jap-uh-NEEZ"],
+["lullaby","noun","English","a gentle song sung to help a child fall asleep","Mom hummed a lullaby until the baby fell asleep.","LUL-uh-by"],
+["carefully","adverb","English","with close attention, to avoid mistakes or harm","Carry the eggs carefully so they don't break.","KAIR-ful-ee"],
+["civilian","noun","Latin","a person who is not a member of the military or police","The soldier was happy to return to civilian life.","sih-VIL-yun"],
+["haddock","noun","English","a silvery North Atlantic fish related to cod","The restaurant served fried haddock with chips.","HAD-uk"],
+["fundraiser","noun","English","an event held to collect money for a cause","Our class held a bake sale fundraiser for the animal shelter.","FUND-ray-zer"],
+["wetlands","noun","English","land soaked with water, such as marshes and swamps","Herons hunt for fish in the wetlands.","WET-landz"],
+["regolith","noun","Greek","the layer of loose rock and dust that covers solid rock, as on the moon","The rover scooped up a sample of lunar regolith.","REG-uh-lith"],
+["proclaim","verb","Latin","to announce publicly and officially","The mayor will proclaim Friday a holiday.","proh-KLAYM"],
+["piñata","noun","Spanish","a decorated container filled with candy and toys that is broken open with a stick at parties","Everyone cheered when the piñata finally burst.","peen-YAH-tuh"],
+["annoyance","noun","Latin, by way of French","the feeling of being slightly angry or bothered","The buzzing fly was a constant annoyance.","uh-NOY-unts"],
+["dachshund","noun","German","a small dog breed with a long body and very short legs","The dachshund waddled down the sidewalk.","DAHKS-hoont"],
+["reservoir","noun","French","a large natural or artificial lake used to store water","The town gets its drinking water from the reservoir.","REZ-er-vwahr"],
+["fierce","adjective","Latin, by way of French","violent, intense, or strong","A fierce wind knocked down the fence.","FEERS"],
+["rigid","adjective","Latin","stiff and unable to bend","The cardboard was too rigid to fold.","RIJ-id"],
+["warrior","noun","French","a brave or experienced fighter","The legend tells of a warrior who protected the village.","WOR-ee-er"],
+["molten","adjective","English","melted into a liquid by great heat","Molten lava flowed down the side of the volcano.","MOHL-tun"],
+["compliment","noun","Latin, by way of Italian and French","a remark that expresses praise or admiration","She gave me a compliment on my drawing.","KOM-pluh-munt"],
+["investment","noun","Latin","money put into something in the hope of making a profit","Buying a good bike was a smart investment.","in-VEST-munt"],
+["relief","noun","Latin, by way of French","the feeling of comfort when worry or pain goes away","It was a relief to find my lost dog.","rih-LEEF"],
+["predecessor","noun","Latin","a person who held a job or position before someone else","The new principal thanked her predecessor.","PRED-uh-ses-er"],
+["buttons","noun","French","small discs sewn onto clothing and used to fasten it","My coat has four shiny buttons.","BUT-unz"],
+["business","noun","English","a company, or the activity of buying and selling","Her lemonade stand became a successful business.","BIZ-nis"],
+["butterflies","noun","English","insects with large, colorful wings","Butterflies fluttered around the flower garden.","BUT-er-flyz"],
+["chimpanzees","noun","Kongo, a Bantu language","intelligent African apes that are closely related to humans","The chimpanzees used sticks to catch termites.","chim-pan-ZEEZ"],
+["apprentice","noun","Latin, by way of French","a person learning a trade from a skilled worker","The young apprentice watched the blacksmith work.","uh-PREN-tis"],
+["pamphlet","noun","Latin, by way of French","a small booklet with information about one subject","The museum gave us a pamphlet about dinosaurs.","PAM-flit"],
+["duration","noun","Latin","the length of time something lasts","Please stay seated for the duration of the flight.","doo-RAY-shun"],
+["pentathlete","noun","Greek","an athlete who competes in an event made up of five different contests","The pentathlete trained in running, swimming, and fencing.","pen-TATH-leet"],
+["singularity","noun","Latin","the quality of being one of a kind; in science, a point of infinite density such as the center of a black hole","Scientists think a singularity lies at the heart of every black hole.","sing-gyuh-LAIR-ih-tee"],
+["calico","noun","Malayalam, from Calicut, a city in India","a cat with patches of white, black, and orange fur; also a printed cotton cloth","Our calico cat has an orange spot on her nose.","KAL-ih-koh"],
+["thimble","noun","English","a small cap worn on a finger to protect it while sewing","Grandma wore a silver thimble while she sewed.","THIM-bul"],
+["truant","noun","French, from Celtic","a student who stays away from school without permission","The truant was found at the arcade during class.","TROO-unt"],
+["organism","noun","Greek","an individual living thing, such as a plant, animal, or bacterium","An amoeba is a tiny single-celled organism.","OR-guh-niz-um"],
+["cutlery","noun","Latin, by way of French","knives, forks, and spoons used for eating","Please set the cutlery next to each plate.","KUT-ler-ee"],
+["laughter","noun","English","the sound or act of laughing","Laughter filled the room when the puppy sneezed.","LAF-ter"],
+["perimeter","noun","Greek","the distance around the outside edge of a shape or area","We measured the perimeter of the garden.","puh-RIM-ih-ter"],
+["interruption","noun","Latin","something that stops an activity for a short time","The fire drill was an interruption to our test.","in-tuh-RUP-shun"],
+["arnica","noun","New Latin","a yellow-flowered plant used in creams for bruises","Mom rubbed arnica cream on my bruised knee.","AR-nih-kuh"],
+["mascara","noun","Spanish and Italian","makeup used to darken and thicken eyelashes","Her mascara ran when she cried at the movie.","ma-SKAIR-uh"],
+["awning","noun","origin unknown","a sheet of fabric stretched on a frame to give shade over a window or door","We stood under the shop's awning to stay dry.","AW-ning"],
+["jovial","adjective","Latin","cheerful and friendly","The jovial mail carrier always waves hello.","JOH-vee-ul"],
+["alphabetical","adjective","Greek","arranged in the order of the letters of the alphabet","The books are shelved in alphabetical order.","al-fuh-BET-ih-kul"],
+["precedent","noun","Latin","an earlier event or decision used as an example for later ones","The court's ruling set a precedent for future cases.","PRES-ih-dunt"],
+["cuddle","verb","English","to hold someone close in your arms to show love","The kids like to cuddle with the new kitten.","KUD-ul"],
+["atmosphere","noun","Greek","the layer of gases that surrounds a planet","Earth's atmosphere protects us from harmful rays.","AT-muh-sfeer"],
+["monorail","noun","Greek and English","a railway whose track is a single rail","We rode the monorail around the theme park.","MON-uh-rayl"],
+["magnesium","noun","Greek","a light, silvery metallic element that burns with a bright white flame","Magnesium is found in leafy green vegetables.","mag-NEE-zee-um"],
+["cosmodrome","noun","Greek, by way of Russian","a launch site for spacecraft, especially in Russia or Kazakhstan","The rocket blasted off from the Baikonur Cosmodrome.","KOZ-muh-drohm"],
+["romerillo","noun","Spanish","a flowering plant with white petals and yellow centers, common in Cuba and Florida","Bees buzzed around the romerillo growing by the road.","roh-meh-REE-yoh"],
+["meticulous","adjective","Latin","showing great care about every detail","She kept meticulous notes in her science journal.","muh-TIK-yuh-lus"],
+["inferior","adjective","Latin","lower in rank, quality, or importance","The cheap umbrella was inferior to the old one.","in-FEER-ee-er"],
+["bifocals","noun","Latin","eyeglasses with lenses divided into two parts, for seeing near and far","Grandpa looks through the bottom of his bifocals to read.","BY-foh-kulz"],
+["custody","noun","Latin","the legal right to care for someone, or the state of being held by police","The police took the suspect into custody.","KUS-tuh-dee"],
+["incident","noun","Latin","an event or occurrence, often an unpleasant one","The principal asked about the incident at recess.","IN-sih-dunt"],
+["arthritis","noun","Greek","a condition that causes pain and swelling in the joints","Grandma's arthritis makes her fingers stiff.","arth-RY-tis"],
+["Aeolus","proper noun","Greek","in Greek mythology, the keeper of the winds","Sailors once prayed to Aeolus for gentle winds.","EE-uh-lus"],
+["battalion","noun","Italian, by way of French","a large group of soldiers that forms part of a brigade","The battalion marched across the bridge.","buh-TAL-yun"],
+["granola","noun","English trademark, from grain","a mix of rolled oats, nuts, and dried fruit, often eaten for breakfast","I sprinkled granola on my yogurt.","gruh-NOH-luh"],
+["versus","preposition","Latin","against; used to name two opponents","Tonight's game is the Tigers versus the Bears.","VUR-sus"],
+["woven","adjective","English","made by crossing threads or strips over and under each other","She carried a basket woven from palm leaves.","WOH-vun"],
+["segregation","noun","Latin","the forced separation of groups of people, especially by race","The civil rights movement fought to end segregation.","seg-rih-GAY-shun"],
+["albino","noun","Portuguese, from Latin","a person or animal born with little or no color in the skin, hair, or eyes","The zoo has a rare albino alligator.","al-BY-noh"],
+["piteously","adverb","Latin, by way of French","in a way that makes people feel pity","The lost puppy whimpered piteously at the door.","PIT-ee-us-lee"],
+["conscious","adjective","Latin","awake and aware of your surroundings","The patient was conscious and talking after surgery.","KON-shus"],
+["Oregon","proper noun","origin uncertain","a state in the northwestern United States on the Pacific coast","We hiked through the forests of Oregon.","OR-ih-gun"],
+["duende","noun","Spanish","a mysterious power of art to move people deeply, especially in flamenco","The flamenco dancer performed with true duende.","doo-EN-day"],
+["desperate","adjective","Latin","feeling that a situation is so bad it is almost hopeless","The desperate hikers signaled for help.","DES-per-it"],
+["matrilineal","adjective","Latin","tracing family descent through the mother's side","The tribe follows a matrilineal tradition of inheritance.","mat-ruh-LIN-ee-ul"],
+["disappointment","noun","French","sadness felt when hopes or expectations are not met","Rain on the day of the picnic was a big disappointment.","dis-uh-POINT-munt"],
+["suggested","verb","Latin","put forward an idea for others to think about","My sister suggested we go to the beach.","sug-JES-tid"],
+["sorceress","noun","French","a woman believed to have magical powers","The sorceress cast a spell on the castle.","SOR-ser-is"],
+["burlap","noun","origin unknown","a coarse cloth woven from jute or hemp","Potatoes are often shipped in burlap sacks.","BUR-lap"],
+["boycotting","verb","English, from the name of Charles Boycott","refusing to buy, use, or take part in something as a protest","The students were boycotting the cafeteria's new menu.","BOY-kot-ing"],
+["salamanders","noun","Greek","small lizard-like amphibians with moist skin","We found salamanders under the wet logs.","SAL-uh-man-derz"],
+["megahertz","noun","Greek and German","a unit of frequency equal to one million cycles per second","The radio station broadcasts at 98.7 megahertz.","MEG-uh-hurts"],
+["bratwurst","noun","German","a German sausage made from pork or veal","We grilled bratwurst at the family picnic.","BRAT-wurst"],
+["sputnik","noun","Russian","an artificial satellite, especially the first Soviet satellite launched in 1957","Sputnik was the first satellite to orbit Earth.","SPUT-nik"],
+["marlin","noun","English","a large ocean fish with a long, spear-like snout","The fisherman caught a blue marlin off the coast.","MAR-lin"],
+["glaucoma","noun","Greek","an eye disease caused by pressure inside the eye that can damage vision","The eye doctor checked Grandpa for glaucoma.","glaw-KOH-muh"],
+["opposite","adjective","Latin","completely different, or located across from","Hot is the opposite of cold.","OP-uh-zit"],
+["pheasants","noun","Greek","large birds with long tails; the males have brightly colored feathers","Pheasants strutted along the edge of the cornfield.","FEZ-unts"],
+["integrity","noun","Latin","the quality of being honest and having strong moral principles","She showed integrity by returning the lost wallet.","in-TEG-rih-tee"],
+["tortillas","noun","Spanish","thin, flat, round breads made from corn or wheat flour","We filled warm tortillas with beans and cheese.","tor-TEE-yuz"],
+["fictitious","adjective","Latin","invented or imaginary; not real","The author used a fictitious name for the town.","fik-TISH-us"],
+["chisel","noun","Latin, by way of French","a tool with a sharp, flat edge used to cut wood or stone","The sculptor carved the statue with a chisel.","CHIZ-ul"],
+["elite","adjective","French","the best or most skilled of a group","Only elite swimmers qualify for the Olympics.","ih-LEET"],
+["fickle","adjective","English","changing your mind or loyalties often","The fickle weather switched from sun to rain.","FIK-ul"],
+["puffy","adjective","English","swollen, or soft and rounded","My eyes were puffy when I woke up.","PUF-ee"],
+["salary","noun","Latin","a fixed amount of money paid regularly for work","The teacher's salary is paid every month.","SAL-uh-ree"],
+["tissues","noun","Latin, by way of French","thin, soft papers used for wiping the nose; also groups of similar cells in a living thing","Pass me the tissues, please. I have to sneeze.","TISH-ooz"],
+["rebuttal","noun","French","a statement that argues against what someone else has said","The debate team prepared a strong rebuttal.","rih-BUT-ul"],
+["invite","verb","Latin","to ask someone to come somewhere or do something","I will invite my whole class to my party.","in-VYT"],
+["Caesar","proper noun","Latin","the title of Roman emperors, especially Julius Caesar","Julius Caesar was a famous leader of ancient Rome.","SEE-zer"],
+["snarkiness","noun","English","the quality of being sarcastic or snide","His snarkiness got him in trouble with the teacher.","SNAR-kee-nis"],
+["hypothermia","noun","Greek","a dangerous drop in body temperature caused by cold","The rescued swimmer was treated for hypothermia.","hy-poh-THUR-mee-uh"],
+["rendezvous","noun","French","a meeting at an agreed time and place","The spies planned a secret rendezvous at midnight.","RAHN-day-voo"],
+["solidarity","noun","French","unity and support among people who share a goal","The team wore matching armbands in solidarity.","sol-ih-DAIR-ih-tee"],
+["adrenaline","noun","Latin","a hormone your body releases when you are scared or excited that makes your heart beat faster","Adrenaline rushed through me at the top of the roller coaster.","uh-DREN-uh-lin"],
+["insurrection","noun","Latin","a violent uprising against an authority or government","The king's soldiers put down the insurrection.","in-suh-REK-shun"],
+];
+// How the speech voice should say a few tricky words
+const SAY_AS = {"piñata":"pin yah tuh","duende":"dwen day","romerillo":"romeh reeyo","Aeolus":"Eeolus","dachshund":"docks hoond","schnauzer":"shnowzer"};
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const esc = s => s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- saved progress (this browser only) ---------- */
+const KEY="twobee.v1";
+let store = {stats:{}, prefs:{}};
+try{ const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s&&s.stats) store=s; }catch(e){}
+const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(store)); }catch(e){} };
+const statOf = w => store.stats[w] || null;
+const status = w => { const s=statOf(w); return !s ? "new" : s.last==="c" ? "ok" : "miss"; };
+
+/* ---------- speech out ---------- */
+const synth = window.speechSynthesis;
+let voice = null;
+// Most natural voices first: Apple Premium/Enhanced (if installed), then Chrome's Google voice
+const NOVELTY = /Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Wobble|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Zarvox|Fred|Junior|Ralph|Kathy|Grandma|Grandpa|Rocko|Eddy|Flo|Reed|Sandy|Shelley/;
+function voiceScore(v){
+  let sc = 0;
+  if(/Premium/i.test(v.name)) sc += 100;
+  else if(/Enhanced|Neural|Natural|Online/i.test(v.name)) sc += 80;
+  if(/^Google US English/.test(v.name)) sc += 70;
+  if(/Ava|Zoe|Evan|Nathan|Allison|Susan|Tom|Aria|Jenny|Guy/.test(v.name)) sc += 20;
+  if(/Samantha/.test(v.name)) sc += 10;
+  if(/^en[-_]US/i.test(v.lang)) sc += 5;
+  return sc;
+}
+function pickVoice(){
+  if(!synth) return;
+  const all = synth.getVoices().filter(v=>/^en[-_]/i.test(v.lang) && !NOVELTY.test(v.name)).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  const saved = (store.prefs||{}).voiceName;
+  voice = all.find(v=>v.name===saved) || all[0] || null;
+  const sel = document.getElementById("voice");
+  if(sel){
+    sel.innerHTML = all.map((v,i)=>`<option value="${esc(v.name)}">${esc(v.name)}${i===0?" (most natural)":""}</option>`).join("");
+    if(voice) sel.value = voice.name;
+  }
+}
+if(synth){ synth.onvoiceschanged = pickVoice; setTimeout(pickVoice, 0); }
+let rate = 0.85;
+function speak(text, r){
+  return new Promise(res=>{
+    if(!synth){ res(); return; }
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if(voice) u.voice = voice;
+    u.rate = r || rate; u.lang = "en-US";
+    u.onend = u.onerror = ()=>res();
+    synth.speak(u);
+  });
+}
+// The trailing pause keeps Chrome from clipping a short word's last sound ("kelp" heard as "kell")
+const sayWord = (w, r) => speak((SAY_AS[w] || w) + ". . ", r);
+const spelledOut = w => norm(w).split("").map(c=>c.toUpperCase()).join(", ");
+
+/* ---------- sounds: bee bell for a miss, chime for correct ---------- */
+let actx;
+function tone(freqs, dur, type="sine", gain=.25){
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const t = actx.currentTime;
+    freqs.forEach((f,i)=>{
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type=type; o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+i*.12); g.gain.linearRampToValueAtTime(gain,t+i*.12+.01);
+      g.gain.exponentialRampToValueAtTime(.0001,t+i*.12+dur);
+      o.connect(g).connect(actx.destination); o.start(t+i*.12); o.stop(t+i*.12+dur+.05);
+    });
+  }catch(e){}
+}
+const chime = ()=>tone([660,880,1320],.5);
+const bell = ()=>{ tone([1480,1490*2.76],1.6,"sine",.22); };
+
+/* ---------- speech in ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const LETTERS = {a:"a",ay:"a",eh:"a",b:"b",be:"b",bee:"b",bea:"b",c:"c",see:"c",sea:"c",cee:"c",si:"c",d:"d",dee:"d",e:"e",ee:"e",
+  f:"f",ef:"f",eff:"f",g:"g",gee:"g",jee:"g",h:"h",aitch:"h",age:"h",haitch:"h",i:"i",eye:"i",aye:"i",j:"j",jay:"j",k:"k",kay:"k",
+  l:"l",el:"l",elle:"l",ell:"l",m:"m",em:"m",n:"n",en:"n",o:"o",oh:"o",owe:"o",p:"p",pee:"p",pea:"p",q:"q",queue:"q",cue:"q",
+  r:"r",are:"r",ar:"r",s:"s",es:"s",ess:"s",t:"t",tee:"t",tea:"t",u:"u",you:"u",ewe:"u",v:"v",vee:"v",w:"w",x:"x",ex:"x",
+  y:"y",why:"y",wye:"y",z:"z",zee:"z",zed:"z"};
+function lev(a,b){
+  const m=a.length,n=b.length, d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=1;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return d[m][n];
+}
+const sounds = (t, w) => { const a=norm(t), b=norm(w); return lev(a,b) <= Math.max(1, Math.round(b.length*.35)); };
+
+function parse(raw, target){
+  const text = raw.replace(/double[\s-]+(u|you|yu)\b/gi," w ");
+  const toks = text.split(/[\s\-.,!?;:"]+/).filter(Boolean);
+  const items = toks.map(t=>{
+    const lc = norm(t).replace(/'/g,"");
+    const L = LETTERS[lc] || (/^[a-z]$/.test(lc) ? lc : null);
+    return L ? {k:"L",v:L,raw:t} : {k:"W",v:lc,raw:t};
+  });
+  let s=0, e=items.length;
+  while(s<e && items[s].k==="W") s++;
+  while(e>s && items[e-1].k==="W") e--;
+  const lead = items.slice(0,s), trail = items.slice(e);
+  let letters = "";
+  for(const it of items.slice(s,e)){
+    if(it.k==="L") letters += it.v;
+    else if(/^[A-Z]{2,}$/.test(it.raw)) letters += it.v; // recognizer wrote letters together, e.g. "CAL"
+  }
+  let leadW = lead, trailW = trail;
+  if(!letters && items.length>=3){ // e.g. "Kelp KELP kelp": recognizer joined the spoken letters into capitals
+    const mid = items.slice(1,-1).filter(it=>/^[A-Z]{2,}$/.test(it.raw));
+    if(mid.length){ letters = mid.map(it=>it.v).join(""); leadW=[items[0]]; trailW=[items[items.length-1]]; }
+  }
+  return {letters, lead:leadW, trail:trailW, saidFirst: leadW.some(t=>sounds(t.v,target)), saidLast: letters.length>0 && trailW.some(t=>sounds(t.v,target)), raw};
+}
+function requestIn(raw){
+  const t = raw.toLowerCase();
+  if(/part of speech/.test(t)) return "pos";
+  if(/defin|meaning|what does it mean/.test(t)) return "definition";
+  if(/sentence|use it/.test(t)) return "sentence";
+  if(/origin|language/.test(t)) return "origin";
+  if(/repeat|say (it|that) again|one more time|pardon/.test(t)) return "repeat";
+  return null;
+}
+
+/* ---------- state ---------- */
+let session = null;      // {queue, pos, correct, attempted, streak, best, sudden, missed:[]}
+let cur = null;          // current word entry
+let phase = "idle";      // idle | rec | result
+let rec = null, finalText = "", interimText = "", autoTimer = null, lastAttempt = null;
+const prefs = Object.assign({order:"shuffle", mode: SR ? "voice":"type", rate:.85, sudden:false, pool:"all", showLetters:true}, store.prefs);
+
+/* ---------- home ---------- */
+function renderHome(){
+  const counts = {ok:0,miss:0,new:0};
+  WORDS.forEach(w=>counts[status(w[0])]++);
+  const pct = n => (n/WORDS.length*100)+"%";
+  $("#meter").innerHTML = `<i style="width:${pct(counts.ok)};background:var(--good)"></i><i style="width:${pct(counts.miss)};background:var(--bad)"></i>`;
+  $("#legend").innerHTML = `<span><span class="dot" style="background:var(--good)"></span>Mastered <b>${counts.ok}</b></span><span><span class="dot" style="background:var(--bad)"></span>Missed last time <b>${counts.miss}</b></span><span><span class="dot" style="background:var(--sunk);outline:1px solid var(--line)"></span>Not tried <b>${counts.new}</b></span>`;
+  $("#pool").value = prefs.pool; $("#sudden").checked = prefs.sudden; $("#showLetters").checked = prefs.showLetters; $("#rate").value = prefs.rate; rate = prefs.rate;
+  setSeg("#order", prefs.order); setSeg("#mode", prefs.mode);
+  $("#startAt").closest(".field").hidden = prefs.order!=="list";
+  updatePoolCount();
+  const n = $("#micNotice");
+  if(!SR){ n.hidden=false; n.textContent = "Voice spelling needs Google Chrome, Microsoft Edge, or Safari. In this browser you can type your answers instead."; }
+  else if(location.protocol==="file:" && !/Chrome|Edg/.test(navigator.userAgent)){ n.hidden=false; n.textContent = "If the mic doesn't respond, open this file in Google Chrome."; }
+}
+function setSeg(sel,v){ $$(sel+" button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.v===v))); }
+function poolIdx(){
+  let idx = WORDS.map((w,i)=>i).filter(i=>{
+    const st=status(WORDS[i][0]);
+    return prefs.pool==="all" || (prefs.pool==="new"&&st==="new") || (prefs.pool==="missed"&&st==="miss") || (prefs.pool==="notMastered"&&st!=="ok");
+  });
+  if(prefs.order==="list"){ const from = Math.max(1, Math.min(150, +$("#startAt").value||1))-1; idx = idx.filter(i=>i>=from); }
+  return idx;
+}
+function updatePoolCount(){ const n=poolIdx().length; $("#poolCount").textContent = n ? `${n} word${n===1?"":"s"} in this round` : "No words match. Pick a different set."; $("#start").disabled = !n; }
+const savePrefs = ()=>{ store.prefs = prefs; save(); };
+$("#order").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; prefs.order=b.dataset.v; savePrefs(); renderHome(); };
+$("#mode").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; if(b.dataset.v==="voice" && !SR) return; prefs.mode=b.dataset.v; savePrefs(); setSeg("#mode",prefs.mode); };
+$("#pool").onchange = e=>{ prefs.pool=e.target.value; savePrefs(); updatePoolCount(); };
+$("#startAt").oninput = updatePoolCount;
+$("#sudden").onchange = e=>{ prefs.sudden=e.target.checked; savePrefs(); };
+$("#showLetters").onchange = e=>{ prefs.showLetters=e.target.checked; savePrefs(); };
+$("#showLettersRound").onchange = e=>{ prefs.showLetters=e.target.checked; savePrefs(); if(phase==="rec") showLive(liveLetters); };
+$("#rate").oninput = e=>{ prefs.rate=rate=+e.target.value; savePrefs(); };
+$("#rate").onchange = ()=>sayWord("kelp");
+$("#voice").onchange = e=>{ prefs.voiceName = e.target.value; savePrefs(); pickVoice(); sayWord("kelp"); };
+let resetArmed=false;
+$("#reset").onclick = ()=>{
+  if(!resetArmed){ resetArmed=true; $("#reset").textContent="Tap again to erase all progress"; setTimeout(()=>{resetArmed=false; $("#reset").textContent="Reset progress";},4000); return; }
+  store.stats={}; save(); resetArmed=false; $("#reset").textContent="Reset progress"; renderHome();
+};
+
+/* ---------- views ---------- */
+function show(view){
+  ["home","round","summary","study"].forEach(v=>$("#"+v).hidden = v!==view);
+  $("#tab-play").setAttribute("aria-selected", String(view!=="study"));
+  $("#tab-study").setAttribute("aria-selected", String(view==="study"));
+  window.scrollTo(0,0);
+}
+$("#tab-play").onclick = ()=>{ if(session) show("round"); else { renderHome(); show("home"); } };
+$("#tab-study").onclick = ()=>{ stopRec(true); renderStudy(); show("study"); };
+
+/* ---------- round ---------- */
+$("#start").onclick = ()=>{
+  let q = poolIdx();
+  if(prefs.order==="shuffle") for(let i=q.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [q[i],q[j]]=[q[j],q[i]]; }
+  session = {queue:q, pos:0, correct:0, attempted:0, streak:0, best:0, sudden:prefs.sudden, missed:[]};
+  show("round"); loadWord();
+};
+$("#endRound").onclick = ()=>{ stopRec(true); synth&&synth.cancel(); finishRound(); };
+
+function loadWord(){
+  const i = session.queue[session.pos];
+  cur = {i, w:WORDS[i][0], pos:WORDS[i][1], origin:WORDS[i][2], def:WORDS[i][3], sent:WORDS[i][4], pron:WORDS[i][5]};
+  phase="idle"; lastAttempt=null;
+  $("#placardNo").textContent = i+1;
+  $("#posTxt").textContent = `Word ${session.pos+1} of ${session.queue.length}`;
+  $("#scoreTxt").textContent = `${session.correct} correct of ${session.attempted}` + (session.streak>1?` · streak ${session.streak}`:"") + (session.sudden?" · bee rules":"");
+  $("#resultZone").hidden = true; $("#answerZone").hidden = false;
+  $$("#chips button").forEach(b=>b.classList.remove("on"));
+  setInfo("Ask the pronouncer","Tap a question above, or say \"definition\", \"sentence\", or \"origin\" into the mic.");
+  resetAnswer();
+  setMode(prefs.mode);
+  $("#showLettersRound").checked = prefs.showLetters;
+  setTimeout(()=>sayWord(cur.w), 250);
+}
+function setMode(m){
+  prefs.mode = (m==="voice" && SR) ? "voice" : "type"; savePrefs();
+  $("#voiceZone").hidden = prefs.mode!=="voice"; $("#typeZone").hidden = prefs.mode!=="type";
+  $("#steps").hidden = prefs.mode!=="voice";
+  if(prefs.mode==="type"){ $("#typeIn").value=""; setTimeout(()=>$("#typeIn").focus(),50); }
+}
+$("#toTyping").onclick = ()=>{ stopRec(true); setMode("type"); };
+$("#toVoice").onclick = ()=>setMode("voice");
+function resetAnswer(){
+  renderTiles(""); $("#heard").textContent=""; setSteps(null);
+  $("#micBtn").classList.remove("rec"); $("#micBtn").setAttribute("aria-label","Start speaking");
+  $("#micCap").textContent = "Tap the mic and start with the word"; $("#doneBtn").hidden = true;
+}
+function blank(text){
+  const er = x => x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  return esc(text.replace(new RegExp(er(cur.w)+"|"+er(norm(cur.w)),"gi"),"_____"));
+}
+function setInfo(k, html){ $("#info").innerHTML = `<div class="k">${k}</div><p>${html}</p>`; }
+function ask(q){
+  if(!cur) return;
+  $$("#chips button").forEach(b=>b.classList.toggle("on", b.dataset.q===q));
+  if(q==="definition"){ setInfo("Definition · "+cur.pos, blank(cur.def)); speak(cur.def); }
+  else if(q==="sentence"){ setInfo("Sentence", blank(cur.sent)); speak(cur.sent); }
+  else if(q==="pos"){ setInfo("Part of speech", esc(cur.pos)); speak(cur.pos); }
+  else if(q==="origin"){ setInfo("Language of origin", esc(cur.origin)); speak("This word comes from "+cur.origin.replace(/,? by way of/," by way of")+"."); }
+  else if(q==="pron"){ setInfo("Pronunciation guide", `<span style="font-family:var(--f-tile);font-size:1.3rem;letter-spacing:.04em">${esc(cur.pron)}</span><br><span style="font-size:.88rem;color:#c8d0ff">Capital letters show the stressed syllable.</span>`); sayWord(cur.w); }
+  else if(q==="slow"){ sayWord(cur.w, .55); }
+  else if(q==="repeat"){ sayWord(cur.w); }
+}
+$("#chips").onclick = e=>{ const b=e.target.closest("button"); if(b){ stopRec(true); ask(b.dataset.q); } };
+$("#hearBtn").onclick = ()=>{ stopRec(true); sayWord(cur.w); };
+
+function renderTiles(letters, marks){
+  const t=$("#tiles");
+  if(!letters){ t.innerHTML = `<div class="tile ghost">?</div>`.repeat(3); return; }
+  t.innerHTML = letters.split("").map((c,i)=>`<div class="tile ${marks?marks[i]:""}">${c}</div>`).join("");
+}
+// While spelling: real letters, or blank tiles that only show the mic is catching each letter
+let liveLetters = "";
+function showLive(letters){
+  liveLetters = letters;
+  if(prefs.showLetters || !letters) renderTiles(letters);
+  else $("#tiles").innerHTML = letters.split("").map(()=>`<div class="tile">•</div>`).join("");
+}
+function setSteps(p){
+  const st = $$("#steps .step");
+  st.forEach(s=>s.className="step");
+  if(!p){ if(phase==="rec") st[0].classList.add("active"); return; }
+  const hasLead = p.lead.length>0, hasLetters = p.letters.length>0;
+  st[0].classList.add(hasLead||hasLetters ? "done":"active");
+  if(hasLetters) st[1].classList.add(p.trail.length ? "done":"active");
+  else if(hasLead) st[1].classList.add("active");
+  if(p.trail.length && hasLetters) st[2].classList.add("done");
+}
+
+/* recording */
+$("#micBtn").onclick = ()=>{ phase==="rec" ? stopRec(false) : startRec(); };
+$("#doneBtn").onclick = ()=>stopRec(false);
+function startRec(){
+  if(!SR || phase==="result") return;
+  synth && synth.cancel();
+  finalText=""; interimText="";
+  rec = new SR(); rec.lang="en-US"; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
+  rec.onresult = ev=>{
+    let f="", it="";
+    for(let i=0;i<ev.results.length;i++){ const r=ev.results[i]; if(r.isFinal) f+=r[0].transcript+" "; else it+=r[0].transcript+" "; }
+    finalText=f; interimText=it;
+    const all=(f+it).trim(), p=parse(all, cur.w);
+    showLive(p.letters); setSteps(p);
+    clearTimeout(autoTimer);
+    // finished: word said again after letters -> judge shortly
+    if(p.letters.length>=1 && p.saidLast){ $("#micCap").textContent="Got it. Checking…"; autoTimer=setTimeout(()=>stopRec(false), 900); }
+    else if(p.letters.length) $("#micCap").textContent="Spelling… say the word again when you finish";
+    else if(p.lead.length) $("#micCap").textContent="Now spell it, one letter at a time";
+  };
+  rec.onerror = ev=>{
+    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){ phase="idle"; resetAnswer(); $("#heard").textContent="Microphone access was blocked. Allow the mic in your browser's address bar, or type your answer."; }
+    else if(ev.error==="no-speech"){ $("#heard").textContent="I didn't hear anything. Tap the mic and try again."; }
+    else if(ev.error==="network"){ $("#heard").textContent="Voice recognition needs an internet connection in this browser. You can type instead."; }
+  };
+  rec.onend = ()=>{ if(phase==="rec") finishRec(); };
+  try{ rec.start(); }catch(e){ return; }
+  phase="rec";
+  $("#micBtn").classList.add("rec"); $("#micBtn").setAttribute("aria-label","Stop and check my spelling");
+  $("#micCap").textContent="Listening… say the word"; $("#doneBtn").hidden=false;
+  renderTiles(""); setSteps(null);
+}
+function stopRec(discard){
+  clearTimeout(autoTimer);
+  if(phase!=="rec"){ return; }
+  if(discard){ phase="idle"; try{rec.abort();}catch(e){} resetAnswer(); return; }
+  try{ rec.stop(); }catch(e){ finishRec(); }
+  setTimeout(()=>{ if(phase==="rec") finishRec(); }, 1200); // safety if onend never fires
+}
+function finishRec(){
+  phase="idle";
+  $("#micBtn").classList.remove("rec"); $("#micBtn").setAttribute("aria-label","Start speaking"); $("#doneBtn").hidden=true;
+  const all=(finalText+" "+interimText).trim(), p=parse(all, cur.w);
+  const req = p.letters.length<2 ? requestIn(all) : null;
+  if(req){ ask(req); resetAnswer(); $("#heard").textContent=`You asked for: ${req==="pos"?"part of speech":req}`; return; }
+  if(!all){ resetAnswer(); $("#heard").textContent="I didn't hear anything. Tap the mic and try again."; return; }
+  if(!p.letters){ resetAnswer(); $("#heard").textContent="I heard words but no letters. Spell slowly with a short pause between letters."; return; }
+  judge(p.letters, p);
+}
+$("#typeForm").onsubmit = e=>{
+  e.preventDefault();
+  const v = norm($("#typeIn").value).replace(/[^a-z]/g,"");
+  if(!v) return;
+  judge(v, null);
+};
+
+function judge(letters, p){
+  const target = norm(cur.w).replace(/[^a-z]/g,"");
+  const ok = letters===target;
+  phase="result";
+  lastAttempt = {letters, ok, prev: store.stats[cur.w] ? {...store.stats[cur.w]} : null, sess:{c:session.correct,a:session.attempted,s:session.streak,b:session.best,m:[...session.missed]}};
+  const s = store.stats[cur.w] || {c:0,m:0};
+  ok ? s.c++ : s.m++; s.last = ok?"c":"m"; store.stats[cur.w]=s; save();
+  session.attempted++;
+  if(ok){ session.correct++; session.streak++; session.best=Math.max(session.best,session.streak); }
+  else { session.streak=0; session.missed.push(cur.i); }
+  showResult(letters, ok, p);
+}
+function showResult(letters, ok, p){
+  $("#answerZone").hidden = true;
+  const z=$("#resultZone"); z.hidden=false; z.className="result "+(ok?"good":"bad");
+  const target = norm(cur.w);
+  const marks = letters.split("").map((c,i)=>c===target[i]?"good":"bad");
+  const last = session.pos >= session.queue.length-1 || (!ok && session.sudden);
+  const reminder = p && prefs.mode==="voice" && (!p.lead.length || !p.trail.length) ? `<div class="sub">Tip: say the word before and after you spell it, just like on stage.</div>` : "";
+  z.innerHTML = `
+    <div class="verdict">${ok?"Correct!":"That's not quite it"}</div>
+    ${ok?"":`<div class="label">You spelled</div><div class="tiles">${letters.split("").map((c,i)=>`<div class="tile ${marks[i]}">${c}</div>`).join("")}</div><div class="label">Correct spelling</div>`}
+    <div class="tiles">${target.split("").map(c=>`<div class="tile good">${c}</div>`).join("")}</div>
+    <div class="word">${esc(cur.w)}</div>
+    <div class="sub" style="font-family:var(--f-tile);letter-spacing:.04em">${esc(cur.pron)}</div>
+    <dl class="detail">
+      <dt>Part of speech</dt><dd>${esc(cur.pos)}</dd>
+      <dt>Definition</dt><dd>${esc(cur.def)}</dd>
+      <dt>Sentence</dt><dd><i>${esc(cur.sent)}</i></dd>
+      <dt>Origin</dt><dd>${esc(cur.origin)}</dd>
+    </dl>
+    ${reminder}
+    <div class="row" style="justify-content:center">
+      <button class="btn" id="hearAgain">Hear it spelled</button>
+      ${prefs.mode==="voice" && p ? `<button class="btn" id="appeal">Appeal: the mic misheard me</button>`:""}
+      <button class="btn primary" id="nextBtn">${last?"See results":"Next word"}</button>
+    </div>`;
+  if(ok){ chime(); setTimeout(()=>speak("That is correct."),400); }
+  else { bell(); setTimeout(()=>speak(`The correct spelling is ${spelledOut(cur.w)}. ${SAY_AS[cur.w]||cur.w}.`),900); }
+  $("#hearAgain").onclick = ()=>speak(`${SAY_AS[cur.w]||cur.w}. ${spelledOut(cur.w)}. ${SAY_AS[cur.w]||cur.w}.`, Math.min(rate,.8));
+  const ap=$("#appeal"); if(ap) ap.onclick = appeal;
+  $("#nextBtn").onclick = next;
+  $("#nextBtn").focus({preventScroll:true});
+}
+function appeal(){
+  if(!lastAttempt) return;
+  synth && synth.cancel();
+  if(lastAttempt.prev) store.stats[cur.w]=lastAttempt.prev; else delete store.stats[cur.w];
+  save();
+  const s=lastAttempt.sess; session.correct=s.c; session.attempted=s.a; session.streak=s.s; session.best=s.b; session.missed=s.m;
+  $("#scoreTxt").textContent = `${session.correct} correct of ${session.attempted}`;
+  phase="idle"; lastAttempt=null;
+  $("#resultZone").hidden=true; $("#answerZone").hidden=false; resetAnswer();
+  $("#heard").textContent="Appeal granted. Spell it again, slowly.";
+  sayWord(cur.w);
+}
+function next(){
+  synth && synth.cancel();
+  if(!lastAttempt.ok && session.sudden){ finishRound(true); return; }
+  session.pos++;
+  if(session.pos >= session.queue.length){ finishRound(); return; }
+  loadWord();
+}
+function finishRound(out){
+  if(!session) return;
+  const s=session; session=null; cur=null; phase="idle";
+  const pct = s.attempted ? Math.round(s.correct/s.attempted*100) : 0;
+  const missed = [...new Set(s.missed)];
+  $("#summary").innerHTML = `
+    <section class="card stack" style="text-align:center;align-items:center">
+      <span class="label">${out?"Eliminated by the bell":"Round complete"}</span>
+      <div style="font:800 3rem/1 var(--f-display)">${s.correct}<span style="color:var(--muted);font-size:1.6rem"> / ${s.attempted}</span></div>
+      <div style="color:var(--muted)">${pct}% correct · best streak ${s.best}</div>
+      <div class="row" style="justify-content:center">
+        ${missed.length?`<button class="btn honey" id="retryMissed">Practice the ${missed.length} I missed</button>`:""}
+        <button class="btn primary" id="toHome">Back to start</button>
+      </div>
+    </section>
+    ${missed.length?`<section class="stack"><h2>Words to review</h2><div class="list">${missed.map(i=>itemHTML(i)).join("")}</div></section>`:""}`;
+  show("summary");
+  $("#toHome").onclick = ()=>{ renderHome(); show("home"); };
+  const rm=$("#retryMissed");
+  if(rm) rm.onclick = ()=>{ session={queue:missed, pos:0, correct:0, attempted:0, streak:0, best:0, sudden:false, missed:[]}; show("round"); loadWord(); };
+  wireList($("#summary"));
+}
+
+/* ---------- study list ---------- */
+let studyFilter="all";
+function itemHTML(i){
+  const [w,pos,origin,def,sent,pron]=WORDS[i], st=status(w), s=statOf(w);
+  const pill = st==="new" ? `<span class="pill new">New</span>` : st==="ok" ? `<span class="pill ok">Mastered</span>` : `<span class="pill miss">Missed ${s.m}×</span>`;
+  return `<div class="item" data-i="${i}"><button aria-expanded="false"><span class="n">${i+1}</span><span class="w">${esc(w)}</span>${pill}</button>
+    <div class="more" hidden>
+      <div class="row"><span class="speak" role="button" tabindex="0" data-say="${i}" aria-label="Hear ${esc(w)}"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/></svg></span>
+      <span style="font-family:var(--f-tile);letter-spacing:.04em">${esc(pron)}</span><span style="color:var(--muted)">· ${esc(pos)} · ${esc(origin)}</span></div>
+      <div>${esc(def)}</div><div style="color:var(--muted)"><i>${esc(sent)}</i></div>
+    </div></div>`;
+}
+function wireList(root){
+  root.querySelectorAll(".item>button").forEach(b=>b.onclick=()=>{
+    const m=b.nextElementSibling, open=m.hidden; m.hidden=!open; b.setAttribute("aria-expanded",String(open));
+    if(open) sayWord(WORDS[+b.parentElement.dataset.i][0]);
+  });
+  root.querySelectorAll("[data-say]").forEach(s=>{
+    const go=()=>{ const i=+s.dataset.say; speak(`${SAY_AS[WORDS[i][0]]||WORDS[i][0]}. ${spelledOut(WORDS[i][0])}. ${SAY_AS[WORDS[i][0]]||WORDS[i][0]}.`, .8); };
+    s.onclick=go; s.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } };
+  });
+}
+function renderStudy(){
+  const q = norm($("#search").value.trim());
+  const idx = WORDS.map((w,i)=>i).filter(i=>(!q||norm(WORDS[i][0]).includes(q)) && (studyFilter==="all"||status(WORDS[i][0])===studyFilter));
+  $("#list").innerHTML = idx.length ? idx.map(itemHTML).join("") : `<div style="padding:20px;color:var(--muted)">No words here yet.</div>`;
+  wireList($("#list"));
+}
+$("#search").oninput = renderStudy;
+$("#studyFilter").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; studyFilter=b.dataset.v; setSeg("#studyFilter",studyFilter); renderStudy(); };
+
+/* keyboard: R = hear the word again during a turn */
+document.addEventListener("keydown", e=>{
+  if(!session || $("#round").hidden || e.target.matches("input,select,textarea")) return;
+  if(e.key==="r"){ sayWord(cur.w); }
+});
+
+renderHome();
+</script>
+</body>
+</html>

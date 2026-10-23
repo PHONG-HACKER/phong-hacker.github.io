@@ -7,6 +7,12 @@ permalink: /games/
 Welcome to my games collection! These are games I've created using AI to help me code and bring my ideas to life. I'm always working on improving my games, fixing bugs, and adding exciting new features! I usually release updates on Saturdays, so be sure to check back for new content and improvements!
 
 <div class="game-grid">
+  <a class="game-card" href="https://phong-hacker.github.io/WORD-CLUB/">
+    <span class="game-icon">🐝</span>
+    <span class="game-title">Word Club</span>
+    <span class="game-desc">Spelling bee practice with 150 words. Hear the word, ask for the definition or a sentence, then spell it out loud into the mic!</span>
+    <span class="game-play">▶ Play</span>
+  </a>
   <a class="game-card" href="https://phong-hacker.github.io/STRIKE-PROTOCOL/">
     <span class="game-icon">🎯</span>
     <span class="game-title">Strike Protocol</span>
