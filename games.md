@@ -10,7 +10,7 @@ Welcome to my games collection! These are games I've created using AI to help me
   <a class="game-card" href="https://phong-hacker.github.io/WORD-CLUB/">
     <span class="game-icon">🐝</span>
     <span class="game-title">Word Club</span>
-    <span class="game-desc">Spelling bee practice with 150 words. Hear the word, ask for the definition or a sentence, then spell it out loud into the mic!</span>
+    <span class="game-desc">Spelling bee practice with 450 words in three levels: One Bee, Two Bee and Three Bee. Hear the word, ask for the definition or a sentence, then spell it out loud into the mic!</span>
     <span class="game-play">▶ Play</span>
   </a>
   <a class="game-card" href="https://phong-hacker.github.io/STRIKE-PROTOCOL/">
