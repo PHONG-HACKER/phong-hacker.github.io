@@ -1,0 +1,1033 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
+<title>Blockfall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: full-bleed 3D scene; one scrollable control tray pinned top-left, help strip bottom-right. Single deliberate look. */
+  :root {
+    --sky: #cfdbe6;
+    --ink: #1d2733;
+    --ink-soft: #55636f;
+    --tray: rgba(247, 249, 251, 0.9);
+    --line: #c4ceda;
+    --accent: #e4572e;
+    --fire: #f08a24;
+    --chip: #e6ecf2;
+    --display: "Fredoka", "Avenir Next Rounded", "Trebuchet MS", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: light;
+  }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--sky); color: var(--ink); font-family: var(--display); }
+  #scene { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+
+  .tray {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    left: calc(12px + env(safe-area-inset-left, 0px));
+    width: 300px; max-width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+    max-height: calc(100% - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto; overscroll-behavior: contain;
+    background: var(--tray);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(29, 39, 51, 0.12);
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 12px;
+    user-select: none; -webkit-user-select: none;
+  }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.01em; line-height: 1; display: flex; align-items: center; gap: 8px; }
+  .logo { display: inline-grid; grid-template-columns: repeat(2, 9px); gap: 2px; }
+  .logo i { width: 9px; height: 9px; border-radius: 2px; display: block; }
+  .stats { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); font-variant-numeric: tabular-nums; text-align: right; line-height: 1.35; }
+  .stats b { color: var(--ink); font-weight: 600; }
+  .label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-soft); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .label span { text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .seg { display: grid; background: var(--chip); border-radius: 9px; padding: 3px; gap: 3px; }
+  .tools { grid-template-columns: repeat(6, 1fr); }
+  .tools button { font-size: 12px; }
+  .shapes { grid-template-columns: repeat(4, 1fr); }
+  .mats { grid-template-columns: repeat(3, 1fr); }
+  .seg button, .acts button, .toggle {
+    font: 600 12.5px/1.1 var(--display); color: var(--ink); border: 0; background: transparent;
+    padding: 8px 2px; border-radius: 7px; cursor: pointer; min-width: 0;
+  }
+  .tools button { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .tools button[data-tool="fire"][aria-pressed="true"] { background: var(--fire); color: #fff; }
+  .tools button[data-tool="delete"][aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .seg kbd { font: 400 9px var(--mono); opacity: 0.55; }
+  .mats button { display: flex; align-items: center; gap: 6px; padding: 8px 6px; justify-content: flex-start; }
+  .sw { width: 12px; height: 12px; border-radius: 3px; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+  .acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .acts button { background: #fff; border: 1px solid var(--line); padding: 9px 4px; }
+  .acts .wide { grid-column: span 4; }
+  .acts .half { grid-column: span 1; }
+  .acts .rain { background: var(--ink); border-color: var(--ink); color: #fff; font-size: 14px; }
+  .acts .bonfire { background: var(--fire); border-color: var(--fire); color: #fff; }
+  .acts .reset { grid-column: span 3; color: var(--accent); border-color: var(--accent); }
+  .seg button:hover:not([aria-pressed="true"]), .acts button:hover { filter: brightness(0.95); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .toggle { background: var(--chip); padding: 7px 9px; font-size: 12px; }
+  .tray.collapsed .body { display: none; }
+  .body { display: flex; flex-direction: column; gap: 12px; }
+
+  .hint {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    font: 600 15px var(--display); color: var(--ink); background: var(--tray);
+    border: 1px solid var(--line); border-radius: 999px; padding: 10px 18px; pointer-events: none;
+    box-shadow: 0 6px 20px rgba(29, 39, 51, 0.1); white-space: nowrap;
+  }
+  .help {
+    position: fixed;
+    right: calc(12px + env(safe-area-inset-right, 0px));
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    max-width: 420px;
+    font: 400 11.5px/1.5 var(--mono); color: var(--ink-soft);
+    background: var(--tray); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
+    display: flex; flex-wrap: wrap; gap: 4px 14px; pointer-events: none;
+  }
+  .help b { color: var(--ink); font-weight: 600; }
+  @media (max-width: 760px), (hover: none) { .help { display: none; } }
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div class="hint" id="hint">Click the ground to drop a block</div>
+
+<div class="tray" id="tray">
+  <div class="head">
+    <h1><span class="logo"><i style="background:#e4572e"></i><i style="background:#f3a712"></i><i style="background:#2f6fb0"></i><i style="background:#5fae6e"></i></span>Blockfall</h1>
+    <div class="stats"><b id="count">0</b> blocks · <b id="burning">0</b> on fire<br><span id="fps">– fps</span></div>
+  </div>
+  <div class="body">
+    <div>
+      <div class="label">Click does <span id="tool-note">drops from above</span></div>
+      <div class="seg tools" id="tools">
+        <button id="tool-drop" data-tool="drop" aria-pressed="true">Drop<kbd>1</kbd></button>
+        <button id="tool-place" data-tool="place" aria-pressed="false">Place<kbd>2</kbd></button>
+        <button id="tool-throw" data-tool="throw" aria-pressed="false">Throw<kbd>3</kbd></button>
+        <button id="tool-fire" data-tool="fire" aria-pressed="false">Fire<kbd>4</kbd></button>
+        <button id="tool-blast" data-tool="blast" aria-pressed="false">Blast<kbd>5</kbd></button>
+        <button id="tool-delete" data-tool="delete" aria-pressed="false">Del<kbd>6</kbd></button>
+      </div>
+    </div>
+    <div>
+      <div class="label">Shape</div>
+      <div class="seg shapes" id="shapes"></div>
+    </div>
+    <div>
+      <div class="label">Material <span id="mat-note"></span></div>
+      <div class="seg mats" id="mats"></div>
+    </div>
+    <div>
+      <div class="label">Spawn</div>
+      <div class="acts">
+        <button id="act-rain" class="rain wide">Make it rain · 150 blocks</button>
+        <button id="act-pyramid">Pyramid</button>
+        <button id="act-tower">Tower</button>
+        <button id="act-wall">Wall</button>
+        <button id="act-bonfire" class="bonfire">Bonfire</button>
+        <button id="act-clear" class="half">Clear</button>
+        <button id="act-reset" class="reset">Reset everything</button>
+      </div>
+    </div>
+  </div>
+  <button class="toggle" id="collapse" aria-expanded="true">Hide controls</button>
+</div>
+
+<div class="help">
+  <span><b>Drag</b> orbit</span><span><b>Right-drag</b> pan</span><span><b>Scroll</b> zoom</span>
+  <span><b>WASD</b> move · <b>Q/E</b> down/up</span><span><b>Space</b> pour blocks</span>
+  <span><b>R</b> turn block (Place)</span><span><b>Click TNT</b> to detonate</span><span><b>F</b> ignite · <b>X</b> delete (under cursor)</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script>
+(() => {
+  const MAX_BLOCKS = 800;
+  const TAU = Math.PI * 2;
+
+  // ---------- Shapes ----------
+  // dims = bounding box (w, h, d). Prisms: n sides, top = top radius as a fraction of the bottom (0 = pointed).
+  const SHAPES = {
+    cube:     { label: "Cube",     kind: "box",    dims: [1, 1, 1],       vol: 1 },
+    brick:    { label: "Brick",    kind: "box",    dims: [1.6, 0.7, 0.8], vol: 1 },
+    plank:    { label: "Plank",    kind: "box",    dims: [3, 0.35, 0.9],  vol: 1 },
+    pillar:   { label: "Pillar",   kind: "box",    dims: [0.6, 2.6, 0.6], vol: 1 },
+    cylinder: { label: "Cylinder", kind: "prism",  dims: [1, 1.4, 1],     n: 16, top: 1, smooth: true, vol: 0.785 },
+    disc:     { label: "Disc",     kind: "prism",  dims: [1.5, 0.4, 1.5], n: 16, top: 1, smooth: true, vol: 0.785 },
+    ball:     { label: "Ball",     kind: "sphere", dims: [1, 1, 1],       vol: 0.524 },
+    cone:     { label: "Cone",     kind: "prism",  dims: [1.1, 1.4, 1.1], n: 16, top: 0, smooth: true, vol: 0.26 },
+    pyramid:  { label: "Pyramid",  kind: "prism",  dims: [1.4, 1.1, 1.4], n: 4,  top: 0, offset: Math.PI / 4, vol: 0.167 },
+    hex:      { label: "Hexagon",  kind: "prism",  dims: [1.1, 1, 1.1],   n: 6,  top: 1, vol: 0.65 },
+    tri:      { label: "Triangle", kind: "prism",  dims: [1.3, 1, 1.3],   n: 3,  top: 1, offset: -Math.PI / 2, vol: 0.325 },
+  };
+  const SHAPE_KEYS = Object.keys(SHAPES);
+
+  // ---------- Materials ----------
+  const TOY = ["#e4572e", "#f3a712", "#2f6fb0", "#5fae6e", "#7a5cc2", "#e98aa6"];
+  const MATS = {
+    wood:      { label: "Wood",      colors: ["#b07a45", "#c18c55", "#9a6738", "#d1a26b"], density: 0.6, friction: 0.6, rest: 0.1, rough: 0.75, burn: 8, heatRate: 0.3, smoke: [0.36, 0.34, 0.32], note: "burns" },
+    stone:     { label: "Stone",     colors: ["#8d9196", "#7a7f86", "#a3a6a9", "#6b6f74"], density: 2.5, friction: 0.75, rest: 0.05, rough: 0.95, heatRate: 0, note: "fireproof, heavy" },
+    metal:     { label: "Metal",     colors: ["#b8c0c8", "#9ea7b0", "#cfd5db"], density: 4, friction: 0.35, rest: 0.2, rough: 0.28, metalness: 0.9, heatRate: 0.8, glows: true, note: "glows red-hot" },
+    ice:       { label: "Ice",       colors: ["#bfe6ff", "#a8dcf5", "#d6f1ff"], density: 0.9, friction: 0.03, rest: 0.05, rough: 0.08, opacity: 0.72, heatRate: 0, melts: true, note: "slippery, melts" },
+    glass:     { label: "Glass",     colors: ["#d8f3ef", "#cdeafc", "#e6f7f2"], density: 2.4, friction: 0.4, rest: 0.15, rough: 0.02, metalness: 0.1, opacity: 0.32, heatRate: 0, note: "fireproof" },
+    rubber:    { label: "Rubber",    colors: ["#e63946", "#2a9d8f", "#f4a261", "#3d3d45"], density: 1.1, friction: 0.95, rest: 0.85, rough: 0.9, burn: 10, heatRate: 0.14, smoke: [0.08, 0.08, 0.09], note: "bouncy, slow burn" },
+    plastic:   { label: "Plastic",   colors: TOY, density: 1, friction: 0.45, rest: 0.3, rough: 0.35, burn: 6, heatRate: 0.22, smoke: [0.12, 0.12, 0.13], note: "burns, black smoke" },
+    cardboard: { label: "Cardboard", colors: ["#c4a27a", "#b8956b", "#d0b088"], density: 0.25, friction: 0.7, rest: 0.05, rough: 1, burn: 3.5, heatRate: 0.8, smoke: [0.46, 0.44, 0.41], note: "light, burns fast" },
+    tnt:       { label: "TNT",       colors: ["#c8262c", "#b51f25"], density: 1, friction: 0.6, rest: 0.05, rough: 0.6, burn: 1.4, heatRate: 1.2, explode: true, smoke: [0.3, 0.3, 0.3], note: "explodes when lit" },
+  };
+  const MAT_KEYS = Object.keys(MATS);
+
+  let tool = "drop", shape = "cube", mat = "wood";
+
+  // ---------- Renderer / scene ----------
+  const canvas = document.getElementById("scene");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color("#cfdbe6");
+  scene.fog = new THREE.Fog("#cfdbe6", 70, 160);
+
+  // Soft studio environment so metal and glass have something to reflect
+  {
+    const envScene = new THREE.Scene();
+    const sg = new THREE.SphereGeometry(10, 32, 16);
+    const p = sg.attributes.position, cols = [];
+    const lo = new THREE.Color("#5d6873"), hi = new THREE.Color("#f4f8fb"), c = new THREE.Color();
+    for (let i = 0; i < p.count; i++) { c.copy(lo).lerp(hi, THREE.MathUtils.smoothstep(p.getY(i), -3, 5)); cols.push(c.r, c.g, c.b); }
+    sg.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+    envScene.add(new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.6, 1.6), side: THREE.DoubleSide }));
+    panel.position.set(4, 8, 3); panel.lookAt(0, 0, 0);
+    envScene.add(panel);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+  }
+
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 500);
+  const HOME_CAM = new THREE.Vector3(20, 16, 24), HOME_TARGET = new THREE.Vector3(0, 1.5, 0);
+  camera.position.copy(HOME_CAM);
+
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.target.copy(HOME_TARGET);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI * 0.495;
+  controls.minDistance = 3;
+  controls.maxDistance = 120;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x7d8a99, 0.4));
+  const sun = new THREE.DirectionalLight(0xfff4e6, 0.9);
+  sun.position.set(25, 40, 18);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 120 });
+  sun.shadow.bias = -0.0005;
+  scene.add(sun);
+  const fireLight = new THREE.PointLight("#ff7a2a", 0, 28, 2);
+  scene.add(fireLight);
+
+  // Ground: a finite slab, so blocks pushed off the edge fall away
+  const GROUND = 80;
+  const gridCanvas = document.createElement("canvas");
+  gridCanvas.width = gridCanvas.height = 256;
+  const g = gridCanvas.getContext("2d");
+  g.fillStyle = "#e3e8ed"; g.fillRect(0, 0, 256, 256);
+  g.strokeStyle = "#cdd5de"; g.lineWidth = 2;
+  for (let i = 0; i <= 8; i++) { const q = i * 32; g.beginPath(); g.moveTo(q, 0); g.lineTo(q, 256); g.moveTo(0, q); g.lineTo(256, q); g.stroke(); }
+  g.strokeStyle = "#b6c1cc"; g.lineWidth = 3; g.strokeRect(0, 0, 256, 256);
+  const gridTex = new THREE.CanvasTexture(gridCanvas);
+  gridTex.wrapS = gridTex.wrapT = THREE.RepeatWrapping;
+  gridTex.repeat.set(GROUND / 8, GROUND / 8);
+  gridTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  gridTex.encoding = THREE.sRGBEncoding;
+  const sideMat = new THREE.MeshStandardMaterial({ color: "#a9b4c0", roughness: 0.9, envMapIntensity: 0.3 });
+  const groundMesh = new THREE.Mesh(new THREE.BoxGeometry(GROUND, 1, GROUND),
+    [sideMat, sideMat, new THREE.MeshStandardMaterial({ map: gridTex, roughness: 0.95, envMapIntensity: 0.3 }), sideMat, sideMat, sideMat]);
+  groundMesh.position.y = -0.5;
+  groundMesh.receiveShadow = true;
+  scene.add(groundMesh);
+
+  // ---------- Physics ----------
+  const world = new CANNON.World();
+  world.gravity.set(0, -20, 0);
+  world.broadphase = new CANNON.SAPBroadphase(world);
+  world.allowSleep = true;
+  world.solver.iterations = 8;
+
+  const physMats = {};
+  MAT_KEYS.forEach((k) => (physMats[k] = new CANNON.Material(k)));
+  const groundPhys = new CANNON.Material("ground");
+  const pairs = MAT_KEYS.map((k) => [physMats[k], MATS[k]]).concat([[groundPhys, { friction: 0.6, rest: 0.1 }]]);
+  for (let i = 0; i < pairs.length; i++) for (let j = i; j < pairs.length; j++) {
+    world.addContactMaterial(new CANNON.ContactMaterial(pairs[i][0], pairs[j][0], {
+      friction: Math.sqrt(pairs[i][1].friction * pairs[j][1].friction),
+      restitution: Math.max(pairs[i][1].rest, pairs[j][1].rest),
+    }));
+  }
+  const groundBody = new CANNON.Body({ mass: 0, material: groundPhys });
+  groundBody.addShape(new CANNON.Box(new CANNON.Vec3(GROUND / 2, 0.5, GROUND / 2)));
+  groundBody.position.set(0, -0.5, 0);
+  world.addBody(groundBody);
+  const removeBody = (b) => (world.removeBody || world.remove).call(world, b);
+
+  // Unit prism (fits a 1×1×1 box) as vertex list + outward-wound faces, shared by physics and visuals
+  function prismData(sd) {
+    const n = sd.n, off = sd.offset || 0, v = [], f = [];
+    for (let i = 0; i < n; i++) { const a = off + (TAU * i) / n; v.push([0.5 * Math.cos(a), -0.5, 0.5 * Math.sin(a)]); }
+    f.push([...Array(n).keys()]);
+    if (sd.top > 0) {
+      for (let i = 0; i < n; i++) { const a = off + (TAU * i) / n; v.push([0.5 * sd.top * Math.cos(a), 0.5, 0.5 * sd.top * Math.sin(a)]); }
+      f.push([...Array(n).keys()].map((i) => 2 * n - 1 - i));
+      for (let i = 0; i < n; i++) { const j = (i + 1) % n; f.push([i, n + i, n + j, j]); }
+    } else {
+      v.push([0, 0.5, 0]);
+      for (let i = 0; i < n; i++) f.push([i, n, (i + 1) % n]);
+    }
+    return { v, f };
+  }
+  SHAPE_KEYS.forEach((k) => { const sd = SHAPES[k]; if (sd.kind === "prism") sd.data = prismData(sd); });
+
+  function makeShape(sd, d) {
+    if (sd.kind === "box") return new CANNON.Box(new CANNON.Vec3(d.x / 2, d.y / 2, d.z / 2));
+    if (sd.kind === "sphere") return new CANNON.Sphere(d.x / 2);
+    return new CANNON.ConvexPolyhedron(sd.data.v.map((p) => new CANNON.Vec3(p[0] * d.x, p[1] * d.y, p[2] * d.z)), sd.data.f.map((f) => f.slice()));
+  }
+
+  function makeGeometry(sd) {
+    if (sd.kind === "box") return new THREE.BoxGeometry(1, 1, 1);
+    if (sd.kind === "sphere") return new THREE.SphereGeometry(0.5, 24, 16);
+    // thetaStart π/2 lines Three's vertex ring up with the physics ring exactly
+    if (sd.smooth) return new THREE.CylinderGeometry(0.5 * sd.top, 0.5, 1, sd.n, 1, false, Math.PI / 2);
+    const pos = [];
+    for (const face of sd.data.f) for (let i = 1; i < face.length - 1; i++)
+      for (const idx of [face[0], face[i], face[i + 1]]) pos.push(...sd.data.v[idx]);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geo.computeVertexNormals();
+    return geo;
+  }
+  const geometries = {};
+  SHAPE_KEYS.forEach((k) => (geometries[k] = makeGeometry(SHAPES[k])));
+
+  // ---------- Block rendering: one instanced mesh per (shape, material), made on first use ----------
+  const meshes = new Map();
+  function getMesh(sk, mk) {
+    const key = sk + "|" + mk;
+    let m = meshes.get(key);
+    if (m) return m;
+    const md = MATS[mk];
+    const material = new THREE.MeshStandardMaterial({
+      roughness: md.rough, metalness: md.metalness || 0,
+      transparent: !!md.opacity, opacity: md.opacity || 1,
+    });
+    m = new THREE.InstancedMesh(geometries[sk], material, MAX_BLOCKS);
+    m.castShadow = !md.opacity || md.opacity > 0.5;
+    m.receiveShadow = true;
+    m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    m.setColorAt(0, new THREE.Color(1, 1, 1));
+    m.count = 0;
+    m.frustumCulled = false;
+    m.userData.refs = [];
+    scene.add(m);
+    meshes.set(key, m);
+    return m;
+  }
+
+  const blocks = [];
+  let nextId = 1;
+  const randFrom = (arr) => arr[(Math.random() * arr.length) | 0];
+  const pickShape = () => SHAPE_KEYS[(Math.random() * SHAPE_KEYS.length) | 0];
+
+  function spawn(sk, mk, dims, pos, opts = {}) {
+    if (blocks.length >= MAX_BLOCKS) removeBlock(blocks[0]);
+    const sd = SHAPES[sk], md = MATS[mk];
+    const d = new THREE.Vector3(dims[0], dims[1], dims[2]);
+    const body = new CANNON.Body({ mass: Math.max(0.05, d.x * d.y * d.z * sd.vol * md.density), material: physMats[mk] });
+    body.addShape(makeShape(sd, d));
+    body.position.set(pos.x, pos.y, pos.z);
+    body.sleepSpeedLimit = 0.25;
+    body.sleepTimeLimit = 0.6;
+    body.linearDamping = 0.02;
+    body.angularDamping = sd.kind === "sphere" ? 0.25 : 0.05;
+    if (opts.yaw) body.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), opts.yaw);
+    if (opts.spin) body.quaternion.setFromEuler(Math.random() * TAU, Math.random() * TAU, Math.random() * TAU);
+    if (opts.vel) body.velocity.set(opts.vel.x, opts.vel.y, opts.vel.z);
+    if (opts.angVel) body.angularVelocity.set(opts.angVel.x, opts.angVel.y, opts.angVel.z);
+    world.addBody(body);
+    if (opts.sleep) body.sleep();
+    const base = new THREE.Color(opts.color || randFrom(md.colors)).convertSRGBToLinear();
+    const b = {
+      id: nextId++, body, shape: sk, mat: mk, dims: d, base, color: base.clone(),
+      radius: d.length() * 0.38, heat: 0, heatIn: 0, burning: false, burnLeft: 0, burnTime: 1, melt: 0, meltStep: 0, dead: false,
+    };
+    blocks.push(b);
+    return b;
+  }
+  function spawnSelected(pos, opts = {}) {
+    const sk = shape === "mix" ? pickShape() : shape;
+    const s = 0.85 + Math.random() * 0.3;
+    const dd = SHAPES[sk].dims;
+    return spawn(sk, mat, [dd[0] * s, dd[1] * s, dd[2] * s], pos, { spin: true, ...opts });
+  }
+  function removeBlock(b) {
+    if (b.dead) return;
+    b.dead = true;
+    removeBody(b.body);
+    const i = blocks.indexOf(b);
+    if (i >= 0) blocks.splice(i, 1);
+  }
+  function clearAll() {
+    for (const b of blocks) { b.dead = true; removeBody(b.body); }
+    blocks.length = 0;
+    campfires.length = 0;
+  }
+
+  // ---------- Particles (fire, smoke, debris) ----------
+  function makeParticles(max, additive, core) {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(max * 3), col = new Float32Array(max * 3), alpha = new Float32Array(max), size = new Float32Array(max);
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute("pcolor", new THREE.BufferAttribute(col, 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute("palpha", new THREE.BufferAttribute(alpha, 1).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute("psize", new THREE.BufferAttribute(size, 1).setUsage(THREE.DynamicDrawUsage));
+    const material = new THREE.ShaderMaterial({
+      uniforms: { uScale: { value: 600 }, uCore: { value: core } },
+      vertexShader: `
+        attribute vec3 pcolor; attribute float palpha; attribute float psize;
+        uniform float uScale; varying vec3 vColor; varying float vAlpha;
+        void main() {
+          vColor = pcolor; vAlpha = palpha;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = psize * uScale / max(-mv.z, 0.1);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform float uCore; varying vec3 vColor; varying float vAlpha;
+        void main() {
+          float d = length(gl_PointCoord - 0.5);
+          if (d > 0.5 || vAlpha < 0.003) discard;
+          float a = smoothstep(0.5, 0.05, d) * vAlpha;
+          gl_FragColor = vec4(vColor * (1.0 + uCore * (1.0 - d * 2.0)), a);
+        }`,
+      transparent: true, depthWrite: false,
+      blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    });
+    const pts = new THREE.Points(geo, material);
+    pts.frustumCulled = false;
+    scene.add(pts);
+    const vel = new Float32Array(max * 3), life = new Float32Array(max), maxLife = new Float32Array(max);
+    const s0 = new Float32Array(max), s1 = new Float32Array(max), c0 = new Float32Array(max * 3), c1 = new Float32Array(max * 3);
+    const a0 = new Float32Array(max), grav = new Float32Array(max);
+    let head = 0;
+    return {
+      material,
+      spawn(x, y, z, vx, vy, vz, lf, sa, sb, ca, cb, a, gr = 0) {
+        const i = head; head = (head + 1) % max;
+        pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
+        vel[i * 3] = vx; vel[i * 3 + 1] = vy; vel[i * 3 + 2] = vz;
+        life[i] = maxLife[i] = lf; s0[i] = sa; s1[i] = sb; a0[i] = a; grav[i] = gr;
+        c0[i * 3] = ca[0]; c0[i * 3 + 1] = ca[1]; c0[i * 3 + 2] = ca[2];
+        c1[i * 3] = cb[0]; c1[i * 3 + 1] = cb[1]; c1[i * 3 + 2] = cb[2];
+      },
+      update(dt) {
+        const damp = Math.max(0, 1 - dt * 1.2);
+        for (let i = 0; i < max; i++) {
+          if (life[i] <= 0) { alpha[i] = 0; continue; }
+          life[i] -= dt;
+          if (life[i] <= 0) { alpha[i] = 0; continue; }
+          const k = i * 3;
+          vel[k + 1] += grav[i] * dt;
+          vel[k] *= damp; vel[k + 2] *= damp;
+          pos[k] += vel[k] * dt; pos[k + 1] += vel[k + 1] * dt; pos[k + 2] += vel[k + 2] * dt;
+          if (pos[k + 1] < 0.02 && grav[i] < 0) { pos[k + 1] = 0.02; vel[k + 1] *= -0.3; }
+          const t = 1 - life[i] / maxLife[i];
+          size[i] = s0[i] + (s1[i] - s0[i]) * t;
+          col[k] = c0[k] + (c1[k] - c0[k]) * t; col[k + 1] = c0[k + 1] + (c1[k + 1] - c0[k + 1]) * t; col[k + 2] = c0[k + 2] + (c1[k + 2] - c0[k + 2]) * t;
+          alpha[i] = a0[i] * (t < 0.12 ? t / 0.12 : 1 - (t - 0.12) / 0.88);
+        }
+        geo.attributes.position.needsUpdate = geo.attributes.pcolor.needsUpdate = geo.attributes.palpha.needsUpdate = geo.attributes.psize.needsUpdate = true;
+      },
+      clear() { life.fill(0); alpha.fill(0); },
+    };
+  }
+  const flames = makeParticles(5000, false, 0.6);
+  const glow = makeParticles(2000, true, 0.4);
+  const smoke = makeParticles(2500, false, 0);
+  const debris = makeParticles(1500, false, 0);
+
+  const FLAME_A = [1, 0.72, 0.18], FLAME_B = [0.8, 0.12, 0.02], GLOW = [1, 0.45, 0.1];
+  function emitFlame(x, y, z, spread, scale = 1) {
+    flames.spawn(
+      x + (Math.random() - 0.5) * spread, y, z + (Math.random() - 0.5) * spread,
+      (Math.random() - 0.5) * 0.6, 2 + Math.random() * 2.5, (Math.random() - 0.5) * 0.6,
+      0.5 + Math.random() * 0.5, (1.1 + Math.random() * 0.8) * scale, 0.1, FLAME_A, FLAME_B, 0.9
+    );
+    if (Math.random() < 0.35) glow.spawn(x, y + 0.3, z, 0, 1, 0, 0.5, 2.2 * scale, 1.2 * scale, GLOW, GLOW, 0.35);
+  }
+  function emitSmoke(x, y, z, c, spread = 0.4) {
+    smoke.spawn(x + (Math.random() - 0.5) * spread, y, z + (Math.random() - 0.5) * spread,
+      (Math.random() - 0.5) * 0.4, 1 + Math.random() * 1.2, (Math.random() - 0.5) * 0.4,
+      2 + Math.random() * 1.6, 0.5 + Math.random() * 0.3, 2.2 + Math.random(), c, c, 0.32);
+  }
+  function burst(p, n, c, speed = 4, gr = -14, sz = 0.25, life = 1) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * TAU, u = Math.random() * 2 - 1, s = Math.sqrt(1 - u * u), v = speed * (0.4 + Math.random() * 0.6);
+      debris.spawn(p.x, p.y, p.z, Math.cos(a) * s * v, Math.abs(u) * v + 1, Math.sin(a) * s * v, life * (0.6 + Math.random() * 0.6), sz, sz * 0.4, c, c, 0.9, gr);
+    }
+  }
+
+  // ---------- Fire ----------
+  const campfires = [];
+  const CHAR = new THREE.Color("#1b1512").convertSRGBToLinear();
+  const EMBER = new THREE.Color("#ff6a1a").convertSRGBToLinear();
+  const HOT = new THREE.Color("#ff3c12").convertSRGBToLinear();
+  const WHITE_HOT = new THREE.Color("#ffd58a").convertSRGBToLinear();
+  const WATER = [0.55, 0.78, 0.95];
+
+  function ignite(b, fuse) {
+    const md = MATS[b.mat];
+    if (!md.burn || b.dead) return false;
+    if (!b.burning) {
+      b.burning = true;
+      b.burnTime = md.explode ? md.burn : md.burn * (0.75 + Math.random() * 0.5) * Math.max(0.6, b.radius * 1.6);
+      b.burnLeft = b.burnTime;
+      b.body.wakeUp();
+    }
+    if (fuse !== undefined) b.burnLeft = Math.min(b.burnLeft, fuse);
+    return true;
+  }
+  function applyFireTo(b, p) {
+    const md = MATS[b.mat];
+    if (ignite(b)) return;
+    if (md.glows) { b.heat = 1.6; return; }
+    if (md.melts) { b.melt = Math.min(0.95, b.melt + 0.35); return; }
+    // Fireproof: light a fire against it instead
+    campfires.push({ pos: new THREE.Vector3(p.x, p.y, p.z), life: 8 });
+  }
+
+  function heatTick(dt) {
+    const sources = [];
+    for (const b of blocks) if (b.burning) sources.push({ p: b.body.position, r: b.radius, I: 1, b });
+    for (const c of campfires) sources.push({ p: c.pos, r: 0.8, I: 1.6, b: null });
+    for (const b of blocks) b.heatIn = 0;
+    const REACH = 1.2;
+    for (const s of sources) {
+      for (const b of blocks) {
+        if (b === s.b) continue;
+        const bp = b.body.position;
+        const lim = s.r + b.radius + REACH;
+        const dx = bp.x - s.p.x, dy = bp.y - s.p.y, dz = bp.z - s.p.z;
+        if (Math.abs(dx) > lim || Math.abs(dy) > lim || Math.abs(dz) > lim) continue;
+        const d = Math.sqrt(dx * dx + dy * dy + dz * dz) - s.r - b.radius;
+        if (d < REACH) b.heatIn += s.I * (1 - Math.max(d, 0) / REACH);
+      }
+    }
+    for (const b of blocks) b.heatIn = Math.min(b.heatIn, 1.2);
+    for (const b of blocks) {
+      const md = MATS[b.mat];
+      if (b.heatIn > 0) b.heat = Math.min(1.6, b.heat + b.heatIn * md.heatRate * dt);
+      else b.heat = Math.max(0, b.heat - (md.glows ? 0.08 : 0.15) * dt);
+      if (md.burn && !b.burning && b.heat >= 1) ignite(b);
+      if (md.melts && b.heatIn > 0) b.melt += b.heatIn * dt * 0.3;
+    }
+  }
+
+  // Shrink a melting block's collision shape in steps so it doesn't hover
+  function reshape(b, scale) {
+    const sd = SHAPES[b.shape], md = MATS[b.mat];
+    const d = b.dims.clone().multiplyScalar(scale);
+    const body = b.body;
+    body.shapes.length = 0; body.shapeOffsets.length = 0; body.shapeOrientations.length = 0;
+    body.mass = Math.max(0.05, d.x * d.y * d.z * sd.vol * md.density);
+    body.addShape(makeShape(sd, d));
+    body.wakeUp();
+  }
+
+  // ---------- Blast ----------
+  const blasts = [];
+  function blastAt(p, radius = 7, power = 26) {
+    for (const b of blocks) {
+      const bp = b.body.position;
+      const dx = bp.x - p.x, dy = bp.y - p.y, dz = bp.z - p.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (dist > radius) continue;
+      const k = 1 - dist / radius;
+      const f = (power * k) / Math.max(dist, 0.4);
+      b.body.wakeUp();
+      b.body.velocity.x += dx * f;
+      b.body.velocity.y += Math.abs(dy) * f + power * 0.35 * k;
+      b.body.velocity.z += dz * f;
+      b.body.angularVelocity.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+      if (b.mat === "tnt") ignite(b, 0.1 + Math.random() * 0.25);
+      else if (MATS[b.mat].burn) b.heat += 0.6 * k;
+    }
+    const m = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16),
+      new THREE.MeshBasicMaterial({ color: "#f3a712", transparent: true, opacity: 0.55, depthWrite: false }));
+    m.position.copy(p);
+    scene.add(m);
+    blasts.push({ m, t: 0, radius });
+    for (let i = 0; i < 40; i++) emitFlame(p.x, p.y + Math.random(), p.z, radius * 0.4, 1.6);
+  }
+
+  // ---------- Structures (use the selected material) ----------
+  const EPS = 0.002;
+  function pyramid(cx, cz, n = 6) {
+    for (let l = 0; l < n; l++) {
+      const w = n - l;
+      for (let i = 0; i < w; i++) for (let j = 0; j < w; j++)
+        spawn("cube", mat, [1, 1, 1], { x: cx + i - (w - 1) / 2, y: 0.5 + l * (1 + EPS), z: cz + j - (w - 1) / 2 }, { sleep: true });
+    }
+  }
+  function tower(cx, cz, levels = 14) {
+    const h = 0.6;
+    for (let l = 0; l < levels; l++) for (let k = -1; k <= 1; k++) {
+      const y = h / 2 + l * (h + EPS);
+      if (l % 2 === 0) spawn("plank", mat, [3, h, 0.98], { x: cx, y, z: cz + k }, { sleep: true });
+      else spawn("plank", mat, [0.98, h, 3], { x: cx + k, y, z: cz }, { sleep: true });
+    }
+  }
+  function wall(cx, cz, cols = 12, rows = 8) {
+    const bw = 1.2, bh = 0.6, bd = 0.6;
+    for (let r = 0; r < rows; r++) {
+      const off = r % 2 ? bw / 2 : 0;
+      for (let c = 0; c < cols; c++)
+        spawn("brick", mat, [bw - 0.02, bh, bd], { x: cx + c * bw - (cols * bw) / 2 + off, y: bh / 2 + r * (bh + EPS), z: cz }, { sleep: true });
+    }
+  }
+  function rain(n = 150, center = controls.target, radius = 9) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * radius;
+      spawnSelected({ x: center.x + Math.cos(a) * r, y: 14 + Math.random() * 30, z: center.z + Math.sin(a) * r });
+    }
+  }
+  // A crisscross pile of wooden logs with a fire lit underneath
+  function bonfire(cx, cz) {
+    for (let l = 0; l < 5; l++) for (const k of [-0.8, 0.8]) {
+      const y = 0.22 + l * 0.44;
+      if (l % 2 === 0) spawn("plank", "wood", [2.4, 0.42, 0.5], { x: cx, y, z: cz + k }, { sleep: true });
+      else spawn("plank", "wood", [0.5, 0.42, 2.4], { x: cx + k, y, z: cz }, { sleep: true });
+    }
+    campfires.push({ pos: new THREE.Vector3(cx, 0, cz), life: 14 });
+  }
+  const spot = () => ({ x: controls.target.x + (Math.random() - 0.5) * 6, z: controls.target.z + (Math.random() - 0.5) * 6 });
+
+  // ---------- Picking ----------
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  let pointerInside = false;
+  function setNdc(e) {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  }
+  function pick() {
+    raycaster.setFromCamera(ndc, camera);
+    const targets = [groundMesh];
+    for (const m of meshes.values()) if (m.count) targets.push(m);
+    const hits = raycaster.intersectObjects(targets, false);
+    if (!hits.length) return null;
+    const h = hits[0];
+    const block = h.object.isInstancedMesh ? h.object.userData.refs[h.instanceId] : null;
+    const b = block && !block.dead ? block : null;
+    const normal = h.face ? h.face.normal.clone() : new THREE.Vector3(0, 1, 0);
+    if (b) { const bq = b.body.quaternion; normal.applyQuaternion(new THREE.Quaternion(bq.x, bq.y, bq.z, bq.w)); }
+    return { point: h.point, block: b, normal };
+  }
+
+  const ghost = new THREE.Mesh(geometries.cube,
+    new THREE.MeshBasicMaterial({ color: "#1d2733", transparent: true, opacity: 0.16, depthWrite: false }));
+  const ghostRing = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.7, 40),
+    new THREE.MeshBasicMaterial({ color: "#1d2733", transparent: true, opacity: 0.45, depthWrite: false, side: THREE.DoubleSide }));
+  ghostRing.rotation.x = -Math.PI / 2;
+  scene.add(ghost, ghostRing);
+
+  function dropAt(p) {
+    spawnSelected({ x: p.x + (Math.random() - 0.5) * 0.3, y: Math.max(p.y, 0) + 10 + Math.random() * 2, z: p.z + (Math.random() - 0.5) * 0.3 });
+  }
+  // ----- Place: put the block exactly where you click, upright and still -----
+  let placeRot = false, mixNext = pickShape();
+  const currentShape = () => (shape === "mix" ? mixNext : shape);
+  const snap = (v, origin) => origin + Math.round((v - origin) / 0.5) * 0.5;
+  function placement(hit) {
+    const sk = currentShape(), d = SHAPES[sk].dims;
+    const hx = (placeRot ? d[2] : d[0]) / 2, hy = d[1] / 2, hz = (placeRot ? d[0] : d[2]) / 2;
+    const p = hit.point;
+    if (!hit.block) return { x: snap(p.x, 0), y: Math.max(p.y, 0) + hy + 0.002, z: snap(p.z, 0) };
+    const body = hit.block.body;
+    body.computeAABB();
+    const lo = body.aabb.lowerBound, up = body.aabb.upperBound;
+    const cx = (lo.x + up.x) / 2, cz = (lo.z + up.z) / 2;
+    const n = hit.normal, ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
+    if (ay >= ax && ay >= az) {
+      // Top (or underside): stack on it, snapped to half-units from its centre
+      return { x: snap(p.x, cx), y: n.y > 0 ? up.y + hy + 0.002 : lo.y - hy - 0.002, z: snap(p.z, cz) };
+    }
+    // Side: sit flush against it, on the same floor
+    if (ax >= az) return { x: n.x > 0 ? up.x + hx + 0.002 : lo.x - hx - 0.002, y: lo.y + hy + 0.002, z: snap(p.z, cz) };
+    return { x: snap(p.x, cx), y: lo.y + hy + 0.002, z: n.z > 0 ? up.z + hz + 0.002 : lo.z - hz - 0.002 };
+  }
+  function placeAt(hit) {
+    const sk = currentShape();
+    spawn(sk, mat, SHAPES[sk].dims, placement(hit), { yaw: placeRot ? Math.PI / 2 : 0 });
+    mixNext = pickShape();
+  }
+
+  function throwBlock() {
+    raycaster.setFromCamera(ndc, camera);
+    const d = raycaster.ray.direction;
+    const o = camera.position.clone().addScaledVector(d, 2.5);
+    spawnSelected(o, {
+      vel: { x: d.x * 40, y: d.y * 40 + 3, z: d.z * 40 },
+      angVel: { x: Math.random() * 8 - 4, y: Math.random() * 8 - 4, z: Math.random() * 8 - 4 },
+    });
+  }
+  function deleteBlock(b) {
+    const p = b.body.position;
+    burst(p, 18, [0.75, 0.78, 0.82], 3, -6, 0.3, 0.6);
+    removeBlock(b);
+  }
+  function detonate(b) {
+    const p = b.body.position, at = new THREE.Vector3(p.x, p.y, p.z);
+    removeBlock(b);
+    blastAt(at, 7, 32);
+  }
+  function fireAt(hit) {
+    if (hit.block && hit.block.mat === "tnt") return detonate(hit.block);
+    if (hit.block) applyFireTo(hit.block, hit.point);
+    else campfires.push({ pos: hit.point.clone(), life: 10 });
+  }
+
+  function useTool() {
+    if (tool === "throw") return throwBlock();
+    const hit = pick();
+    if (!hit) return;
+    // Clicking TNT sets it off (except when deleting or placing)
+    if (hit.block && hit.block.mat === "tnt" && tool !== "delete" && tool !== "place") return detonate(hit.block);
+    if (tool === "drop") dropAt(hit.point);
+    else if (tool === "place") placeAt(hit);
+    else if (tool === "blast") blastAt(hit.point);
+    else if (tool === "fire") fireAt(hit);
+    else if (tool === "delete" && hit.block) deleteBlock(hit.block);
+  }
+
+  // Click vs drag: only a short, still press counts as a click
+  let down = null;
+  canvas.addEventListener("pointerdown", (e) => { setNdc(e); down = { x: e.clientX, y: e.clientY, t: performance.now(), b: e.button }; });
+  canvas.addEventListener("pointermove", (e) => { setNdc(e); pointerInside = true; });
+  canvas.addEventListener("pointerleave", () => { pointerInside = false; });
+  canvas.addEventListener("pointerup", (e) => {
+    if (!down) return;
+    const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+    const quick = performance.now() - down.t < 450;
+    const btn = down.b; down = null;
+    if (btn !== 0 || moved > 6 || !quick) return;
+    setNdc(e);
+    useTool();
+  });
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // ---------- Keyboard ----------
+  const keys = new Set();
+  let pouring = false;
+  const TOOL_KEYS = { Digit1: "drop", Digit2: "place", Digit3: "throw", Digit4: "fire", Digit5: "blast", Digit6: "delete" };
+  window.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("button") && (e.code === "Space" || e.code === "Enter")) return;
+    const k = e.code;
+    keys.add(k);
+    if (k === "Space") { pouring = true; e.preventDefault(); }
+    if (TOOL_KEYS[k]) setTool(TOOL_KEYS[k]);
+    if (e.repeat) return;
+    if (k === "KeyR") placeRot = !placeRot;
+    if (k === "KeyF") { const h = pick(); if (h) fireAt(h); }
+    if (k === "KeyX" || k === "Delete" || k === "Backspace") { const h = pick(); if (h && h.block) deleteBlock(h.block); }
+  });
+  window.addEventListener("keyup", (e) => { keys.delete(e.code); if (e.code === "Space") pouring = false; });
+  window.addEventListener("blur", () => { keys.clear(); pouring = false; });
+
+  const fwd = new THREE.Vector3(), right = new THREE.Vector3(), move = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
+  function fly(dt) {
+    move.set(0, 0, 0);
+    camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+    right.crossVectors(fwd, UP).normalize();
+    if (keys.has("KeyW") || keys.has("ArrowUp")) move.add(fwd);
+    if (keys.has("KeyS") || keys.has("ArrowDown")) move.sub(fwd);
+    if (keys.has("KeyD") || keys.has("ArrowRight")) move.add(right);
+    if (keys.has("KeyA") || keys.has("ArrowLeft")) move.sub(right);
+    if (keys.has("KeyE")) move.y += 1;
+    if (keys.has("KeyQ")) move.y -= 1;
+    if (!move.lengthSq()) return;
+    const speed = (keys.has("ShiftLeft") || keys.has("ShiftRight") ? 40 : 16) * dt;
+    move.normalize().multiplyScalar(speed);
+    if (controls.target.y + move.y < 0) move.y = -controls.target.y;
+    camera.position.add(move);
+    controls.target.add(move);
+  }
+
+  // ---------- UI ----------
+  const shapesEl = document.getElementById("shapes"), matsEl = document.getElementById("mats");
+  [...SHAPE_KEYS, "mix"].forEach((k) => {
+    const b = document.createElement("button");
+    b.id = "shape-" + k; b.dataset.shape = k;
+    b.textContent = k === "mix" ? "Mix" : SHAPES[k].label;
+    shapesEl.appendChild(b);
+  });
+  MAT_KEYS.forEach((k) => {
+    const b = document.createElement("button");
+    b.id = "mat-" + k; b.dataset.mat = k;
+    const sw = document.createElement("span");
+    sw.className = "sw";
+    sw.style.background = k === "plastic" ? `linear-gradient(135deg, ${TOY[0]} 50%, ${TOY[2]} 50%)` : MATS[k].colors[0];
+    if (MATS[k].opacity) sw.style.opacity = Math.max(0.6, MATS[k].opacity);
+    b.append(sw, MATS[k].label);
+    matsEl.appendChild(b);
+  });
+  const matNote = document.getElementById("mat-note");
+
+  const TOOL_NOTES = { drop: "drops from above", place: "sets it right there · R turns it", throw: "fires from the camera", fire: "sets things alight", blast: "explosion", delete: "removes a block" };
+  function setTool(t) {
+    tool = t;
+    document.getElementById("tool-note").textContent = TOOL_NOTES[t];
+    document.querySelectorAll("#tools button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tool === t)));
+    canvas.style.cursor = t === "throw" ? "cell" : t === "delete" ? "pointer" : "crosshair";
+  }
+  function setShape(s) {
+    shape = s;
+    shapesEl.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.shape === s)));
+    ghost.geometry = geometries[s === "mix" ? "cube" : s];
+    const d = SHAPES[s === "mix" ? "cube" : s].dims;
+    ghost.scale.set(d[0], d[1], d[2]);
+  }
+  function setMat(m) {
+    mat = m;
+    matsEl.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mat === m)));
+    matNote.textContent = MATS[m].note;
+  }
+  document.getElementById("tools").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setTool(b.dataset.tool); });
+  shapesEl.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setShape(b.dataset.shape); });
+  matsEl.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setMat(b.dataset.mat); });
+  document.getElementById("act-rain").onclick = () => rain();
+  document.getElementById("act-pyramid").onclick = () => { const s = spot(); pyramid(s.x, s.z, 6); };
+  document.getElementById("act-tower").onclick = () => { const s = spot(); tower(s.x, s.z, 14); };
+  document.getElementById("act-wall").onclick = () => { const s = spot(); wall(s.x, s.z, 12, 8); };
+  document.getElementById("act-bonfire").onclick = () => { const s = spot(); bonfire(s.x, s.z); };
+  document.getElementById("act-clear").onclick = () => { clearAll(); flames.clear(); glow.clear(); smoke.clear(); };
+  document.getElementById("act-reset").onclick = () => {
+    clearAll();
+    flames.clear(); glow.clear(); smoke.clear(); debris.clear();
+    for (const bl of blasts) { scene.remove(bl.m); bl.m.geometry.dispose(); bl.m.material.dispose(); }
+    blasts.length = 0;
+    camera.position.copy(HOME_CAM);
+    controls.target.copy(HOME_TARGET);
+    controls.update();
+    setTool("drop"); setShape("cube"); setMat("wood");
+  };
+  const tray = document.getElementById("tray"), collapseBtn = document.getElementById("collapse");
+  collapseBtn.onclick = () => {
+    const c = tray.classList.toggle("collapsed");
+    collapseBtn.textContent = c ? "Show controls" : "Hide controls";
+    collapseBtn.setAttribute("aria-expanded", String(!c));
+  };
+  if (window.innerWidth < 560) collapseBtn.click();
+  setShape("cube"); setMat("wood");
+
+  // ---------- Loop ----------
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    const scale = (h * renderer.getPixelRatio()) / (2 * Math.tan((camera.fov * Math.PI) / 360));
+    flames.material.uniforms.uScale.value = glow.material.uniforms.uScale.value = smoke.material.uniforms.uScale.value = debris.material.uniforms.uScale.value = scale;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  const countEl = document.getElementById("count"), burnEl = document.getElementById("burning"), fpsEl = document.getElementById("fps");
+  const hintEl = document.getElementById("hint");
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  const DELETE_TINT = new THREE.Color("#ff2a2a").convertSRGBToLinear();
+  let last = performance.now(), fpsAcc = 0, fpsFrames = 0, pourTimer = 0, heatAcc = 0, time = 0;
+
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now; time += dt;
+
+    fly(dt);
+    controls.update();
+
+    if (pouring) {
+      pourTimer += dt;
+      while (pourTimer > 0.03) {
+        pourTimer -= 0.03;
+        const h = pick();
+        const p = h ? h.point : controls.target;
+        dropAt({ x: p.x + (Math.random() - 0.5) * 1.5, y: p.y, z: p.z + (Math.random() - 0.5) * 1.5 });
+      }
+    }
+
+    world.step(1 / 60, dt, 3);
+
+    heatAcc += dt;
+    if (heatAcc >= 0.1) { heatTick(heatAcc); heatAcc = 0; }
+
+    // Burning, melting, falling off the edge
+    let burningCount = 0, fx = 0, fy = 0, fz = 0;
+    for (let i = blocks.length - 1; i >= 0; i--) {
+      const b = blocks[i];
+      if (b.dead) continue;
+      const p = b.body.position, md = MATS[b.mat];
+      if (p.y < -40) { removeBlock(b); continue; }
+
+      if (b.burning) {
+        burningCount++; fx += p.x; fy += p.y; fz += p.z;
+        b.burnLeft -= dt;
+        const char = 1 - Math.max(0, b.burnLeft) / b.burnTime;
+        const spread = Math.min(b.dims.x, b.dims.z) * 0.8;
+        const rate = (md.explode ? 50 : 30) * Math.min(2, b.radius * 1.6) * (1 - char * 0.4);
+        const n = Math.floor(rate * dt + Math.random());
+        for (let j = 0; j < n; j++) emitFlame(p.x, p.y + Math.random() * b.dims.y * 0.4, p.z, spread, md.explode ? 0.7 : 1);
+        if (Math.random() < dt * 5) emitSmoke(p.x, p.y + b.dims.y * 0.5 + 0.6, p.z, md.smoke);
+        if (b.burnLeft <= 0) {
+          const at = new THREE.Vector3(p.x, p.y, p.z);
+          removeBlock(b);
+          if (md.explode) blastAt(at, 7, 32);
+          else burst(at, 14, [0.12, 0.1, 0.09], 2, -8, 0.22, 1.2);
+          continue;
+        }
+      }
+
+      if (md.melts && b.melt > 0) {
+        if (Math.random() < b.heatIn * dt * 6) debris.spawn(p.x, p.y, p.z, (Math.random() - 0.5), -0.5, (Math.random() - 0.5), 0.8, 0.2, 0.1, WATER, WATER, 0.8, -12);
+        const step = Math.floor(b.melt * 5);
+        if (b.melt >= 1) { burst(p, 20, WATER, 2, -12, 0.25, 0.8); removeBlock(b); continue; }
+        if (step !== b.meltStep) { b.meltStep = step; reshape(b, 1 - 0.15 * step); }
+      }
+    }
+
+    // Campfires (fire lit on the ground or against fireproof blocks)
+    for (let i = campfires.length - 1; i >= 0; i--) {
+      const c = campfires[i];
+      c.life -= dt;
+      if (c.life <= 0) { campfires.splice(i, 1); continue; }
+      burningCount++; fx += c.pos.x; fy += c.pos.y; fz += c.pos.z;
+      const strength = Math.min(1, c.life / 2);
+      const n = Math.floor(40 * strength * dt + Math.random());
+      for (let j = 0; j < n; j++) emitFlame(c.pos.x, c.pos.y + 0.05, c.pos.z, 1.1, 1.2);
+      if (Math.random() < dt * 4) emitSmoke(c.pos.x, c.pos.y + 1.2, c.pos.z, [0.35, 0.34, 0.33]);
+    }
+
+    // Fire light follows the centre of all fires and flickers
+    if (burningCount) {
+      fireLight.position.set(fx / burningCount, fy / burningCount + 1.5, fz / burningCount);
+      fireLight.intensity = Math.min(3.5, 0.9 + burningCount * 0.12) * (0.82 + Math.random() * 0.3);
+      fireLight.distance = 18 + Math.min(30, burningCount * 1.5);
+    } else fireLight.intensity = 0;
+
+    // Hover target (for delete highlight and the cursor preview)
+    const hover = pointerInside ? pick() : null;
+    const hoverBlock = hover && tool === "delete" ? hover.block : null;
+
+    // Write instances
+    for (const m of meshes.values()) m.count = 0;
+    for (const b of blocks) {
+      const md = MATS[b.mat];
+      const mesh = getMesh(b.shape, b.mat);
+      const i = mesh.count++;
+      mesh.userData.refs[i] = b;
+      const p = b.body.position, bq = b.body.quaternion;
+      const s = md.melts ? Math.max(0.4, 1 - 0.75 * b.melt) : 1;
+      sc.copy(b.dims).multiplyScalar(s);
+      m4.compose(v.set(p.x, p.y, p.z), q.set(bq.x, bq.y, bq.z, bq.w), sc);
+      mesh.setMatrixAt(i, m4);
+
+      const c = b.color.copy(b.base);
+      if (b.burning) {
+        const char = 1 - Math.max(0, b.burnLeft) / b.burnTime;
+        c.lerp(CHAR, Math.min(0.92, char * 1.1));
+        c.lerp(EMBER, 0.4 + 0.25 * Math.sin(time * 18 + b.id));
+      } else if (b.heat > 0.02 && md.burn) {
+        c.lerp(CHAR, b.heat * 0.35);
+      } else if (md.glows && b.heat > 0.02) {
+        c.lerp(HOT, Math.min(1, b.heat) * 0.85);
+        if (b.heat > 1) c.lerp(WHITE_HOT, (b.heat - 1) * 1.2);
+      }
+      if (b === hoverBlock) c.lerp(DELETE_TINT, 0.55);
+      mesh.setColorAt(i, c);
+    }
+    for (const m of meshes.values()) {
+      m.userData.refs.length = m.count;
+      m.instanceMatrix.needsUpdate = true;
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    }
+
+    // Cursor preview
+    const showRing = hover && tool !== "throw" && !(tool === "delete" && !hover.block);
+    ghostRing.visible = !!showRing;
+    ghost.visible = !!hover && (tool === "drop" || tool === "place");
+    if (hover) {
+      const hp = hover.point;
+      ghostRing.position.set(hp.x, hp.y + 0.03, hp.z);
+      ghostRing.scale.setScalar(tool === "blast" ? 7 : 1);
+      ghostRing.material.color.set(tool === "blast" ? "#e4572e" : tool === "fire" ? "#f08a24" : tool === "delete" ? "#ff2a2a" : "#1d2733");
+      const gs = currentShape(), gd = SHAPES[gs].dims;
+      ghost.geometry = geometries[gs];
+      ghost.scale.set(gd[0], gd[1], gd[2]);
+      if (tool === "place") {
+        const pp = placement(hover);
+        ghost.position.set(pp.x, pp.y, pp.z);
+        ghost.rotation.set(0, placeRot ? Math.PI / 2 : 0, 0);
+        ghost.material.opacity = 0.4;
+        ghost.material.color.set(MATS[mat].colors[0]);
+        ghostRing.visible = false;
+      } else {
+        ghost.position.set(hp.x, Math.max(hp.y, 0) + 10, hp.z);
+        ghost.rotation.set(0, 0, 0);
+        ghost.material.opacity = 0.16;
+        ghost.material.color.set("#1d2733");
+      }
+    }
+
+    for (let i = blasts.length - 1; i >= 0; i--) {
+      const bl = blasts[i];
+      bl.t += dt;
+      const k = bl.t / 0.45;
+      bl.m.scale.setScalar(0.5 + k * bl.radius);
+      bl.m.material.opacity = 0.55 * (1 - k);
+      if (k >= 1) { scene.remove(bl.m); bl.m.geometry.dispose(); bl.m.material.dispose(); blasts.splice(i, 1); }
+    }
+
+    flames.update(dt); glow.update(dt); smoke.update(dt); debris.update(dt);
+    renderer.render(scene, camera);
+
+    hintEl.hidden = blocks.length > 0 || campfires.length > 0;
+    fpsAcc += dt; fpsFrames++;
+    if (fpsAcc > 0.4) {
+      fpsEl.textContent = Math.round(fpsFrames / fpsAcc) + " fps";
+      countEl.textContent = blocks.length;
+      burnEl.textContent = blocks.reduce((n, b) => n + (b.burning ? 1 : 0), 0);
+      fpsAcc = 0; fpsFrames = 0;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

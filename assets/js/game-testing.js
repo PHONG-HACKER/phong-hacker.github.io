@@ -5,6 +5,7 @@
   // Codes work with capital or small letters.
   var CODES = {
     "GRAINTEST": { name: "Grainfall", url: "https://phong-hacker.github.io/GRAINFALL/" },
+    "3DTEST": { name: "Blockfall", url: "https://phong-hacker.github.io/BLOCKFALL/" },
   };
 
   var form = document.getElementById("tester-form");
