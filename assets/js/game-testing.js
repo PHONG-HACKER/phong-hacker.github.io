@@ -4,6 +4,7 @@
   //   "MYCODE123": { name: "My New Game", url: "https://phong-hacker.github.io/my-new-game/" },
   // Codes work with capital or small letters.
   var CODES = {
+    "GRAINTEST": { name: "Grainfall", url: "https://phong-hacker.github.io/GRAINFALL/" },
   };
 
   var form = document.getElementById("tester-form");

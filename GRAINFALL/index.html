@@ -1,0 +1,1193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Grainfall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+/* Layout: workbench — pixel tank on the left, tool rail on the right; stacks to one column under 880px.
+   Single committed dark look (a lit glass tank in a dark room), so no light theme. */
+:root{
+  --bg:#11141b;
+  --tank:#0c0f15;
+  --panel:#181c26;
+  --line:#272e3c;
+  --fg:#ebe6da;
+  --muted:#8e95a6;
+  --accent:#f2b448;
+  --accent-ink:#1d1506;
+  --f-display:"Pixelify Sans","Courier New",monospace;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.app{box-sizing:border-box;max-width:1440px;margin:0 auto;padding-inline:16px;padding-block:14px 20px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:8px 20px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1;margin:0;letter-spacing:.01em;text-wrap:balance}
+h1 i{font-style:normal;color:var(--accent)}
+.stats{font-family:var(--f-mono);font-size:12px;color:var(--muted);display:flex;gap:6px 18px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.stats b{color:var(--fg);font-weight:500}
+main{display:grid;grid-template-columns:minmax(0,1fr) 312px;gap:18px;align-items:start}
+.stagecol{display:flex;flex-direction:column;gap:8px;min-width:0;align-items:center}
+.fastbadge{position:absolute;top:8px;right:8px;font:500 11px var(--f-mono);letter-spacing:.08em;color:var(--accent-ink);background:var(--accent);padding:2px 7px;border-radius:2px;pointer-events:none}
+.stage{position:relative;width:100%;max-width:calc((100dvh - 120px) * 1.5);min-width:min(100%,320px);border:1px solid var(--line);background:var(--tank);border-radius:3px;overflow:hidden;box-shadow:0 0 0 4px var(--panel)}
+canvas{display:block;width:100%;aspect-ratio:3/2;max-width:100%;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;cursor:crosshair}
+.hint{font-size:12px;color:var(--muted);text-align:center;margin:0;text-wrap:balance}
+kbd{font-family:var(--f-mono);font-size:11px;padding:0 4px;border:1px solid var(--line);border-radius:3px;color:var(--fg);background:var(--panel)}
+aside{display:flex;flex-direction:column;gap:16px;min-width:0}
+.controls{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font:500 13px var(--f-body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);min-width:74px}
+.btn.warn{border-color:#c4553f;color:#f1a08f}
+.btn:focus-visible,.mat:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.field{display:grid;grid-template-columns:auto minmax(0,1fr) 2.4em;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+.field output{font-family:var(--f-mono);color:var(--fg);text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{font:500 12px var(--f-mono);background:transparent;color:var(--muted);border:0;padding:5px 8px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--panel);color:var(--accent)}
+.label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 6px}
+.cat{border-top:1px solid var(--line)}
+.cat:last-child{border-bottom:1px solid var(--line)}
+.cat summary{list-style:none;display:flex;align-items:center;gap:8px;padding:9px 4px;cursor:pointer;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--fg)}
+.cat summary::-webkit-details-marker{display:none}
+.cat summary::before{content:"";width:0;height:0;border-left:5px solid var(--muted);border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .15s}
+.cat[open] summary::before{transform:rotate(90deg)}
+.cat summary:hover{color:var(--accent)}
+.cat summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cat summary .n{margin-left:auto;font-family:var(--f-mono);font-size:11px;letter-spacing:0;color:var(--muted);font-weight:400}
+.cat .mats{padding:0 0 10px}
+.mats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px}
+.mat{display:flex;align-items:center;gap:8px;padding:5px 8px;background:transparent;border:1px solid transparent;border-radius:3px;color:var(--fg);font:500 13px var(--f-body);cursor:pointer;text-align:left;min-width:0}
+.mat span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mat:hover{background:var(--panel)}
+.mat[aria-pressed=true]{border-color:var(--accent);background:var(--panel)}
+.sw{width:14px;height:14px;flex:none;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:center}
+.card .sw{width:30px;height:30px;grid-row:span 2}
+.card h3{margin:0;font-family:var(--f-display);font-weight:500;font-size:19px;line-height:1.1}
+.card .kind{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:lowercase}
+.card p{grid-column:1/-1;margin:6px 0 0;color:var(--fg);opacity:.86;font-size:13px}
+@media (max-width:880px){
+  main{grid-template-columns:minmax(0,1fr)}
+  .stage{max-width:100%}
+  .mats{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Grain<i>fall</i></h1>
+    <div class="stats" aria-live="off">
+      <span><b id="fps">60</b> fps</span>
+      <span><b id="count">0</b> grains</span>
+      <span>under cursor: <b id="hover">—</b></span>
+    </div>
+  </header>
+  <main>
+    <div class="stagecol">
+      <div class="stage"><div class="fastbadge" id="fastbadge" hidden>FAST ×5</div><canvas id="c" width="240" height="160" aria-label="Sandbox simulation canvas. Drag to pour the selected material."></canvas></div>
+      <p class="hint">Drag to pour · use Container to draw walls in any shape · right-click erases · <kbd>Space</kbd> pause · <kbd>[</kbd> <kbd>]</kbd> brush size · <kbd>E</kbd> eraser · <kbd>S</kbd> pour / spray · <kbd>F</kbd> fast</p>
+    </div>
+    <aside>
+      <div class="controls">
+        <div class="row">
+          <button class="btn primary" id="play">Pause</button>
+          <button class="btn" id="stepbtn" disabled>Step</button>
+          <button class="btn" id="reset">Demo scene</button>
+          <button class="btn" id="clear">Clear</button>
+          <button class="btn" id="sound" aria-pressed="true">Sound on</button>
+        </div>
+        <div class="field" style="grid-template-columns:auto 1fr">Tool
+          <div class="seg" role="group" aria-label="Brush mode" id="mode">
+            <button data-m="pour" aria-pressed="true">Pour</button><button data-m="spray" aria-pressed="false">Spray</button>
+          </div>
+        </div>
+        <div class="field" style="grid-template-columns:auto 1fr">Pixels
+          <div class="seg" role="group" aria-label="Pixel size" id="pxsize">
+            <button data-w="480" aria-pressed="false">Tiny</button><button data-w="360" aria-pressed="false">Small</button><button data-w="240" aria-pressed="true">Medium</button><button data-w="162" aria-pressed="false">Large</button><button data-w="120" aria-pressed="false">Huge</button>
+          </div>
+        </div>
+        <div class="field" id="tempRow" hidden style="grid-template-columns:auto minmax(0,1fr) auto"><span id="tempLabel">Heat</span><input type="range" id="temp" min="1" max="10" value="4" aria-label="Heat level"><output id="tempOut">4 · Hot</output></div>
+        <label class="field" for="brush">Brush <input type="range" id="brush" min="1" max="16" value="4"> <output id="brushOut">4</output></label>
+        <div class="field" style="grid-template-columns:auto 1fr">Speed
+          <div class="seg" role="group" aria-label="Simulation speed" id="speed">
+            <button data-s="0.5" aria-pressed="false">½×</button><button data-s="1" aria-pressed="true">1×</button><button data-s="2" aria-pressed="false">2×</button><button data-s="5" aria-pressed="false">Fast</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="card">
+        <div class="sw" id="cardSw"></div>
+        <h3 id="cardName">Sand</h3>
+        <div class="kind" id="cardKind">powder</div>
+        <p id="cardDesc"></p>
+      </div>
+      <div id="palette"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(() => {
+let W = 240, H = 160, N = W * H;
+const R = Math.random;
+const STATIC = 1, POWDER = 2, LIQUID = 3, GAS = 4;
+const KIND_NAME = ['', 'solid', 'powder', 'liquid', 'gas'];
+
+// ---- Materials -------------------------------------------------------------
+const E=0, WALL=1, SAND=2, WATER=3, STONE=4, WOOD=5, FIRE=6, SMOKE=7, STEAM=8, OIL=9, LAVA=10,
+      ACID=11, ICE=12, PLANT=13, GUNP=14, SALT=15, BRINE=16, GLASS=17, SNOW=18, SEED=19, NITRO=20,
+      METHANE=21, EMBER=22, ASH=23, CLONE=24, VOID=25, COAL=26, IRON=27, RUST=28, GOLD=29, OBSID=30, CUP=31, WOODG=32, BCOAL=33,
+      GRANITE=34, BASALT=35, LIME=36, MARBLE=37, GRAVEL=38, CLAY=39, BRICK=40, PUMICE=41,
+      COPPER=42, PATINA=43, SILVER=44, LEAD=45, MOLTEN=46, MERCURY=47, MAGNES=48, SODIUM=49,
+      QUARTZ=50, CRYSTAL=51, DIAMOND=52, RUBY=53, EMERALD=54, SAPPHIRE=55, AMETHYST=56,
+      SULFUR=57, THERMITE=58, PHOS=59, URANIUM=60,
+      APPLE=61, PAPER=62, WETPAPER=63, CARDBOARD=64, KERNEL=65, POPCORN=66, WAX=67, MWAX=68, LN2=69;
+const HOT = new Set([FIRE, EMBER, BCOAL, LAVA, MOLTEN, URANIUM]), COLD = new Set([ICE, SNOW, LN2]);
+const MELTS = new Set([STONE, GRAVEL, GRANITE, BASALT, LIME, MARBLE, BRICK, OBSID, CLAY, PUMICE]);
+let heatLevel = 4, coldLevel = 4;
+const HEAT_WORDS = ['', 'Warm', 'Warm', 'Warm', 'Hot', 'Hot', 'Very hot', 'Melts stone', 'Melts stone', 'White hot', 'White hot'];
+const COLD_WORDS = ['', 'Chilly', 'Chilly', 'Cold', 'Freezing', 'Freezing', 'Very cold', 'Deep freeze', 'Deep freeze', 'Arctic', 'Arctic'];
+const decay = v => v > 4 ? v - 1 : v < 4 ? v + 1 : 4;
+const GEMS = new Set([QUARTZ, CRYSTAL, DIAMOND, RUBY, EMERALD, SAPPHIRE, AMETHYST]);
+
+// id, name, kind, density, rgb, variation, group, description
+const DEFS = [
+  [E,      'Eraser',     0,      0,    [20,24,32],   0,  'Special', 'Clears cells back to empty air. Right-click does the same with any material selected.'],
+  [WALL,   'Wall',       STATIC, 99,   [92,97,110],  10, 'Solids',  'Indestructible. Nothing burns, melts, dissolves or blows it apart.'],
+  [WOOD,   'Wood',       STATIC, 99,   [124,80,46],  20, 'Solids',  'Holds its shape. Catches fire slowly and smoulders into embers, then ash.'],
+  [ICE,    'Ice',        STATIC, 99,   [172,222,246],14, 'Solids',  'Freezes the water it touches, a little at a time. Salt and heat melt it.'],
+  [GLASS,  'Glass',      STATIC, 99,   [178,222,228],10, 'Solids',  'Acid can’t touch it. Lava slowly fuses sand into it. Cracks in explosions.'],
+  [PLANT,  'Plant',      STATIC, 99,   [66,172,72],  32, 'Solids',  'Drinks water to grow into it. Burns quickly.'],
+  [WOODG,  'Wood grains', POWDER, 0.7, [124,80,46],  20, 'Powders', 'Loose grains of wood. They fall and pile up instead of holding a shape, float on water and burn like wood.'],
+  [SAND,   'Sand',       POWDER, 2.0,  [224,188,122],24, 'Powders', 'Piles into slopes and sinks through water. Lava turns it to glass.'],
+  [STONE,  'Stone',      POWDER, 3.0,  [130,126,122],28, 'Rocks', 'Heavy grains that drop straight down and stack in columns. Forms when lava meets water.'],
+  [SALT,   'Salt',       POWDER, 1.9,  [240,240,242],14, 'Rocks', 'Dissolves in water to make salt water. Melts ice on contact.'],
+  [GUNP,   'Gunpowder',  POWDER, 1.7,  [62,60,66],   16, 'Powders', 'Goes off in small bursts that chain through a pile. Light it with fire, embers or lava.'],
+  [SNOW,   'Snow',       POWDER, 0.6,  [244,248,255], 8, 'Powders', 'Drifts down slowly. Melts in water or near heat.'],
+  [SEED,   'Seed',       POWDER, 1.5,  [176,134,72], 22, 'Powders', 'Sprouts into a climbing stem once it lands on sand or ash.'],
+  [ASH,    'Ash',        POWDER, 1.2,  [150,146,142],20, 'Powders', 'What embers leave behind.'],
+  [COAL,   'Coal',       POWDER, 2.2,  [40,38,40],   14, 'Fuels & reactive', 'Hard to light, but once it catches it glows as embers for a long time.'],
+  [IRON,   'Iron',       STATIC, 99,   [150,156,166],16, 'Metals', 'Solid metal. Rusts where it touches water, faster in salt water. Lava slowly melts it.'],
+  [RUST,   'Rust',       POWDER, 2.3,  [166,84,40],  26, 'Metals', 'Crumbly flakes that flake off wet iron.'],
+  [GOLD,   'Gold',       POWDER, 4.0,  [232,188,52], 26, 'Metals', 'The heaviest grain. Sinks through everything and even acid leaves it alone.'],
+  [OBSID,  'Obsidian',   STATIC, 99,   [34,26,44],   12, 'Rocks', 'Volcanic glass. Forms when lava touches ice. Shrugs off most explosions.'],
+  [GRAVEL, 'Gravel',     POWDER, 2.6,  [118,112,104],34, 'Rocks', 'Coarse broken rock. Piles steeply and sinks through almost any liquid.'],
+  [GRANITE,'Granite',    STATIC, 99,   [156,130,132],38, 'Rocks', 'Speckled, very hard rock. Barely notices explosions.'],
+  [BASALT, 'Basalt',     STATIC, 99,   [54,54,60],   14, 'Rocks', 'Dark volcanic rock. Tough and fireproof.'],
+  [LIME,   'Limestone',  STATIC, 99,   [212,205,184],16, 'Rocks', 'Soft pale rock. Acid fizzes through it fast.'],
+  [MARBLE, 'Marble',     STATIC, 99,   [234,232,228],22, 'Rocks', 'Polished white stone with grey veins. Acid etches it.'],
+  [CLAY,   'Clay',       POWDER, 1.8,  [180,106,74], 18, 'Rocks', 'Soft earth. Fire or lava bakes it into brick.'],
+  [BRICK,  'Brick',      STATIC, 99,   [166,64,48],  20, 'Rocks', 'Fired clay. Solid, fireproof and fairly blast resistant.'],
+  [PUMICE, 'Pumice',     POWDER, 0.5,  [198,192,178],16, 'Rocks', 'Rock full of air bubbles. So light it floats on water.'],
+  [COPPER, 'Copper',     STATIC, 99,   [198,112,62], 22, 'Metals', 'Warm metal. Water slowly turns it green with patina.'],
+  [PATINA, 'Patina',     STATIC, 99,   [82,170,140], 22, 'Metals', 'The green crust that forms on wet copper.'],
+  [SILVER, 'Silver',     STATIC, 99,   [204,208,216],14, 'Metals', 'Bright metal. Stands up to fire and explosions.'],
+  [LEAD,   'Lead',       STATIC, 99,   [98,102,116], 10, 'Metals', 'Dull, soft metal. Melts in fire into molten metal that runs and cools back into lead.'],
+  [MOLTEN, 'Molten metal', LIQUID, 3.5, [244,170,96], 30, 'Metals', 'Glowing liquid metal. Sets things alight, boils water and hardens as it cools.'],
+  [MERCURY,'Mercury',    LIQUID, 5.0,  [192,198,206],16, 'Metals', 'Liquid metal so dense that everything floats on it, even gold.'],
+  [QUARTZ, 'Quartz',     STATIC, 99,   [226,220,240],18, 'Crystals & gems', 'Clear, glittering crystal. Acid can’t touch it.'],
+  [CRYSTAL,'Salt crystal', STATIC, 99, [150,236,226],20, 'Crystals & gems', 'Grows by drinking salt water. Drop a seed of it into brine and watch it spread.'],
+  [DIAMOND,'Diamond',    POWDER, 3.5,  [214,240,252],20, 'Crystals & gems', 'Unbreakable sparkling grains. Survives acid and every explosion.'],
+  [RUBY,   'Ruby',       POWDER, 4.0,  [214,30,70],  30, 'Crystals & gems', 'Heavy red gem grains. Acid-proof.'],
+  [EMERALD,'Emerald',    POWDER, 2.8,  [30,190,110], 30, 'Crystals & gems', 'Green gem grains. Acid-proof.'],
+  [SAPPHIRE,'Sapphire',  POWDER, 4.0,  [40,80,220],  30, 'Crystals & gems', 'Deep blue gem grains. Acid-proof.'],
+  [AMETHYST,'Amethyst',  POWDER, 2.65, [150,90,210], 28, 'Crystals & gems', 'Purple quartz grains. Acid-proof.'],
+  [SULFUR, 'Sulfur',     POWDER, 2.0,  [230,214,62], 18, 'Fuels & reactive', 'Yellow powder that burns quickly and throws off smoke.'],
+  [MAGNES, 'Magnesium',  POWDER, 1.7,  [212,212,218],12, 'Fuels & reactive', 'Light metal shavings that burn white hot.'],
+  [SODIUM, 'Sodium',     POWDER, 0.97, [222,216,192],12, 'Fuels & reactive', 'Soft metal that explodes the moment it touches water.'],
+  [PHOS,   'Phosphorus', POWDER, 1.8,  [238,234,204],10, 'Fuels & reactive', 'Catches fire on its own when left out in the air. Keep it under water.'],
+  [THERMITE,'Thermite',  POWDER, 2.4,  [134,98,94],  18, 'Fuels & reactive', 'Once lit it burns into molten iron that melts down through metal and sand.'],
+  [URANIUM,'Uranium',    STATIC, 99,   [96,206,72],  26, 'Fuels & reactive', 'Glows and gives off heat. Boils nearby water and lights things around it.'],
+  [WATER,  'Water',      LIQUID, 1.0,  [50,118,214], 10, 'Liquids', 'Flows and levels out. Puts out fire, dissolves salt, cools lava into stone.'],
+  [LN2,    'Liquid nitrogen', LIQUID, 0.81, [196,236,250], 8, 'Liquids', 'Extremely cold. Freezes water solid, snuffs fire, turns lava to stone and boils away into the air.'],
+  [BRINE,  'Salt water', LIQUID, 1.1,  [72,142,196], 10, 'Liquids', 'Heavier than fresh water, so it sinks under it. Boils off and leaves salt behind.'],
+  [OIL,    'Oil',        LIQUID, 0.8,  [104,78,30],  10, 'Liquids', 'Floats on water. Burns hot and fast.'],
+  [ACID,   'Acid',       LIQUID, 1.05, [128,232,64], 16, 'Liquids', 'Eats through almost anything and gets used up doing it. Wall and glass resist it.'],
+  [LAVA,   'Lava',       LIQUID, 2.5,  [242,92,22],  34, 'Liquids', 'Slow and molten. Ignites what it touches. Water turns it into stone and steam.'],
+  [NITRO,  'Nitro',      LIQUID, 1.3,  [204,72,152], 12, 'Liquids', 'Unstable liquid. Any flame sets off a large blast.'],
+  [FIRE,   'Fire',       GAS,   -1.2,  [255,140,30],  0, 'Heat & gas', 'Rises and flickers out. Spreads to anything flammable. Water snuffs it.'],
+  [EMBER,  'Ember',      STATIC, 99,   [230,90,20],   0, 'Heat & gas', 'Long-burning coals. Throws off flames and crumbles to ash.'],
+  [BCOAL,  'Hot coal',   POWDER, 2.2,  [200,70,20],   0, 'Heat & gas', 'Burning coal that still falls and piles. Spray water on top to put it out: it hisses into steam and turns back into coal you can relight.'],
+  [SMOKE,  'Smoke',      GAS,   -1.0,  [96,96,104],   8, 'Heat & gas', 'Rises and fades away.'],
+  [STEAM,  'Steam',      GAS,   -1.0,  [204,216,228], 8, 'Heat & gas', 'Rises, then condenses back into falling water.'],
+  [METHANE,'Methane',    GAS,   -0.5,  [150,190,120], 8, 'Heat & gas', 'Faint gas that drifts upward and collects. Flashes into flame all at once.'],
+  [APPLE,  'Apple',      POWDER, 0.8,  [206,34,40],  22, 'Everyday', 'Click to drop a whole apple; brush size sets how big. It falls in one piece, floats on water, and roasts away in fire.'],
+  [PAPER,  'Paper',      STATIC, 99,   [236,232,220], 8, 'Everyday', 'Draw sheets of paper. Goes up in flames almost instantly. Water turns it soggy.'],
+  [WETPAPER,'Wet paper', POWDER, 1.2,  [176,174,164],10, 'Everyday', 'Soggy paper that slumps and sinks. Won’t burn until heat dries it out.'],
+  [CARDBOARD,'Cardboard',STATIC, 99,   [178,138,92], 14, 'Everyday', 'Stiff brown board. Burns slower than paper and smoulders. Goes soggy in water.'],
+  [KERNEL, 'Popcorn kernel', POWDER, 1.3, [236,190,70], 20, 'Everyday', 'Heat it and it pops into a puff of popcorn.'],
+  [POPCORN,'Popcorn',    POWDER, 0.3,  [250,244,220],14, 'Everyday', 'Light fluffy puffs that float on water. Burns if you leave it on the fire.'],
+  [WAX,    'Candle wax', STATIC, 99,   [240,228,196],10, 'Everyday', 'Melts near flame into liquid wax that runs, then sets solid again as it cools.'],
+  [MWAX,   'Melted wax', LIQUID, 0.9,  [252,214,150],10, 'Everyday', 'Runny hot wax. Floats on water and hardens back into candle wax.'],
+  [CUP,    'Container',  0,      0,    [178,222,228], 0, 'Special', 'Draw the walls of a container in any shape: a cup, a funnel, a maze, a bowl. Brush size sets the wall thickness. The walls are glass, so they hold acid and lava.'],
+  [CLONE,  'Clone',      STATIC, 99,   [196,172,58], 12, 'Special', 'Copies the first material that touches it, then emits it forever.'],
+  [VOID,   'Void',       STATIC, 99,   [70,24,104],  20, 'Special', 'Deletes anything next to it.'],
+];
+const M = [];
+const KIND = new Uint8Array(128), DENS = new Float32Array(128);
+for (const d of DEFS) {
+  const [id,name,kind,dens,col,vary,group,desc] = d;
+  M[id] = {id,name,kind,dens,col,vary,group,desc};
+  KIND[id] = kind; DENS[id] = dens;
+}
+
+// ---- Grid state ------------------------------------------------------------
+let type = new Uint8Array(N), life = new Int16Array(N), shade = new Uint8Array(N), clk = new Uint8Array(N), lvl = new Uint8Array(N).fill(4);
+let tick = 1;
+const evt = { boom: 0, hiss: 0, sizzle: 0, pop: 0 };
+
+function set(i, t, l, v = 4) { type[i] = t; life[i] = l | 0; shade[i] = (R() * 256) | 0; lvl[i] = v; clk[i] = tick; }
+function spawnAt(i, m, v) {
+  let l = initLife(m);
+  if (m === FIRE) l *= 0.6 + v * 0.12;
+  set(i, m, l, v);
+}
+function swap(i, j) {
+  const t = type[i]; type[i] = type[j]; type[j] = t;
+  const l = life[i]; life[i] = life[j]; life[j] = l;
+  const s = shade[i]; shade[i] = shade[j]; shade[j] = s;
+  const v = lvl[i]; lvl[i] = lvl[j]; lvl[j] = v;
+  clk[i] = clk[j] = tick;
+}
+function initLife(m) {
+  switch (m) {
+    case FIRE: return 20 + R() * 40;
+    case SMOKE: return 80 + R() * 80;
+    case STEAM: return 250 + R() * 250;
+    case EMBER: return 250 + R() * 300;
+    case BCOAL: return 900 + R() * 900;
+    default: return 0;
+  }
+}
+const sink = (a, b) => b === E || (KIND[b] !== STATIC && DENS[a] > DENS[b]);
+const rise = (a, b) => b === E || ((KIND[b] === LIQUID || KIND[b] === GAS) && DENS[b] > DENS[a]);
+
+const DX = [-1,0,1,-1,1,-1,0,1], DY = [-1,-1,-1,0,0,1,1,1];
+function rnb(x, y) {
+  const k = (R() * 8) | 0, nx = x + DX[k], ny = y + DY[k];
+  return (nx < 0 || ny < 0 || nx >= W || ny >= H) ? -1 : ny * W + nx;
+}
+
+// ---- Movement --------------------------------------------------------------
+function powder(i, x, y, slide) {
+  if (y + 1 >= H) return false;
+  const t = type[i], b = i + W, tb = type[b];
+  if (sink(t, tb)) {
+    if (KIND[tb] === LIQUID && R() < 0.5) return true; // drag while sinking through liquid
+    swap(i, b); return true;
+  }
+  if (!slide) return false;
+  const d = R() < 0.5 ? -1 : 1;
+  for (let n = 0, s = d; n < 2; n++, s = -s) {
+    const nx = x + s;
+    if (nx < 0 || nx >= W) continue;
+    if (sink(t, type[b + s]) && KIND[type[i + s]] !== STATIC) { swap(i, b + s); return true; }
+  }
+  return false;
+}
+
+function liquid(i, x, y, disp) {
+  const t = type[i];
+  if (y + 1 < H) {
+    const b = i + W;
+    if (sink(t, type[b])) { swap(i, b); return true; }
+    const d = R() < 0.5 ? -1 : 1;
+    for (let n = 0, s = d; n < 2; n++, s = -s) {
+      const nx = x + s;
+      if (nx < 0 || nx >= W) continue;
+      if (sink(t, type[b + s]) && KIND[type[i + s]] !== STATIC) { swap(i, b + s); return true; }
+    }
+  }
+  const d = R() < 0.5 ? -1 : 1;
+  for (let n = 0, s = d; n < 2; n++, s = -s) {
+    let last = -1;
+    for (let k = 1; k <= disp; k++) {
+      const nx = x + s * k;
+      if (nx < 0 || nx >= W) break;
+      const j = i + s * k;
+      if (!sink(t, type[j])) break;
+      last = j;
+      if (y + 1 < H && sink(t, type[j + W])) break;
+    }
+    if (last >= 0) { swap(i, last); return true; }
+  }
+  return false;
+}
+
+function gas(i, x, y, p) {
+  const t = type[i];
+  if (y > 0 && R() < p) {
+    const u = i - W;
+    if (rise(t, type[u])) { swap(i, u); return; }
+  }
+  const dx = ((R() * 3) | 0) - 1, dy = R() < 0.5 ? -1 : 0;
+  if (dx === 0 && dy === 0) return;
+  const nx = x + dx, ny = y + dy;
+  if (nx < 0 || nx >= W || ny < 0) return;
+  const j = ny * W + nx;
+  if (rise(t, type[j])) swap(i, j);
+}
+
+// ---- Reactions -------------------------------------------------------------
+function explode(cx, cy, r) {
+  if (r > evt.boom) evt.boom = r;
+  const r2 = r * r;
+  for (let dy = -r; dy <= r; dy++) {
+    const y = cy + dy; if (y < 0 || y >= H) continue;
+    for (let dx = -r; dx <= r; dx++) {
+      const x = cx + dx; if (x < 0 || x >= W) continue;
+      const d2 = dx * dx + dy * dy; if (d2 > r2) continue;
+      const j = y * W + x, tj = type[j];
+      if (tj === WALL || tj === VOID || tj === CLONE) continue;
+      if (tj === GLASS && R() < 0.5) continue;
+      if (tj === STONE && R() < 0.6) continue;
+      if (tj === DIAMOND) continue;
+      if ((tj === OBSID || tj === IRON || tj === GOLD || tj === GRANITE || tj === BASALT || tj === SILVER) && R() < 0.85) continue;
+      if ((tj === BRICK || tj === MARBLE || tj === QUARTZ) && R() < 0.6) continue;
+      if (tj === GUNP || tj === NITRO) { set(j, FIRE, 3 + R() * 4); continue; }
+      const f = d2 / r2;
+      if (f < 0.55) set(j, FIRE, 12 + R() * 25);
+      else if (R() < 0.5) set(j, SMOKE, 40 + R() * 50);
+      else if (KIND[tj] !== STATIC) set(j, E, 0);
+    }
+  }
+}
+
+function popKernel(j) {
+  const x = j % W, y = (j / W) | 0;
+  set(j, POPCORN, 0);
+  for (let k = 0, made = 0; k < 8 && made < 3; k++) {
+    const nx = x + DX[k], ny = y + DY[k];
+    if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+    const n = ny * W + nx;
+    if (type[n] === E && R() < 0.6) { set(n, POPCORN, 0); made++; }
+  }
+  evt.pop++;
+}
+function chill(j, c, str) {
+  const r = R() / (str * c / 4);
+  switch (type[j]) {
+    case WATER:  if (r < 0.006) { set(j, ICE, 0, decay(c)); return true; } break;
+    case BRINE:  if (c >= 8 && r < 0.003) { set(j, ICE, 0, decay(c)); return true; } break;
+    case STEAM:  if (c >= 5 && r < 0.05) { set(j, SNOW, 0, decay(c)); return true; } break;
+    case FIRE:   if (c >= 6 && r < 0.3) { set(j, E, 0); return true; } break;
+    case EMBER:  if (c >= 6 && r < 0.03) { set(j, ASH, 0); evt.hiss++; return true; } break;
+    case BCOAL:  if (c >= 6 && r < 0.03) { set(j, COAL, 0); evt.hiss++; return true; } break;
+    case LAVA:   if (c >= 7 && r < 0.01) { set(j, R() < 0.5 ? OBSID : STONE, 0); evt.hiss++; return true; } break;
+    case MOLTEN: if (c >= 7 && r < 0.01) { set(j, (shade[j] & 1) ? IRON : LEAD, 0); evt.hiss++; return true; } break;
+    case MWAX:   if (r < 0.02) { set(j, WAX, 0); return true; } break;
+  }
+  return false;
+}
+function heat(j, h = 4) {
+  if (j < 0) return;
+  if (h >= 7) {
+    const tj = type[j];
+    if (MELTS.has(tj) && R() < (h - 6) * 0.02) { set(j, LAVA, 0, R() < 0.5 ? h : h - 1); return; }
+    if (tj === IRON && R() < (h - 6) * 0.004) { set(j, MOLTEN, 600 + R() * 400, h - 1); shade[j] |= 1; return; }
+    if (tj === GLASS && h >= 9 && R() < 0.004) { set(j, LAVA, 0, h - 1); return; }
+    if (tj === SAND && R() < 0.02) { set(j, GLASS, 0); return; }
+  }
+  const r = R() * 4 / h, hv = decay(h);
+  switch (type[j]) {
+    case WOOD:    if (r < 0.02) set(j, EMBER, 200 + R() * 300, hv); break;
+    case WOODG:   if (r < 0.03) set(j, BCOAL, 120 + R() * 160, hv); break;
+    case PLANT:   if (r < 0.08) set(j, EMBER, 30 + R() * 40, hv); break;
+    case OIL:     if (r < 0.25) set(j, FIRE, 30 + R() * 40, hv); break;
+    case METHANE: if (r < 0.7) set(j, FIRE, 10 + R() * 15, hv); break;
+    case COAL:    if (r < 0.006) set(j, BCOAL, 900 + R() * 900, hv); break;
+    case CLAY:    if (r < 0.01) set(j, BRICK, 0); break;
+    case LEAD:    if (r < 0.004) { set(j, MOLTEN, 400 + R() * 400, hv); shade[j] &= 0xFE; } break;
+    case MAGNES:  if (r < 0.1) set(j, FIRE, 63, hv); break;
+    case SULFUR:  if (r < 0.08) set(j, R() < 0.5 ? FIRE : SMOKE, 30 + R() * 30); break;
+    case THERMITE:if (r < 0.05) { set(j, MOLTEN, 900 + R() * 600, hv); shade[j] |= 1; } break;
+    case PHOS:    if (r < 0.5) set(j, FIRE, 30 + R() * 20, hv); break;
+    case SODIUM:  if (r < 0.05) set(j, FIRE, 30, hv); break;
+    case WATER:   if (r < 0.01) set(j, STEAM, initLife(STEAM)); break;
+    case BRINE:   if (r < 0.01) set(j, SALT, 0); break;
+    case APPLE:   if (r < 0.01) set(j, R() < 0.5 ? FIRE : ASH, 20); break;
+    case PAPER:   if (r < 0.35) set(j, FIRE, 15 + R() * 15, hv); break;
+    case WETPAPER:if (r < 0.01) set(j, PAPER, 0); break;
+    case CARDBOARD: if (r < 0.04) set(j, EMBER, 60 + R() * 80, hv); break;
+    case POPCORN: if (r < 0.04) set(j, FIRE, 20, hv); break;
+    case WAX:     if (r < 0.03) set(j, MWAX, 300 + R() * 300); break;
+    case MWAX:    if (r < 0.01) set(j, FIRE, 30, hv); break;
+    case KERNEL:  if (r < 0.04) popKernel(j); break;
+    case SEED:    if (r < 0.15) set(j, FIRE, 15, hv); break;
+    case GUNP:    if (r < 0.5) explode(j % W, (j / W) | 0, 3); break;
+    case NITRO:   if (r < 0.6) explode(j % W, (j / W) | 0, 10); break;
+    case LN2:     if (r < 0.2) set(j, E, 0); break;
+    case ICE:     if (r < 0.12 / lvl[j]) set(j, WATER, 0); break;
+    case SNOW:    if (r < 0.32 / lvl[j]) set(j, WATER, 0); break;
+  }
+}
+
+function upd(t, i, x, y) {
+  switch (t) {
+    case SAND: case GUNP: case SALT: case COAL: case RUST: case GOLD: case WOODG:
+    case GRAVEL: case CLAY: case PUMICE: case MAGNES: case SULFUR: case THERMITE:
+    case DIAMOND: case RUBY: case EMERALD: case SAPPHIRE: case AMETHYST:
+      powder(i, x, y, true); break;
+    case ASH:
+      if (R() < 0.0015) { if (R() < 0.3) set(i, SMOKE, 30 + R() * 30); else set(i, E, 0); break; }
+      powder(i, x, y, true); break;
+    case LN2: {
+      const c = Math.min(10, lvl[i] + 5);
+      for (let n = 0; n < 2; n++) {
+        const j = rnb(x, y); if (j < 0 || type[j] === LN2) continue;
+        if (chill(j, c, 30) && R() < 0.3) { set(i, E, 0); return; }
+      }
+      if (y > 0 && type[i - W] === E && R() < 0.003) { set(i, E, 0); break; }
+      liquid(i, x, y, 4); break;
+    }
+    case STONE:
+      powder(i, x, y, false); break;
+    case SNOW: {
+      const j = rnb(x, y);
+      if (j >= 0 && (type[j] === WATER || type[j] === BRINE) && R() < 0.08 / lvl[i]) { set(i, WATER, 0); break; }
+      if (j >= 0 && lvl[i] >= 5) chill(j, lvl[i], 0.3);
+      if (R() < 0.45) powder(i, x, y, true);
+      break;
+    }
+    case SEED: {
+      if (!powder(i, x, y, true) && y + 1 < H) {
+        const b = type[i + W];
+        if (b === SAND || b === ASH) set(i, PLANT, 20 + R() * 30);
+      }
+      break;
+    }
+    case WATER: {
+      const j = rnb(x, y);
+      if (j >= 0 && type[j] === SALT && R() < 0.04) { set(j, E, 0); set(i, BRINE, 0); break; }
+      if (y > 0 && type[i - W] === E && R() < 0.0004) { set(i, STEAM, initLife(STEAM)); break; }
+      liquid(i, x, y, 5); break;
+    }
+    case BRINE:
+      if (y > 0 && type[i - W] === E && R() < 0.0003) { set(i - W, STEAM, initLife(STEAM)); set(i, SALT, 0); break; }
+      liquid(i, x, y, 4); break;
+    case OIL:   liquid(i, x, y, 3); break;
+    case NITRO: liquid(i, x, y, 3); break;
+    case ACID: {
+      const j = rnb(x, y);
+      if (j >= 0) {
+        const tj = type[j];
+        if (tj !== E && tj !== ACID && tj !== WALL && tj !== GLASS && tj !== GOLD && tj !== OBSID && !GEMS.has(tj) && tj !== MERCURY && tj !== VOID && tj !== CLONE && KIND[tj] !== GAS && R() < (tj === LIME ? 0.5 : tj === MARBLE ? 0.2 : 0.1)) {
+          if (R() < 0.2) set(j, SMOKE, 30 + R() * 30); else set(j, E, 0);
+          evt.sizzle++;
+          if (R() < 0.35) { set(i, E, 0); break; }
+        }
+      }
+      liquid(i, x, y, 3); break;
+    }
+    case LAVA: {
+      for (let n = 0; n < 2; n++) {
+        const j = rnb(x, y); if (j < 0) continue;
+        const tj = type[j];
+        if (tj === WATER || tj === BRINE) {
+          if (tj === BRINE && R() < 0.4) set(j, SALT, 0); else set(j, STEAM, initLife(STEAM));
+          evt.hiss++;
+          if (R() < 2.4 / lvl[i]) { set(i, STONE, 0); return; }
+        } else if (tj === SAND) { if (R() < 0.004) set(j, GLASS, 0); }
+        else if (tj === ICE) { set(j, WATER, 0); if (R() < 0.5) { set(i, OBSID, 0); return; } }
+        else if (tj === IRON) { if (R() < 0.0015) set(j, LAVA, 0); }
+        else if (tj === E) { if (j < i - 1 && R() < 0.0015) set(j, FIRE, 8 + R() * 10, lvl[i]); }
+        else heat(j, lvl[i]);
+      }
+      if (R() < 0.09 * lvl[i]) liquid(i, x, y, lvl[i] >= 8 ? 2 : 1);
+      break;
+    }
+    case FIRE: {
+      if (--life[i] <= 0) { if (R() < 0.3) set(i, SMOKE, 60 + R() * 60); else set(i, E, 0); break; }
+      for (let n = 0; n < 2; n++) {
+        const j = rnb(x, y); if (j < 0) continue;
+        const tj = type[j];
+        if ((tj === WATER || tj === BRINE) && lvl[i] >= 8) { set(j, STEAM, initLife(STEAM)); evt.hiss++; continue; }
+        if (tj === WATER || tj === BRINE) {
+          if (R() < 0.2) { if (tj === BRINE && R() < 0.5) set(j, SALT, 0); else set(j, STEAM, initLife(STEAM)); }
+          evt.hiss++; set(i, E, 0); return;
+        }
+        heat(j, lvl[i]);
+      }
+      gas(i, x, y, 0.6); break;
+    }
+    case EMBER: {
+      if (--life[i] <= 0) { if (R() < 0.65) set(i, ASH, 0); else set(i, SMOKE, 60 + R() * 60); break; }
+      const j = rnb(x, y); if (j < 0) break;
+      const tj = type[j];
+      if (tj === E) { if (j < i && R() < 0.07) set(j, FIRE, 8 + R() * 14, lvl[i]); }
+      else if (tj === WATER || tj === BRINE) { if (R() < 0.3) set(j, STEAM, initLife(STEAM)); set(i, ASH, 0); evt.hiss++; }
+      else heat(j, lvl[i]);
+      break;
+    }
+    case BCOAL: {
+      if (--life[i] <= 0) { set(i, ASH, 0); break; }
+      for (let n = 0; n < 3; n++) {
+        const j = rnb(x, y); if (j < 0) continue;
+        const tj = type[j];
+        if (tj === WATER || tj === BRINE || tj === SNOW || tj === ICE) {
+          set(i, COAL, 0);
+          if (R() < 0.5) set(j, STEAM, initLife(STEAM)); else if (tj !== WATER && tj !== BRINE) set(j, WATER, 0);
+          evt.hiss++; return;
+        }
+        if (tj === E) { if (j < i && R() < 0.04) set(j, FIRE, 8 + R() * 14, lvl[i]); }
+        else heat(j, lvl[i]);
+      }
+      powder(i, x, y, true); break;
+    }
+    case SMOKE:
+      if (--life[i] <= 0) { set(i, E, 0); break; }
+      gas(i, x, y, 0.5); break;
+    case STEAM: {
+      if (--life[i] <= 0) { if (R() < 0.5) set(i, WATER, 0); else set(i, E, 0); break; }
+      const j = rnb(x, y);
+      if (j >= 0 && (type[j] === ICE || type[j] === SNOW) && R() < 0.05) { set(i, WATER, 0); break; }
+      gas(i, x, y, 0.6); break;
+    }
+    case METHANE: gas(i, x, y, 0.25); break;
+    case MERCURY: liquid(i, x, y, 4); break;
+    case APPLE: case WETPAPER: powder(i, x, y, false); break;
+    case KERNEL: case POPCORN: powder(i, x, y, true); break;
+    case MWAX:
+      if (--life[i] <= 0) { set(i, WAX, 0); break; }
+      if (R() < 0.5) liquid(i, x, y, 2);
+      break;
+    case PAPER: case CARDBOARD: {
+      const j = rnb(x, y);
+      if (j >= 0 && (type[j] === WATER || type[j] === BRINE) && R() < (t === PAPER ? 0.05 : 0.01)) set(i, WETPAPER, 0);
+      break;
+    }
+    case MOLTEN: {
+      if (--life[i] <= 0) { set(i, (shade[i] & 1) ? IRON : LEAD, 0); break; }
+      for (let n = 0; n < 2; n++) {
+        const j = rnb(x, y); if (j < 0) continue;
+        const tj = type[j];
+        if (tj === WATER || tj === BRINE) { set(j, STEAM, initLife(STEAM)); evt.hiss++; life[i] -= 60; }
+        else if (tj === SAND) { if (R() < 0.01) set(j, GLASS, 0); }
+        else if (tj === IRON && (shade[i] & 1)) { if (R() < 0.01) { set(j, MOLTEN, life[i]); shade[j] |= 1; } }
+        else if (tj === E) { if (j < i - 1 && R() < 0.002) set(j, FIRE, 8 + R() * 8, lvl[i]); }
+        else heat(j, lvl[i]);
+      }
+      if (R() < 0.6) liquid(i, x, y, 2);
+      break;
+    }
+    case COPPER: {
+      const j = rnb(x, y); if (j < 0) break;
+      const tj = type[j];
+      if ((tj === WATER && R() < 0.0015) || (tj === BRINE && R() < 0.005)) set(i, PATINA, 0);
+      break;
+    }
+    case CRYSTAL: {
+      const j = rnb(x, y);
+      if (j >= 0 && type[j] === BRINE && R() < 0.03) set(j, CRYSTAL, 0);
+      break;
+    }
+    case URANIUM: {
+      const j = rnb(x, y); if (j < 0) break;
+      const tj = type[j];
+      if ((tj === WATER || tj === BRINE) && R() < 0.01) { set(j, STEAM, initLife(STEAM)); evt.hiss++; }
+      else if (R() < 0.05) heat(j, lvl[i]);
+      break;
+    }
+    case PHOS: {
+      const j = rnb(x, y);
+      if (j >= 0 && type[j] === E && R() < 0.0008) { set(i, FIRE, 40); break; }
+      powder(i, x, y, true); break;
+    }
+    case SODIUM: {
+      const j = rnb(x, y);
+      if (j >= 0 && (type[j] === WATER || type[j] === BRINE)) { set(j, STEAM, initLife(STEAM)); set(i, E, 0); explode(x, y, 3); break; }
+      powder(i, x, y, true); break;
+    }
+    case IRON: {
+      const j = rnb(x, y); if (j < 0) break;
+      const tj = type[j];
+      if ((tj === WATER && R() < 0.002) || (tj === BRINE && R() < 0.008)) set(i, RUST, 0);
+      break;
+    }
+    case ICE: {
+      const j = rnb(x, y); if (j < 0) break;
+      const tj = type[j], c = lvl[i];
+      if ((tj === SALT || tj === BRINE) && R() < 0.08 / c) set(i, WATER, 0);
+      else chill(j, c, 1);
+      break;
+    }
+    case PLANT: {
+      const j = rnb(x, y);
+      if (j >= 0 && type[j] === WATER && R() < 0.03) set(j, PLANT, 0);
+      if (life[i] > 0 && R() < 0.08 && y > 0) {
+        const nx = x + ((R() * 3) | 0) - 1;
+        if (nx >= 0 && nx < W) {
+          const k = (y - 1) * W + nx;
+          if (type[k] === E) { set(k, PLANT, life[i] - 1); if (R() > 0.12) life[i] = 0; }
+        }
+      }
+      break;
+    }
+    case CLONE: {
+      if (life[i] === 0) {
+        for (let k = 0; k < 8; k++) {
+          const nx = x + DX[k], ny = y + DY[k];
+          if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+          const tj = type[ny * W + nx];
+          if (tj !== E && tj !== CLONE && tj !== VOID && tj !== WALL) { life[i] = tj; break; }
+        }
+      } else {
+        const j = rnb(x, y);
+        if (j >= 0 && type[j] === E && R() < 0.4) set(j, life[i], initLife(life[i]));
+      }
+      break;
+    }
+    case VOID: {
+      for (let k = 0; k < 8; k++) {
+        const nx = x + DX[k], ny = y + DY[k];
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        const j = ny * W + nx, tj = type[j];
+        if (tj !== E && tj !== WALL && tj !== VOID && tj !== CLONE) set(j, E, 0);
+      }
+      break;
+    }
+  }
+}
+
+function step() {
+  tick = (tick % 255) + 1;
+  for (let y = H - 1; y >= 0; y--) {
+    const ltr = R() < 0.5, row = y * W;
+    for (let k = 0; k < W; k++) {
+      const x = ltr ? k : W - 1 - k, i = row + x, t = type[i];
+      if (t === E || clk[i] === tick || KIND[t] === STATIC && t !== ICE && t !== IRON && t !== COPPER && t !== PAPER && t !== CARDBOARD && t !== CRYSTAL && t !== URANIUM && t !== PLANT && t !== EMBER && t !== CLONE && t !== VOID) continue;
+      clk[i] = tick;
+      upd(t, i, x, y);
+    }
+  }
+}
+
+// ---- Rendering -------------------------------------------------------------
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let img = ctx.createImageData(W, H);
+let px = new Uint32Array(img.data.buffer);
+const pack = (r, g, b) => ((255 << 24) | (b << 16) | (g << 8) | r) >>> 0;
+const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v | 0;
+const LUT = new Uint32Array(128 * 32);
+for (const m of M) {
+  for (let v = 0; v < 32; v++) {
+    const o = (v / 31 - 0.5) * 2 * m.vary;
+    LUT[m.id * 32 + v] = pack(clamp(m.col[0] + o), clamp(m.col[1] + o), clamp(m.col[2] + o));
+  }
+}
+const FIRE_LUT = new Uint32Array(64), EMBER_LUT = new Uint32Array(64);
+for (let l = 0; l < 64; l++) {
+  const t = l / 63;
+  FIRE_LUT[l] = pack(clamp(200 + 55 * t), clamp(40 + 190 * t * t), clamp(10 + 120 * t * t * t));
+  EMBER_LUT[l] = pack(clamp(150 + 105 * t), clamp(30 + 130 * t), clamp(8 + 40 * t));
+}
+let BG;
+function buildBG() {
+BG = new Uint32Array(H);
+for (let y = 0; y < H; y++) {
+  const t = y / (H - 1);
+  BG[y] = pack(clamp(19 - 6 * t), clamp(23 - 7 * t), clamp(32 - 9 * t));
+}
+}
+buildBG();
+// Change the grid resolution, keeping what's on screen by resampling it.
+function resizeGrid(nw, nh) {
+  if (nw === W && nh === H) return;
+  const oW = W, oH = H, oT = type, oL = life, oS = shade, oV = lvl;
+  W = nw; H = nh; N = W * H;
+  type = new Uint8Array(N); life = new Int16Array(N); shade = new Uint8Array(N); clk = new Uint8Array(N); lvl = new Uint8Array(N);
+  for (let y = 0; y < H; y++) {
+    const sy = Math.min(oH - 1, (y * oH / H) | 0);
+    for (let x = 0; x < W; x++) {
+      const o = sy * oW + Math.min(oW - 1, (x * oW / W) | 0), i = y * W + x;
+      type[i] = oT[o]; life[i] = oL[o]; shade[i] = oS[o]; lvl[i] = oV[o];
+    }
+  }
+  canvas.width = W; canvas.height = H;
+  img = ctx.createImageData(W, H); px = new Uint32Array(img.data.buffer);
+  buildBG();
+  drops.length = 0;
+}
+function mix(a, b, t) {
+  const ar = a & 255, ag = (a >>> 8) & 255, ab = (a >>> 16) & 255;
+  const br = b & 255, bg = (b >>> 8) & 255, bb = (b >>> 16) & 255;
+  return pack((ar + (br - ar) * t) | 0, (ag + (bg - ag) * t) | 0, (ab + (bb - ab) * t) | 0);
+}
+const WHITEHOT = pack(214, 228, 255), DEEPRED = pack(150, 20, 10), YELLOWHOT = pack(255, 232, 140), DEEPBLUE = pack(80, 130, 255);
+let frame = 0, fireCount = 0, lavaCount = 0;
+function render() {
+  frame++; fireCount = 0; lavaCount = 0;
+  for (let y = 0, i = 0; y < H; y++) {
+    const bg = BG[y];
+    for (let x = 0; x < W; x++, i++) {
+      const t = type[i];
+      if (t === E) { px[i] = bg; continue; }
+      const s = shade[i];
+      switch (t) {
+        case FIRE: { fireCount++; const l = life[i] + (s & 7), h = lvl[i]; let c = FIRE_LUT[l > 63 ? 63 : l]; if (h >= 7) c = mix(c, WHITEHOT, (h - 6) / 5); else if (h <= 2) c = mix(c, DEEPRED, 0.45); px[i] = c; break; }
+        case EMBER: { fireCount++; const k = (s + frame * 2) & 127; let c = EMBER_LUT[k < 64 ? k : 127 - k]; if (lvl[i] >= 7) c = mix(c, WHITEHOT, (lvl[i] - 6) / 8); px[i] = c; break; }
+        case BCOAL: { fireCount++; const k = (s + frame) & 127; let c = EMBER_LUT[((k < 64 ? k : 127 - k) * 0.75) | 0]; if (lvl[i] >= 7) c = mix(c, WHITEHOT, (lvl[i] - 6) / 8); px[i] = c; break; }
+        case LAVA: { lavaCount++; let c = LUT[LAVA * 32 + (((s >> 3) + (frame >> 3)) & 31)]; if (lvl[i] >= 7) c = mix(c, YELLOWHOT, (lvl[i] - 6) / 6); px[i] = c; break; }
+        case ICE: { let c = LUT[ICE * 32 + (s >> 3)]; if (lvl[i] >= 7) c = mix(c, DEEPBLUE, (lvl[i] - 6) / 7); px[i] = c; break; }
+        case VOID: px[i] = LUT[VOID * 32 + (((s >> 3) + (frame >> 2)) & 31)]; break;
+        case SMOKE: { const a = life[i] / 110; px[i] = mix(bg, LUT[SMOKE * 32 + (s >> 3)], a > 1 ? 0.85 : a * 0.85); break; }
+        case STEAM: { const a = life[i] / 160; px[i] = mix(bg, LUT[STEAM * 32 + (s >> 3)], a > 1 ? 0.7 : 0.15 + a * 0.55); break; }
+        case METHANE: px[i] = mix(bg, LUT[METHANE * 32 + (s >> 3)], 0.32); break;
+        case GLASS: px[i] = mix(bg, LUT[GLASS * 32 + (s >> 3)], 0.6); break;
+        case PLANT: px[i] = life[i] > 0 ? LUT[PLANT * 32 + 31] : LUT[PLANT * 32 + (s >> 3)]; break;
+        case APPLE: px[i] = life[i] === 1 ? LUT[WOOD * 32 + 6] : life[i] === 2 ? LUT[PLANT * 32 + 20] : LUT[APPLE * 32 + (s >> 3)]; break;
+        case MOLTEN: lavaCount++; px[i] = LUT[MOLTEN * 32 + (((s >> 3) + (frame >> 3)) & 31)]; break;
+        case URANIUM: { const k = (frame + s) & 63; px[i] = LUT[URANIUM * 32 + (k < 32 ? k : 63 - k)]; break; }
+        default:
+          px[i] = GEMS.has(t) && ((s * 7 + frame) & 255) < 2 ? 0xffffffff : LUT[t * 32 + (s >> 3)];
+      }
+    }
+  }
+  for (const p of drops) {
+    const i = (p.y | 0) * W + (p.x | 0);
+    if (i >= 0 && i < N) px[i] = p.m === FIRE ? FIRE_LUT[50] : LUT[p.m * 32 + 26];
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+// ---- Starting scene --------------------------------------------------------
+function clearAll() { type.fill(0); life.fill(0); drops.length = 0; }
+function fillRect(x0, y0, x1, y1, m, p = 1) {
+  for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++)
+    for (let x = Math.max(0, x0); x <= Math.min(W - 1, x1); x++)
+      if (R() < p) set(y * W + x, m, initLife(m));
+}
+function scene() {
+  clearAll();
+  const top = new Int16Array(W);
+  for (let x = 0; x < W; x++) {
+    const h = (16 + 6 * Math.sin(x * 0.045) + 3 * Math.sin(x * 0.13 + 1)) | 0;
+    top[x] = H - h;
+    fillRect(x, H - h, x, H - 4, SAND);
+    fillRect(x, H - 3, x, H - 1, STONE);
+  }
+  // Wall basin: oil floating on water
+  fillRect(14, 74, 15, H - 1, WALL);
+  fillRect(84, 74, 85, H - 1, WALL);
+  fillRect(14, 112, 85, 113, WALL);
+  fillRect(16, 80, 83, 87, OIL);
+  fillRect(16, 88, 83, 111, WATER);
+  fillRect(16, 114, 83, H - 1, STONE);
+  // Ice shelf on the basin rim
+  fillRect(6, 70, 22, 73, ICE);
+  // Campfire: logs with a lit end
+  for (let x = 102; x <= 134; x++) fillRect(x, top[x] - 6, x, top[x] - 1, WOOD);
+  fillRect(102, top[103] - 5, 105, top[103] - 2, EMBER);
+  // Gunpowder heap beside it, waiting for the fire to creep over
+  for (let x = 136; x <= 150; x++) { const hh = 6 - Math.abs(x - 143) * 0.8; if (hh > 0) fillRect(x, top[x] - (hh | 0), x, top[x] - 1, GUNP); }
+  // Sprouting seedlings
+  for (const x of [160, 168, 92]) set((top[x] - 1) * W + x, PLANT, 34 + R() * 12);
+  // Glass cup of lava with a stone lid of salt water
+  fillRect(176, 62, 177, H - 1, GLASS);
+  fillRect(224, 62, 225, H - 1, GLASS);
+  fillRect(176, 112, 225, 113, GLASS);
+  fillRect(178, 94, 223, 111, LAVA);
+  fillRect(178, 114, 223, H - 1, SAND);
+  // A clone tap dripping snow over the cup
+  fillRect(196, 8, 204, 9, CLONE);
+  for (let x = 196; x <= 204; x++) life[9 * W + x] = SNOW;
+  // Iron bridge dipping into the water, gold and coal seams in the dunes
+  fillRect(40, 96, 60, 99, IRON);
+  for (let x = 110; x <= 170; x++) if (R() < 0.6) fillRect(x, H - 6, x, H - 4, GOLD);
+  fillRect(152, top[152] - 3, 158, top[152] - 1, COAL);
+  // Methane pocket trapped under a wall ledge
+  fillRect(30, 30, 70, 31, WALL);
+  fillRect(32, 32, 68, 44, METHANE, 0.55);
+}
+
+// ---- UI --------------------------------------------------------------------
+let sel = SAND, brush = 4, paused = false, speed = 1, acc = 0;
+const cssColor = m => {
+  if (m.id === FIRE) return 'linear-gradient(180deg,#ffe07a,#ff7a1e 60%,#c8280a)';
+  if (m.id === BCOAL) return 'radial-gradient(circle at 40% 40%,#ff9a3a,#7a1e08 70%,#2a2628)';
+  if (m.id === EMBER) return 'radial-gradient(circle at 40% 40%,#ffb04a,#c0360c)';
+  if (m.id === E) return 'repeating-linear-gradient(45deg,#3a4252 0 3px,#1a1f29 3px 6px)';
+  if (m.id === CLONE) return 'repeating-linear-gradient(90deg,#c4ac3a 0 3px,#8e7a22 3px 6px)';
+  return `rgb(${m.col.join(',')})`;
+};
+const palette = document.getElementById('palette');
+const groups = ['Solids', 'Powders', 'Liquids', 'Heat & gas', 'Rocks', 'Metals', 'Crystals & gems', 'Fuels & reactive', 'Everyday', 'Special'];
+const sections = {};
+const buttons = {};
+for (const g of groups) {
+  const sec = document.createElement('details');
+  sec.className = 'cat';
+  const list = DEFS.map(d => M[d[0]]).filter(m => m.group === g);
+  sec.innerHTML = `<summary><span>${g}</span><span class="n">${list.length}</span></summary><div class="mats"></div>`;
+  sections[g] = sec;
+  const grid = sec.querySelector('.mats');
+  for (const m of list) {
+    const b = document.createElement('button');
+    b.className = 'mat'; b.id = 'mat-' + m.id;
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = `<i class="sw" style="background:${cssColor(m)}"></i><span>${m.name}</span>`;
+    b.addEventListener('click', () => select(m.id));
+    grid.appendChild(b); buttons[m.id] = b;
+  }
+  palette.appendChild(sec);
+}
+function levelFor(m) { return HOT.has(m) ? heatLevel : COLD.has(m) ? coldLevel : 4; }
+function updateTempUI() {
+  const row = document.getElementById('tempRow'), inp = document.getElementById('temp');
+  const hot = HOT.has(sel), cold = COLD.has(sel);
+  row.hidden = !(hot || cold);
+  if (row.hidden) return;
+  const v = hot ? heatLevel : coldLevel;
+  inp.value = v;
+  inp.style.accentColor = hot ? '#f0702a' : '#5aa8ff';
+  inp.setAttribute('aria-label', hot ? 'Heat level' : 'Cold level');
+  document.getElementById('tempLabel').textContent = hot ? 'Heat' : 'Cold';
+  document.getElementById('tempOut').textContent = v + ' · ' + (hot ? HEAT_WORDS : COLD_WORDS)[v];
+}
+document.getElementById('temp').oninput = e => {
+  const v = +e.target.value;
+  if (HOT.has(sel)) heatLevel = v; else coldLevel = v;
+  updateTempUI();
+};
+function select(id) {
+  buttons[sel]?.setAttribute('aria-pressed', 'false');
+  if (id === CUP && sel !== CUP) setBrush(2);
+  sel = id; buttons[sel].setAttribute('aria-pressed', 'true');
+  const m = M[id];
+  sections[m.group].open = true;
+  updateTempUI();
+  document.getElementById('cardSw').style.background = cssColor(m);
+  document.getElementById('cardName').textContent = m.name;
+  document.getElementById('cardKind').textContent = id === E || id === CUP ? 'tool' : id === APPLE ? 'object' : KIND_NAME[m.kind];
+  document.getElementById('cardDesc').textContent = m.desc;
+}
+select(SAND);
+
+const playBtn = document.getElementById('play'), stepBtn = document.getElementById('stepbtn');
+function setPaused(p) { paused = p; playBtn.textContent = p ? 'Play' : 'Pause'; stepBtn.disabled = !p; }
+playBtn.onclick = () => setPaused(!paused);
+stepBtn.onclick = () => { step(); render(); };
+const pxBtns = document.querySelectorAll('#pxsize button');
+function setPixelSize(w) {
+  resizeGrid(w, Math.round(w * 2 / 3));
+  pxBtns.forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === w ? 'true' : 'false'));
+  try { localStorage.setItem('grainfall-px', w); } catch (e) {}
+}
+pxBtns.forEach(b => b.onclick = () => setPixelSize(+b.dataset.w));
+document.getElementById('reset').onclick = () => { setPixelSize(240); scene(); };
+const clearBtn = document.getElementById('clear');
+let clearArmed = 0;
+clearBtn.onclick = () => {
+  if (clearArmed) { clearTimeout(clearArmed); clearArmed = 0; clearAll(); clearBtn.textContent = 'Clear'; clearBtn.classList.remove('warn'); return; }
+  clearBtn.textContent = 'Click again to clear'; clearBtn.classList.add('warn');
+  clearArmed = setTimeout(() => { clearArmed = 0; clearBtn.textContent = 'Clear'; clearBtn.classList.remove('warn'); }, 2500);
+};
+const brushIn = document.getElementById('brush'), brushOut = document.getElementById('brushOut');
+function setBrush(v) { brush = Math.max(1, Math.min(16, v)); brushIn.value = brush; brushOut.textContent = brush; }
+brushIn.oninput = () => setBrush(+brushIn.value);
+const speedBtns = document.querySelectorAll('#speed button');
+let slowSpeed = 1;
+function setSpeed(v) {
+  speed = v; if (v !== 5) slowSpeed = v;
+  speedBtns.forEach(o => o.setAttribute('aria-pressed', +o.dataset.s === v ? 'true' : 'false'));
+  document.getElementById('fastbadge').hidden = v !== 5;
+}
+speedBtns.forEach(b => b.onclick = () => setSpeed(+b.dataset.s));
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+  if (e.code === 'Space') { e.preventDefault(); setPaused(!paused); }
+  else if (e.key === '[') setBrush(brush - 1);
+  else if (e.key === ']') setBrush(brush + 1);
+  else if (e.key === 'e' || e.key === 'E') select(E);
+  else if (e.key === 'f' || e.key === 'F') setSpeed(speed === 5 ? slowSpeed : 5);
+  else if (e.key === 's' || e.key === 'S') setMode(sprayMode ? 'pour' : 'spray');
+});
+
+// ---- Spray -----------------------------------------------------------------
+// Droplets fly as free particles with gravity and land where they hit something.
+let sprayMode = false;
+const modeBtns = document.querySelectorAll('#mode button');
+function setMode(m) {
+  sprayMode = m === 'spray';
+  modeBtns.forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m ? 'true' : 'false'));
+}
+modeBtns.forEach(b => b.onclick = () => setMode(b.dataset.m));
+const drops = [];
+const canSpray = m => m !== E && m !== CUP && m !== APPLE && KIND[m] !== STATIC;
+function emitSpray(cx, cy) {
+  const m = sel, n = 3 + brush * 2, spread = 0.35 + brush * 0.04;
+  const g = KIND[m] === GAS;
+  for (let k = 0; k < n && drops.length < 4000; k++) {
+    const a = (g ? -Math.PI / 2 : Math.PI / 2) + (R() - 0.5) * 2 * spread;
+    const v = 1.6 + R() * 1.6;
+    drops.push({ x: cx + 0.5 + (R() - 0.5), y: cy + 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, m, lv: levelFor(m), age: 0 });
+  }
+}
+function stepSpray() {
+  for (let d = drops.length - 1; d >= 0; d--) {
+    const p = drops[d];
+    p.vy += KIND[p.m] === GAS ? -0.04 : 0.1;
+    p.vx *= 0.985;
+    const steps = Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy), 0.01));
+    let done = false;
+    for (let s = 0; s < steps && !done; s++) {
+      const nx = p.x + p.vx / steps, ny = p.y + p.vy / steps;
+      const ix = nx | 0, iy = ny | 0;
+      if (nx < 0 || ny < 0 || ix >= W || iy >= H) {
+        const cx = Math.min(W - 1, Math.max(0, p.x | 0)), cy = Math.min(H - 1, Math.max(0, p.y | 0)), ci = cy * W + cx;
+        if (type[ci] === E) spawnAt(ci, p.m, p.lv);
+        done = true; break;
+      }
+      if (type[iy * W + ix] !== E) {
+        if (IGNITERS.has(p.m)) scorch(iy * W + ix);
+        const ci = (p.y | 0) * W + (p.x | 0);
+        if (type[ci] === E) spawnAt(ci, p.m, p.lv);
+        done = true; break;
+      }
+      p.x = nx; p.y = ny;
+    }
+    if (!done && ++p.age > 200) { const ci = (p.y | 0) * W + (p.x | 0); if (type[ci] === E) spawnAt(ci, p.m, p.lv); done = true; }
+    if (done) { drops[d] = drops[drops.length - 1]; drops.pop(); }
+  }
+}
+
+// ---- Painting --------------------------------------------------------------
+let drawing = false, erasing = false, last = null;
+function cellAt(e) {
+  const r = canvas.getBoundingClientRect();
+  return [Math.floor((e.clientX - r.left) / r.width * W), Math.floor((e.clientY - r.top) / r.height * H)];
+}
+function density(m) {
+  if (brush === 1) return 1;
+  switch (KIND[m]) { case STATIC: return 1; case POWDER: return 0.3; case LIQUID: return 0.45; default: return 0.4; }
+}
+// Heat sources applied straight onto something set it alight.
+const IGNITERS = new Set([FIRE, EMBER, BCOAL, LAVA, MOLTEN]);
+function scorch(i) {
+  const t0 = type[i];
+  for (let k = 0; k < 10 && type[i] === t0; k++) heat(i, levelFor(sel));
+}
+function paint(cx, cy) {
+  const m = erasing ? E : sel === CUP ? GLASS : sel, r = brush - 1, r2 = r * r + r, p = density(m);
+  for (let dy = -r; dy <= r; dy++) {
+    const y = cy + dy; if (y < 0 || y >= H) continue;
+    for (let dx = -r; dx <= r; dx++) {
+      const x = cx + dx; if (x < 0 || x >= W || dx * dx + dy * dy > r2) continue;
+      const i = y * W + x;
+      if (m === E) { type[i] = E; life[i] = 0; continue; }
+      const cur = type[i];
+      if (cur !== E && IGNITERS.has(m)) { scorch(i); continue; }
+      if (cur !== E && !(KIND[m] === STATIC && KIND[cur] !== STATIC)) continue;
+      if (R() > p) continue;
+      spawnAt(i, m, levelFor(m));
+    }
+  }
+}
+function stampCup(cx, cy) {
+  const w = 6 + brush * 2, h = Math.round(w * 0.85);
+  const x0 = cx - (w >> 1), x1 = x0 + w - 1, y0 = cy - h + 1;
+  const put = (x, y) => {
+    if (x < 0 || y < 0 || x >= W || y >= H) return;
+    const i = y * W + x;
+    if (KIND[type[i]] !== STATIC || type[i] === E) set(i, GLASS, 0);
+  };
+  for (let y = y0; y <= cy; y++) { put(x0, y); put(x1, y); }
+  for (let x = x0; x <= x1; x++) put(x, cy);
+}
+function stampApple(cx, cy) {
+  const r = brush + 2, r2 = r * r;
+  const put = (x, y, mark) => {
+    if (x < 0 || y < 0 || x >= W || y >= H) return;
+    const i = y * W + x;
+    if (type[i] === E || KIND[type[i]] === GAS) { set(i, APPLE, mark); }
+  };
+  for (let dy = -r; dy <= r; dy++)
+    for (let dx = -r; dx <= r; dx++) {
+      // slightly wider than tall, with a dip at the top
+      const ex = dx / 1.08, ey = dy;
+      if (ex * ex + ey * ey > r2) continue;
+      if (dy < -r * 0.7 && Math.abs(dx) < r * 0.25) continue;
+      put(cx + dx, cy + dy, 0);
+    }
+  const sh = Math.max(2, (r / 2) | 0);
+  for (let k = 0; k < sh; k++) put(cx, cy - r + 1 - k, 1);
+  for (let k = 1; k <= Math.max(2, (r / 2.5) | 0); k++) { put(cx + k, cy - r - k + 2, 2); put(cx + k, cy - r - k + 1, 2); }
+  burst(900, 0.06, 0.12, 'lowpass', 1);
+}
+function line(a, b) {
+  const n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]), 1);
+  for (let s = 0; s <= n; s++) paint(Math.round(a[0] + (b[0] - a[0]) * s / n), Math.round(a[1] + (b[1] - a[1]) * s / n));
+}
+const hoverEl = document.getElementById('hover');
+function showHover(c) {
+  if (!c || c[0] < 0 || c[1] < 0 || c[0] >= W || c[1] >= H) { hoverEl.textContent = '—'; return; }
+  const t = type[c[1] * W + c[0]];
+  hoverEl.textContent = t === E ? 'air' : M[t].name.toLowerCase();
+}
+let hoverCell = null;
+canvas.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
+  erasing = e.button === 2;
+  last = cellAt(e);
+  if (sel === APPLE && !erasing) { stampApple(last[0], last[1]); return; }
+  drawing = true; if (!(sprayMode && !erasing && canSpray(sel))) paint(last[0], last[1]);
+});
+canvas.addEventListener('pointermove', e => {
+  const c = cellAt(e); hoverCell = c;
+  if (drawing) { if (sprayMode && !erasing && canSpray(sel)) { last = c; return; } if (c[0] !== last[0] || c[1] !== last[1]) scratch(); line(last, c); last = c; }
+});
+const stop = () => { drawing = false; };
+canvas.addEventListener('pointerup', stop);
+canvas.addEventListener('pointercancel', stop);
+canvas.addEventListener('pointerleave', () => { hoverCell = null; });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// ---- Sound -----------------------------------------------------------------
+let actx = null, master = null, noiseBuf = null, pourFilter = null, pourGain = null, soundOn = true;
+let lastBoom = 0, lastHiss = 0, lastSiz = 0, lastScratch = 0;
+try { soundOn = localStorage.getItem('grainfall-sound') !== 'off'; } catch (e) {}
+const soundBtn = document.getElementById('sound');
+function showSound() { soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off'; soundBtn.setAttribute('aria-pressed', soundOn); }
+showSound();
+soundBtn.onclick = () => {
+  soundOn = !soundOn; showSound();
+  try { localStorage.setItem('grainfall-sound', soundOn ? 'on' : 'off'); } catch (e) {}
+  initAudio();
+  if (master) master.gain.setTargetAtTime(soundOn ? 0.7 : 0, actx.currentTime, 0.05);
+};
+function initAudio() {
+  if (actx) { if (actx.state === 'suspended') actx.resume(); return; }
+  try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  master = actx.createGain(); master.gain.value = soundOn ? 0.7 : 0;
+  const comp = actx.createDynamicsCompressor();
+  master.connect(comp).connect(actx.destination);
+  const len = actx.sampleRate * 2;
+  noiseBuf = actx.createBuffer(1, len, actx.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = R() * 2 - 1;
+  const src = actx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+  pourFilter = actx.createBiquadFilter(); pourFilter.type = 'bandpass';
+  pourGain = actx.createGain(); pourGain.gain.value = 0;
+  src.connect(pourFilter).connect(pourGain).connect(master); src.start();
+}
+addEventListener('pointerdown', initAudio, true);
+addEventListener('keydown', initAudio, true);
+function burst(freq, dur, vol, type = 'bandpass', q = 1, attack = 0.002) {
+  if (!actx || !soundOn) return;
+  const t = actx.currentTime;
+  const src = actx.createBufferSource(); src.buffer = noiseBuf;
+  const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(vol, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + attack + dur);
+  src.connect(f).connect(g).connect(master);
+  src.start(t, R() * 1.5, attack + dur + 0.05);
+}
+function tone(f0, f1, dur, vol, type = 'sine') {
+  if (!actx || !soundOn) return;
+  const t = actx.currentTime;
+  const o = actx.createOscillator(); o.type = type;
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = actx.createGain();
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.02);
+}
+function scratch() {
+  const now = performance.now();
+  if (now - lastScratch < 35) return;
+  lastScratch = now;
+  const m = erasing ? E : sel === CUP ? GLASS : sel;
+  if (m === GLASS) { burst(5200 + R() * 2000, 0.03, 0.05, 'bandpass', 6); if (R() < 0.08) tone(2400 + R() * 1600, 2300, 0.15, 0.015); }
+  else if (KIND[m] === STATIC) burst(2500 + R() * 1500, 0.03, 0.05, 'bandpass', 2);
+}
+function updateSound() {
+  if (!actx) return;
+  const t = actx.currentTime;
+  let target = 0;
+  if (drawing && soundOn) {
+    const m = erasing ? E : sel === CUP ? GLASS : sel, k = KIND[m];
+    let f = 3000, q = 1;
+    if (m === E) { f = 500; q = 0.7; target = 0.05; }
+    else if (k === POWDER) { f = (m === GOLD || m === STONE) ? 1600 : m === SNOW ? 7000 : m === WOODG ? 2600 : 4200; q = 0.8; target = 0.13; }
+    else if (k === LIQUID) {
+      f = m === LAVA ? 260 : 650 + 450 * Math.sin(t * 23) * Math.sin(t * 7); q = m === LAVA ? 2 : 5; target = 0.2;
+      if (m !== LAVA && R() < 0.2) tone(350 + R() * 700, 900 + R() * 900, 0.06, 0.05);
+      if (m === LAVA && R() < 0.06) tone(90 + R() * 60, 180, 0.12, 0.08);
+    }
+    else if (k === GAS) { f = m === FIRE ? 900 : 2400; q = 0.5; target = 0.06; }
+    if (sprayMode && !erasing && canSpray(m)) { f = m === WATER || m === BRINE ? 5200 : 3800; q = 0.6; target = 0.14; }
+    pourFilter.frequency.setTargetAtTime(f, t, 0.02);
+    pourFilter.Q.setTargetAtTime(q, t, 0.05);
+  }
+  pourGain.gain.setTargetAtTime(target, t, 0.04);
+  if (!soundOn) { evt.boom = evt.hiss = evt.sizzle = evt.pop = 0; return; }
+
+  const now = performance.now();
+  if (evt.boom && now - lastBoom > 90) {
+    const v = Math.min(1, evt.boom / 10);
+    burst(300 + v * 700, 0.4 + v * 1.1, 0.35 + 0.5 * v, 'lowpass', 0.7, 0.004);
+    tone(110, 32, 0.35 + v * 0.5, 0.4 + 0.5 * v);
+    lastBoom = now;
+  }
+  if (evt.hiss && now - lastHiss > 70) {
+    burst(3500, 0.2 + Math.min(evt.hiss, 40) / 70, Math.min(0.22, 0.03 + evt.hiss * 0.01), 'highpass', 0.7, 0.02);
+    lastHiss = now;
+  }
+  if (evt.sizzle && now - lastSiz > 45) {
+    burst(6500, 0.06, Math.min(0.1, 0.015 + evt.sizzle * 0.004), 'bandpass', 2);
+    lastSiz = now;
+  }
+  if (evt.pop) { for (let k = 0; k < Math.min(evt.pop, 3); k++) { burst(1600 + R() * 1200, 0.03, 0.22, 'bandpass', 1.5); tone(700 + R() * 300, 220, 0.05, 0.08, 'triangle'); } }
+  evt.boom = evt.hiss = evt.sizzle = evt.pop = 0;
+  if (fireCount && !paused) {
+    const p = Math.min(0.9, fireCount / 120), loud = Math.min(1, fireCount / 400);
+    if (R() < p) burst(1200 + R() * 3500, 0.008 + R() * 0.03, 0.04 + R() * 0.12 * loud, 'bandpass', 3);
+    if (fireCount > 300 && R() < 0.3) burst(600 + R() * 1200, 0.02, 0.1 * loud, 'bandpass', 2);
+  }
+  if (lavaCount && !paused && R() < Math.min(0.12, lavaCount / 3000)) tone(70 + R() * 70, 140 + R() * 80, 0.14, 0.06);
+}
+
+// ---- Loop ------------------------------------------------------------------
+const fpsEl = document.getElementById('fps'), countEl = document.getElementById('count');
+let fpsT = performance.now(), fpsN = 0;
+function loop(now) {
+  if (drawing && last) { if (sprayMode && !erasing && canSpray(sel)) emitSpray(last[0], last[1]); else paint(last[0], last[1]); }
+  if (!paused) { acc += speed; while (acc >= 1) { step(); stepSpray(); acc -= 1; } }
+  render();
+  fpsN++;
+  if (now - fpsT > 500) {
+    fpsEl.textContent = Math.round(fpsN * 1000 / (now - fpsT));
+    fpsT = now; fpsN = 0;
+    let c = 0; for (let i = 0; i < N; i++) if (type[i] !== E) c++;
+    countEl.textContent = c.toLocaleString();
+  }
+  showHover(hoverCell);
+  updateSound();
+  requestAnimationFrame(loop);
+}
+try { const saved = +localStorage.getItem('grainfall-px'); if ([480, 360, 240, 162, 120].includes(saved)) setPixelSize(saved); } catch (e) {}
+select(CUP);
+render();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
