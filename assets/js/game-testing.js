@@ -6,6 +6,7 @@
   var CODES = {
     "GRAINTEST": { name: "Grainfall", url: "https://phong-hacker.github.io/GRAINFALL/" },
     "3DTEST": { name: "Blockfall", url: "https://phong-hacker.github.io/BLOCKFALL/" },
+    "DIRTFUN": { name: "Dirt Pit Tycoon", url: "https://phong-hacker.github.io/DIRT-PIT-TYCOON/" },
   };
 
   var form = document.getElementById("tester-form");
