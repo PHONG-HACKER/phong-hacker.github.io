@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Squishy Unboxing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Figtree:wght@400;600;800&display=swap">
+<style>
+/* Layout: toy-shop counter. Sticky squish pad on the left, shelves (boxes / shop / collection) on the right.
+   Single deliberate look: mint shop wall, chunky plum sticker outlines, bubblegum + butter accents. */
+:root{
+  --wall:#cfeee2;
+  --wall-dot:#bde5d5;
+  --paper:#fffdfc;
+  --ink:#2a1838;
+  --ink-2:#6c5878;
+  --pop:#ff4f9a;
+  --pop-2:#ffe1ee;
+  --butter:#ffd447;
+  --sky:#d9f1ff;
+  --f-display:"Bagel Fat One", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --f-body:"Figtree", ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background:var(--wall);
+  background-image:radial-gradient(var(--wall-dot) 2px, transparent 2.5px);
+  background-size:26px 26px;
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:15px;
+  line-height:1.45;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:18px 60px;
+  -webkit-tap-highlight-color:transparent;
+}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+
+/* header */
+header{display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px}
+.brand{display:flex;flex-direction:column;margin-right:auto;min-width:0}
+.brand h1{font-family:var(--f-display);font-weight:400;font-size:clamp(30px,5.2vw,48px);line-height:.95;margin:0;letter-spacing:.5px;color:var(--pop);
+  -webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:3px 3px 0 var(--ink);text-wrap:balance}
+.brand small{font-weight:800;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--ink-2);margin-top:8px}
+.money{display:flex;align-items:center;gap:10px;background:var(--butter);border:3px solid var(--ink);border-radius:999px;padding:6px 18px 6px 8px;box-shadow:3px 3px 0 var(--ink)}
+.coin{width:30px;height:30px;border-radius:50%;background:#ffe98a;border:3px solid var(--ink);display:grid;place-items:center;font-family:var(--f-display);font-size:15px}
+.money b{font-family:var(--f-display);font-weight:400;font-size:24px;font-variant-numeric:tabular-nums;min-width:4.5ch}
+.money.bump{animation:bump .35s}
+@keyframes bump{40%{transform:scale(1.08) rotate(-2deg)}}
+.stat{font-size:12px;font-weight:600;color:var(--ink-2);line-height:1.2}
+.stat b{display:block;font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+.btn{font:inherit;font-weight:800;border:3px solid var(--ink);border-radius:14px;background:var(--paper);color:var(--ink);padding:9px 14px;cursor:pointer;
+  box-shadow:0 4px 0 var(--ink);transition:transform .08s, box-shadow .08s;white-space:nowrap}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn:focus-visible,.sq:focus-visible,.box:focus-visible,.tab:focus-visible,select:focus-visible{outline:3px solid var(--pop);outline-offset:3px}
+.btn.pop{background:var(--pop);color:#fff}
+.btn.butter{background:var(--butter)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:11px;box-shadow:0 3px 0 var(--ink)}
+
+/* admin bar */
+.admin{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;background:var(--ink);color:#fff;border-radius:16px;padding:8px 12px}
+.admin label{font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--butter)}
+.admin input{font:inherit;font-weight:600;border:2px solid #fff;border-radius:10px;padding:5px 9px;background:#3b2552;color:#fff;width:9.5em;min-width:0}
+.admin input::placeholder{color:#b9a8c6}
+.admin .btn{box-shadow:0 3px 0 #000}
+.admin-panel{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;width:100%;padding-top:8px;border-top:2px dashed #6c5878}
+.admin-panel input{width:6em}
+.admin-msg{font-size:13px;color:#ffd1e6}
+.boost{display:flex;align-items:center;gap:8px;background:var(--pop);color:#fff;border:3px solid var(--ink);border-radius:999px;padding:5px 12px;box-shadow:3px 3px 0 var(--ink);font-weight:800;font-variant-numeric:tabular-nums;animation:glow 1.2s ease-in-out infinite alternate}
+@keyframes glow{to{transform:scale(1.05)}}
+/* daily spin */
+.spin-btn{position:relative}
+.spin-btn.ready{background:var(--butter);animation:glow 1s ease-in-out infinite alternate}
+.spin-btn .dot{position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;background:var(--pop);border:2px solid var(--ink)}
+.wheel-wrap{position:relative;width:min(330px,100%);aspect-ratio:1;margin:6px auto 0}
+.wheel-wrap canvas{width:100%;height:100%;display:block;border-radius:50%;box-shadow:5px 5px 0 var(--ink)}
+.pointer{position:absolute;left:50%;top:-10px;margin-left:-16px;width:32px;height:38px;z-index:2;
+  clip-path:polygon(0 0,100% 0,50% 100%);filter:drop-shadow(0 2px 0 var(--ink))}
+.pointer::after{content:"";position:absolute;inset:3px 5px 9px;background:var(--pop);clip-path:polygon(0 0,100% 0,50% 100%)}
+.pointer{background:var(--ink)}
+.prize-legend{font-size:12px;color:var(--ink-2);margin:0}
+/* main layout */
+.main{display:grid;grid-template-columns:minmax(0,370px) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--paper);border:3px solid var(--ink);border-radius:24px;box-shadow:5px 5px 0 var(--ink);min-width:0}
+
+/* squish pad */
+.pad{position:sticky;top:calc(14px + env(safe-area-inset-top, 0px));padding:16px;display:flex;flex-direction:column;gap:12px}
+@media (max-width:860px){.pad{position:static}}
+.pad-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.eyebrow{font-weight:800;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--ink-2)}
+.pad-stage{position:relative;height:290px;border-radius:18px;border:3px dashed #e7c9d8;
+  background:radial-gradient(circle at 50% 55%, #fff 0, var(--pop-2) 70%);display:grid;place-items:center;overflow:hidden}
+.pad-info h2{font-family:var(--f-display);font-weight:400;font-size:24px;line-height:1.1;margin:0 0 6px;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pad-line{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+.pad-line b{color:var(--ink);font-variant-numeric:tabular-nums}
+.empty{text-align:center;color:var(--ink-2);padding:20px;max-width:32ch}
+.empty strong{display:block;font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--ink);margin-bottom:4px}
+.tip{font-size:12.5px;color:var(--ink-2);background:var(--sky);border-radius:12px;padding:8px 10px}
+
+/* chips */
+.chip{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:2px solid var(--ink);border-radius:999px;padding:2px 8px;background:#fff;white-space:nowrap}
+.chip[data-r=common]{background:#c8f0dd}
+.chip[data-r=rare]{background:#bfe3ff}
+.chip[data-r=epic]{background:#e0cbff}
+.chip[data-r=legendary]{background:#ffe17a}
+.chip[data-r=mythic]{background:linear-gradient(90deg,#ff9ecb,#ffd47a,#b5f59a,#9fe0ff,#d4b4ff)}
+.chip.tex{background:#fff;border-style:dashed;font-weight:600}
+.chip.shiny{background:var(--ink);color:var(--butter)}
+
+/* tabs */
+.shelf{padding:14px 16px 18px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tab{font:inherit;font-weight:800;font-size:14px;border:3px solid var(--ink);border-radius:999px;padding:7px 14px;background:#fff;color:var(--ink);cursor:pointer}
+.tab[aria-selected=true]{background:var(--ink);color:#fff}
+.tab .n{font-variant-numeric:tabular-nums;background:var(--pop);color:#fff;border-radius:999px;padding:0 7px;margin-left:4px;font-size:12px}
+.lede{margin:0 0 14px;color:var(--ink-2);max-width:62ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:14px}
+.card{border:3px solid var(--ink);border-radius:18px;background:#fff;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0;position:relative}
+.card.sel{background:var(--pop-2);box-shadow:inset 0 0 0 3px var(--pop)}
+.card h3{font-size:15px;font-weight:800;margin:0;line-height:1.2}
+.card .art{position:relative;height:130px;display:grid;place-items:center;border-radius:12px;background:#f6f2fa}
+.card .row{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:auto}
+.price{font-family:var(--f-display);font-weight:400;font-size:19px;font-variant-numeric:tabular-nums}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.toolbar .sum{margin-right:auto;color:var(--ink-2);font-size:13px}
+.toolbar .sum b{color:var(--ink)}
+select{font:inherit;font-weight:600;border:3px solid var(--ink);border-radius:12px;padding:6px 8px;background:#fff;color:var(--ink)}
+
+/* box cards */
+.boxcard{border:3px solid var(--ink);border-radius:20px;background:#fff;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.boxcard h3{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0}
+.mini-box{height:128px;display:grid;grid-template-columns:minmax(0,1fr);place-items:end center;overflow:hidden;border-radius:14px;background:#f6f2fa}
+.mini-box .box{transform:scale(.5);transform-origin:bottom center;margin:0 0 6px;pointer-events:none}
+.odds{display:flex;height:12px;border-radius:999px;overflow:hidden;border:2px solid var(--ink)}
+.odds span{display:block;height:100%}
+.odds-txt{font-size:12px;color:var(--ink-2);line-height:1.35}
+
+/* squishy */
+.sq{position:relative;width:var(--sz);max-width:100%;aspect-ratio:1;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;border-radius:30%}
+.sq:active{cursor:grabbing}
+.sq .inner{position:absolute;inset:0;transform-origin:50% 94%;
+  transition:transform var(--rel,.9s) var(--ease,cubic-bezier(.25,1.7,.45,1))}
+.sq svg{width:100%;height:100%;display:block;overflow:visible}
+.sq.pressed .inner{transform:translateX(var(--sx,0px)) scale(var(--wx,1.22),var(--wy,.7)) skewX(var(--skew,0deg));transition:transform .17s cubic-bezier(.3,.8,.4,1)}
+.sq .f-sq{display:none}
+.sq.pressed .f-op{display:none}
+.sq.pressed .f-sq{display:inline}
+.sq .dent{position:absolute;left:var(--px,50%);top:var(--py,50%);width:34%;height:22%;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(closest-side, rgba(42,24,56,.28), rgba(42,24,56,0));opacity:0;transition:opacity .5s;pointer-events:none}
+.sq.pressed .dent{opacity:1;transition:opacity .1s}
+.sq.shiny::after,.sq.shiny::before{content:"✦";position:absolute;color:#ffc21a;-webkit-text-stroke:1.5px var(--ink);font-size:calc(var(--sz) * .15);line-height:1;pointer-events:none;animation:twinkle 1.8s ease-in-out infinite}
+.sq.shiny::after{top:4%;right:8%}
+.sq.shiny::before{bottom:18%;left:4%;font-size:calc(var(--sz) * .1);animation-delay:.9s}
+@keyframes twinkle{0%,100%{transform:scale(.6) rotate(0);opacity:.5}50%{transform:scale(1.15) rotate(25deg);opacity:1}}
+.float{position:absolute;pointer-events:none;font-family:var(--f-display);font-size:18px;color:var(--pop);-webkit-text-stroke:1.5px var(--ink);paint-order:stroke fill;animation:floatup .9s ease-out forwards;white-space:nowrap;z-index:5}
+@keyframes floatup{from{transform:translate(-50%,-50%) scale(.7);opacity:1}to{transform:translate(-50%,-140%) scale(1.1);opacity:0}}
+
+/* cardboard box */
+.box{position:relative;width:220px;height:160px;margin-top:84px;cursor:pointer;flex:none}
+.box[data-look=card]{--box:#d9a066;--box-d:#bd8549;--tape:#f1e5c2;--lbl:var(--ink)}
+.box[data-look=pastel]{--box:#ffc2dc;--box-d:#f49ac1;--tape:#ffffff;--lbl:var(--ink)}
+.box[data-look=glitter]{--box:#c7a4ff;--box-d:#a57ef0;--tape:#ffd447;--lbl:var(--ink)}
+.box[data-look=steamer]{--box:#e6c27a;--box-d:#c99f52;--tape:#e0524f;--lbl:var(--ink)}
+.box[data-look=mega]{--box:#45295f;--box-d:#2f1b42;--tape:#ffd447;--lbl:#ffd447}
+.box .body{position:absolute;inset:0;background:var(--box);border:4px solid var(--ink);border-radius:10px 10px 18px 18px;z-index:2;
+  display:grid;place-items:center;box-shadow:inset 0 -16px 0 var(--box-d)}
+.box[data-look=pastel] .body{background:repeating-linear-gradient(90deg, var(--box) 0 18px, #ffd3e6 18px 36px)}
+.box[data-look=glitter] .body{background:radial-gradient(#fff 1.6px, transparent 2.2px) 0 0/16px 16px, radial-gradient(#ffe680 1.3px, transparent 2px) 8px 8px/16px 16px, var(--box)}
+.box[data-look=steamer] .body{background:repeating-linear-gradient(0deg, var(--box) 0 14px, #d4ab5e 14px 17px)}
+.box[data-look=mega] .body{background:radial-gradient(#ffd447 1.4px, transparent 2px) 0 0/20px 20px, var(--box)}
+.box .label{font-family:var(--f-display);font-size:17px;color:var(--lbl);letter-spacing:.06em;margin-top:52px;background:color-mix(in srgb, var(--box) 70%, #fff);padding:1px 10px;border:2px solid var(--ink);border-radius:6px;transform:rotate(-3deg)}
+.box[data-look=mega] .label{background:var(--box-d)}
+.box .flap{position:absolute;bottom:calc(100% - 6px);width:50%;height:76px;background:var(--box-d);border:4px solid var(--ink);z-index:0;
+  transition:transform .5s cubic-bezier(.3,1.7,.5,1)}
+.box .flap.l{left:0;transform-origin:0 100%;transform:scaleY(.13);border-radius:10px 4px 0 0}
+.box .flap.r{right:0;transform-origin:100% 100%;transform:scaleY(.13);border-radius:4px 10px 0 0}
+.box.open .flap.l{transform:rotate(-34deg)}
+.box.open .flap.r{transform:rotate(34deg)}
+.box .tape{position:absolute;left:50%;top:-12px;width:48px;height:100px;margin-left:-24px;background:var(--tape);border:3px solid var(--ink);border-radius:3px;z-index:3;
+  clip-path:inset(0 0 0 0);transition:clip-path .5s cubic-bezier(.5,0,.3,1), transform .5s}
+.box .tape::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg, rgba(42,24,56,.08) 0 2px, transparent 2px 9px)}
+.box.peeled .tape{clip-path:inset(0 0 100% 0);transform:translateY(-40px) rotate(-16deg)}
+.box .bag{position:absolute;left:50%;bottom:22px;width:134px;height:128px;margin-left:-67px;z-index:1;border:3px solid var(--ink);border-radius:8px 8px 14px 14px;
+  background:linear-gradient(125deg, rgba(255,255,255,.95) 0, #e3f4ff 30%, #fff 46%, #d6eeff 64%, #f6fbff 100%);
+  display:grid;place-items:center;transition:transform .6s cubic-bezier(.25,1.5,.5,1)}
+.box .bag::before{content:"";position:absolute;left:-3px;right:-3px;top:-3px;height:14px;border:3px solid var(--ink);border-radius:6px 6px 2px 2px;
+  background:repeating-linear-gradient(90deg, #ffffff 0 6px, #cfe7f7 6px 12px)}
+.box .bag span{font-family:var(--f-display);font-size:58px;color:var(--pop);-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;margin-top:8px}
+.box.bagout .bag{transform:translateY(-138px) rotate(-3deg)}
+.box.wiggle{animation:wiggle 1.6s ease-in-out infinite}
+.box.gone{animation:poof .32s ease-in forwards}
+@keyframes wiggle{0%,70%,100%{transform:rotate(0)}76%{transform:rotate(-3deg)}84%{transform:rotate(3deg)}92%{transform:rotate(-1.5deg)}}
+@keyframes poof{to{transform:scale(1.15,.6) translateY(30px);opacity:0}}
+
+/* unbox overlay */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(42,24,56,.6);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:grid;place-items:center;
+  padding:max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));overflow:auto}
+.stage{width:min(460px,100%);background:var(--paper);border:3px solid var(--ink);border-radius:28px;box-shadow:6px 6px 0 var(--ink);padding:18px;text-align:center;display:flex;flex-direction:column;gap:10px;animation:stagein .35s cubic-bezier(.3,1.5,.5,1)}
+@keyframes stagein{from{transform:scale(.85);opacity:0}}
+.stage-title{font-family:var(--f-display);font-size:24px;margin:0}
+.arena{position:relative;height:330px;display:grid;place-items:end center;padding-bottom:22px;border-radius:20px;background:radial-gradient(circle at 50% 60%, #fff 0, var(--sky) 75%);overflow:hidden}
+.arena::after{content:"";position:absolute;bottom:14px;left:50%;width:240px;height:18px;margin-left:-120px;border-radius:50%;background:rgba(42,24,56,.14);z-index:0}
+.arena .box{z-index:1}
+.rays{position:absolute;left:50%;top:50%;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;opacity:0;pointer-events:none;
+  background:repeating-conic-gradient(var(--ray,#ffd447) 0 11deg, transparent 11deg 26deg);
+  -webkit-mask:radial-gradient(circle, #000 0, transparent 62%);mask:radial-gradient(circle, #000 0, transparent 62%);transition:opacity .4s}
+.rays.on{opacity:.75;animation:spin 14s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.reveal{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;z-index:2;padding:10px}
+.reveal .sq{animation:popin .55s cubic-bezier(.2,1.8,.4,1)}
+@keyframes popin{from{transform:scale(.2) translateY(60px)}}
+.reveal h2{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0;line-height:1.1;text-wrap:balance}
+.hint{margin:0;font-weight:800;color:var(--ink-2);min-height:1.4em}
+.ub-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:#fff;font-weight:600;
+  border-radius:14px;padding:10px 16px;max-width:min(420px, calc(100vw - 32px));text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.2);animation:toastin .25s}
+@keyframes toastin{from{transform:translate(-50%,20px);opacity:0}}
+footer{text-align:center;color:var(--ink-2);font-size:12px}
+.linkish{background:none;border:0;font:inherit;color:var(--ink-2);text-decoration:underline;cursor:pointer;padding:0}
+
+@media (prefers-reduced-motion: reduce){
+  .rays.on,.box.wiggle,.sq.shiny::after,.sq.shiny::before{animation:none}
+  .sq .inner{transition-duration:.25s !important}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <form class="admin" id="adminForm" autocomplete="off">
+    <label for="adminCode">Admin code</label>
+    <input id="adminCode" type="text" placeholder="Enter code" autocapitalize="characters" spellcheck="false">
+    <button class="btn sm butter" type="submit">Enter</button>
+    <span class="admin-msg" id="adminMsg" aria-live="polite"></span>
+    <div class="admin-panel" id="adminPanel" hidden>
+      <label for="boostMult">Money ×</label>
+      <input id="boostMult" type="number" min="1" max="1000" step="0.5" value="5">
+      <label for="boostMin">For minutes</label>
+      <input id="boostMin" type="number" min="0.5" max="1440" step="0.5" value="5">
+      <button class="btn sm pop" type="button" id="boostStart">Start boost</button>
+      <button class="btn sm" type="button" id="boostStop">Stop boost</button>
+    </div>
+  </form>
+  <header>
+    <div class="brand">
+      <h1>Squishy Unboxing</h1>
+      <small>Unbox · Squish · Sell · Collect</small>
+    </div>
+    <div class="stat"><b id="stOpened">0</b>boxes opened</div>
+    <div class="stat"><b id="stSquish">0</b>squishes</div>
+    <div class="boost" id="boostBadge" hidden></div>
+    <div class="money" id="money" aria-live="polite"><span class="coin">$</span><b id="moneyAmt">$0.00</b></div>
+    <button class="btn sm spin-btn" id="spinBtn" type="button">Daily spin</button>
+    <button class="btn sm" id="soundBtn" type="button" aria-pressed="true">Sound: On</button>
+  </header>
+
+  <div class="main">
+    <section class="panel pad" aria-label="Squish pad">
+      <div class="pad-head">
+        <span class="eyebrow">Squish pad</span>
+        <span class="eyebrow" id="padEarn"></span>
+      </div>
+      <div class="pad-stage" id="padStage"></div>
+      <div class="pad-info" id="padInfo"></div>
+      <p class="tip">Press and hold to squish. Drag while holding to knead it. Every squish earns a few cents, and rarer squishies earn more. Headphones make it extra crunchy.</p>
+    </section>
+
+    <section class="panel shelf">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tab-boxes" aria-selected="true" aria-controls="p-boxes">Mystery boxes</button>
+        <button class="tab" role="tab" id="tab-shop" aria-selected="false" aria-controls="p-shop">Squishy shop</button>
+        <button class="tab" role="tab" id="tab-coll" aria-selected="false" aria-controls="p-coll">My collection <span class="n" id="collN">0</span></button>
+      </div>
+
+      <div id="p-boxes" role="tabpanel">
+        <p class="lede">Every box hides one squishy. Bigger boxes cost more but roll rarer ones, and the rarer the squishy, the more it sells for: Commons sell for a few dollars, Mythics for hundreds. About 1 in 20 comes out shiny and sells for more than double.</p>
+        <div class="grid" id="boxGrid"></div>
+      </div>
+
+      <div id="p-shop" role="tabpanel" hidden>
+        <p class="lede">Want a specific one? Buy it straight off the shelf. Shop prices are higher than unboxing odds, but you get exactly what you pick. Squish to test before you buy.</p>
+        <div class="grid" id="shopGrid"></div>
+      </div>
+
+      <div id="p-coll" role="tabpanel" hidden>
+        <div class="toolbar">
+          <span class="sum" id="collSum"></span>
+          <label class="eyebrow" for="sortSel">Sort</label>
+          <select id="sortSel">
+            <option value="new">Newest</option>
+            <option value="value">Highest value</option>
+            <option value="rarity">Rarity</option>
+          </select>
+          <button class="btn sm" id="sellCommons" type="button">Sell all commons</button>
+        </div>
+        <div class="grid" id="collGrid"></div>
+      </div>
+    </section>
+  </div>
+  <footer>Progress saves in this browser. <button class="linkish" id="resetBtn" type="button">Start over</button></footer>
+</div>
+
+<div class="overlay" id="unbox" hidden>
+  <div class="stage" role="dialog" aria-modal="true" aria-labelledby="ubTitle">
+    <h2 class="stage-title" id="ubTitle">Cardboard Box</h2>
+    <div class="arena" id="arena">
+      <div class="rays" id="ubRays"></div>
+      <div class="box" id="ubBox" role="button" tabindex="0" aria-label="Open the box">
+        <div class="flap l"></div><div class="flap r"></div>
+        <div class="bag"><span>?</span></div>
+        <div class="body"><div class="label">FRAGILE</div></div>
+        <div class="tape"></div>
+      </div>
+      <div class="reveal" id="ubReveal" hidden></div>
+    </div>
+    <p class="hint" id="ubHint">Tap the tape to peel it</p>
+    <div class="ub-actions" id="ubActions" hidden>
+      <button class="btn pop" id="ubKeep" type="button">Keep it</button>
+      <button class="btn butter" id="ubSell" type="button">Sell</button>
+      <button class="btn" id="ubAgain" type="button">Open another</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="spinOv" hidden>
+  <div class="stage" role="dialog" aria-modal="true" aria-labelledby="spinTitle">
+    <h2 class="stage-title" id="spinTitle">Daily Free Spin</h2>
+    <p class="prize-legend">One free spin every day. The gold slices are the lucky ones.</p>
+    <div class="wheel-wrap"><div class="pointer"></div><canvas id="wheel" width="660" height="660"></canvas></div>
+    <p class="hint" id="spinHint"></p>
+    <div class="ub-actions">
+      <button class="btn pop" id="spinGo" type="button">Spin!</button>
+      <button class="btn" id="spinClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+/* ---------- data ---------- */
+const RAR = {
+  common:    {label:'Common',    mult:1,  color:'#7fd9b0', order:0},
+  rare:      {label:'Rare',      mult:2,  color:'#6cb8ff', order:1},
+  epic:      {label:'Epic',      mult:3,  color:'#b98cff', order:2},
+  legendary: {label:'Legendary', mult:5,  color:'#ffc43d', order:3},
+  mythic:    {label:'Mythic',    mult:10, color:'#ff7ec4', order:4},
+};
+const TEX = {goo:'Gooey dough', foam:'Slow-rise foam', gel:'Jelly gel', crunch:'Sugar crunch'};
+const BRIGHT = ['#ff7eb6','#7ed6ff','#a8f07a','#ffd35c','#c59bff','#ff9a62','#6ff0d2'];
+const CAT = [
+  {key:'classic',   name:'Classic NeeDoh',        shape:'ball',       tex:'goo',    rar:'common',    val:4,   colors:BRIGHT},
+  {key:'teenie',    name:'Teenie NeeDoh',         shape:'teenie',     tex:'goo',    rar:'common',    val:2,   colors:BRIGHT},
+  {key:'mochi',     name:'Mochi Bun',             shape:'bun',        tex:'foam',   rar:'common',    val:3,   colors:['#fff0f5','#ffe0ec','#e6f6ff','#effde4','#fff6d9']},
+  {key:'toast',     name:'Slow-Rise Toast',       shape:'toast',      tex:'foam',   rar:'common',    val:3,   colors:['#e9b56c','#d99a52']},
+  {key:'gelball',   name:'Jelly Bubble Ball',     shape:'ball',       tex:'gel',    rar:'common',    val:4,   colors:['#7ee8fa','#ff9ecf','#b4ff9f','#d6b8ff'], pattern:'gel'},
+  {key:'dumpling',  name:'Squishy Dumpling',      shape:'dumpling',   tex:'goo',    rar:'common',    val:3,   colors:['#fff4e6','#ffe9f2','#eaf7ee']},
+  {key:'boba',      name:'Crunchy Boba Ball',     shape:'ball',       tex:'crunch', rar:'common',    val:4,   colors:['#f3d9b1','#ffd6e8','#d9f0ff'], pattern:'speckle'},
+  {key:'crunchdump',name:'Crunchy Dumpling',      shape:'dumpling',   tex:'crunch', rar:'rare',      val:9,   colors:['#ffe0b8','#fff1d6'], pattern:'speckle'},
+  {key:'crunchcat', name:'Crunchy Cool Cat',      shape:'cat',        tex:'crunch', rar:'rare',      val:12,  colors:['#ffd1e6','#e8e0ff'], pattern:'speckle'},
+  {key:'nicecube',  name:'Nice Cube NeeDoh',      shape:'cube',       tex:'goo',    rar:'rare',      val:10,  colors:['#9fe7ff','#ffb3d6','#c8ff9e','#ffe27a']},
+  {key:'gumdrop',   name:'Gumdrop NeeDoh',        shape:'gumdrop',    tex:'goo',    rar:'rare',      val:10,  colors:['#ff6f8f','#7be0a8','#ffb547','#a98bff']},
+  {key:'coolcat',   name:'Cool Cats NeeDoh',      shape:'cat',        tex:'goo',    rar:'rare',      val:12,  colors:['#ffb86b','#c9c3d9','#ff9fc6','#f5f0e8']},
+  {key:'snowball',  name:'Snowball Crunch NeeDoh',shape:'ball',       tex:'crunch', rar:'rare',      val:11,  colors:['#eef7ff','#e3ecff'], pattern:'speckle'},
+  {key:'berry',     name:'Strawberry Squish',     shape:'strawberry', tex:'foam',   rar:'rare',      val:8,   colors:['#ff5b6e','#ff7a8c']},
+  {key:'glitter',   name:'Glitter Glob NeeDoh',   shape:'ball',       tex:'gel',    rar:'epic',      val:26,  colors:['#ff7ec7','#8a7dff','#3fd0c9'], pattern:'glitter'},
+  {key:'bear',      name:'Dohzee Bear',           shape:'bear',       tex:'goo',    rar:'epic',      val:28,  colors:['#c98b5e','#f2c6a0','#ffb3c7']},
+  {key:'sugarcube', name:'Sugar Cube Crunch',     shape:'cube',       tex:'crunch', rar:'epic',      val:25,  colors:['#ffd1e6','#d6f3ff','#fff1b8'], pattern:'speckle'},
+  {key:'donut',     name:'Donut Dream',           shape:'donut',      tex:'foam',   rar:'epic',      val:22,  colors:['#ff8fc4','#8b5a3c','#bfe8ff','#fff3f8']},
+  {key:'star',      name:'Starlight Squish',      shape:'star',       tex:'gel',    rar:'epic',      val:30,  colors:['#ffd84d','#9ce8ff'], pattern:'glitter'},
+  {key:'crunchstar',name:'Crunchy Sugar Star',    shape:'star',       tex:'crunch', rar:'epic',      val:27,  colors:['#ffe27a','#ffc2dc'], pattern:'speckle'},
+  {key:'glitterdump',name:'Glitter Dumpling',     shape:'dumpling',   tex:'gel',    rar:'legendary', val:90,  colors:['#ff9ecf','#9fd8ff','#c9a6ff'], pattern:'glitter'},
+  {key:'galaxy',    name:'Galaxy NeeDoh',         shape:'ball',       tex:'goo',    rar:'legendary', val:80,  colors:['#7b5cf0'], pattern:'galaxy'},
+  {key:'goldgum',   name:'Golden Gumdrop',        shape:'gumdrop',    tex:'goo',    rar:'legendary', val:95,  colors:['#ffd447'], pattern:'gold'},
+  {key:'rainbowcat',name:'Rainbow Cool Cat',      shape:'cat',        tex:'gel',    rar:'legendary', val:110, colors:['#ff9ecb'], pattern:'rainbow'},
+  {key:'golddump',  name:'Golden Glitter Dumpling',shape:'dumpling',  tex:'gel',    rar:'mythic',    val:260, colors:['#ffd447'], pattern:'goldglitter'},
+  {key:'heart',     name:'Crystal Heart',         shape:'heart',      tex:'gel',    rar:'mythic',    val:250, colors:['#ff8fd0'], pattern:'crystal'},
+  {key:'cosmic',    name:'Cosmic Crunch Cube',    shape:'cube',       tex:'crunch', rar:'mythic',    val:300, colors:['#7b5cf0'], pattern:'galaxy'},
+];
+const DEF = Object.fromEntries(CAT.map(c => [c.key, c]));
+const BOXES = [
+  {key:'card',    name:'Cardboard Box',    price:5,   look:'card',    label:'FRAGILE',  w:{common:80, rare:18, epic:2}},
+  {key:'pastel',  name:'Pastel Gift Box',  price:15,  look:'pastel',  label:'with love', w:{common:30, rare:48, epic:18, legendary:4}},
+  {key:'steamer', name:'Dumpling Steamer', price:10,  look:'steamer', label:'DUMPLINGS', pool:['dumpling','crunchdump','glitterdump','golddump'], w:{common:70, rare:25, legendary:4.5, mythic:.5}},
+  {key:'glitter', name:'Glitter Crate',    price:40,  look:'glitter', label:'SPARKLE',  w:{common:4, rare:36, epic:42, legendary:15, mythic:3}},
+  {key:'mega',    name:'Mega Mystery Box', price:100, look:'mega',    label:'MEGA',     w:{epic:40, legendary:44, mythic:16}},
+];
+const RELEASE = {
+  goo:    ['.95s', 'cubic-bezier(.25,1.75,.45,1)'],
+  foam:   ['2.4s', 'cubic-bezier(.12,.6,.3,1)'],
+  gel:    ['.75s', 'cubic-bezier(.2,2.3,.4,.85)'],
+  crunch: ['.55s', 'cubic-bezier(.3,1.4,.5,1)'],
+};
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const fmt = n => '$' + n.toFixed(2);
+const cents = n => Math.round(n * 100) / 100;
+function rng(seed){ let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hx = h => [1,3,5].map(i => parseInt(h.slice(i, i + 2), 16));
+function mix(a, b, t){ const A = hx(a), B = hx(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
+const light = (c, t) => mix(c, '#ffffff', t);
+const dark  = (c, t) => mix(c, '#1a0f24', t);
+
+/* ---------- audio: everything is synthesized live ---------- */
+const sfx = (() => {
+  let C = null, M = null, WN = null, BN = null, on = true;
+  function init(){
+    if (C){ if (C.state === 'suspended') C.resume(); return C; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    C = new AC();
+    const comp = C.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 5; comp.attack.value = .003; comp.release.value = .2;
+    M = C.createGain(); M.gain.value = .85; M.connect(comp); comp.connect(C.destination);
+    const n = C.sampleRate * 2;
+    WN = C.createBuffer(1, n, C.sampleRate); BN = C.createBuffer(1, n, C.sampleRate);
+    const w = WN.getChannelData(0), b = BN.getChannelData(0); let last = 0;
+    for (let i = 0; i < n; i++){ const r = Math.random() * 2 - 1; w[i] = r; last = (last + .02 * r) / 1.02; b[i] = last * 3.5; }
+    return C;
+  }
+  const R = (a, b) => a + Math.random() * (b - a);
+  function env(g, t, a, dur, peak){ g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(peak, .0002), t + a); g.gain.exponentialRampToValueAtTime(.0001, t + dur); }
+  function nz({t = 0, dur = .3, type = 'lowpass', f = 800, f2, q = 1, g = .4, a = .01, brown = false}){
+    const now = C.currentTime + t;
+    const s = C.createBufferSource(); s.buffer = brown ? BN : WN; s.loop = true;
+    const fl = C.createBiquadFilter(); fl.type = type; fl.Q.value = q;
+    fl.frequency.setValueAtTime(f, now); if (f2) fl.frequency.exponentialRampToValueAtTime(f2, now + dur);
+    const gn = C.createGain(); env(gn, now, Math.min(a, dur * .5), dur, g);
+    s.connect(fl); fl.connect(gn); gn.connect(M); s.start(now, R(0, 1.5)); s.stop(now + dur + .05);
+  }
+  function tone({t = 0, f = 440, f2, dur = .2, type = 'sine', g = .2, a = .005}){
+    const now = C.currentTime + t;
+    const o = C.createOscillator(); o.type = type;
+    o.frequency.setValueAtTime(f, now); if (f2) o.frequency.exponentialRampToValueAtTime(f2, now + dur);
+    const gn = C.createGain(); env(gn, now, Math.min(a, dur * .5), dur, g);
+    o.connect(gn); gn.connect(M); o.start(now); o.stop(now + dur + .05);
+  }
+  function bubbles(n, t0, t1, lo, hi, g){ for (let i = 0; i < n; i++){ const f = R(lo, hi); tone({t:R(t0, t1), f, f2:f * R(1.4, 2.2), dur:R(.025, .06), g:g * R(.5, 1)}); } }
+  function grains(n, t0, t1, lo, hi, g, type = 'bandpass'){ for (let i = 0; i < n; i++) nz({t:R(t0, t1), dur:R(.004, .016), type, f:R(lo, hi), q:1.4, g:g * R(.3, 1), a:.001}); }
+  function rip(dur, f1, f2, g){
+    const now = C.currentTime;
+    const s = C.createBufferSource(); s.buffer = WN; s.loop = true;
+    const fl = C.createBiquadFilter(); fl.type = 'bandpass'; fl.Q.value = 1.1;
+    fl.frequency.setValueAtTime(f1, now); fl.frequency.exponentialRampToValueAtTime(f2, now + dur);
+    const gn = C.createGain(); gn.gain.setValueAtTime(0, now);
+    for (let x = 0; x < dur; x += .008) gn.gain.setValueAtTime(R(.08, 1) * g * (1 - x / dur * .5), now + x);
+    gn.gain.setValueAtTime(0, now + dur);
+    s.connect(fl); fl.connect(gn); gn.connect(M); s.start(now, R(0, 1)); s.stop(now + dur + .05);
+  }
+  const ok = () => on && init();
+  return {
+    get on(){ return on; }, set on(v){ on = v; },
+    unlock(){ init(); },
+    squish(tex, k = 1){
+      if (!ok()) return;
+      if (tex === 'goo'){
+        nz({dur:.45, f:1200, f2:160, q:3, g:.75 * k, a:.03, brown:true});
+        nz({dur:.3, type:'bandpass', f:1000, f2:280, q:4, g:.2 * k, a:.02});
+        tone({f:120, f2:55, dur:.2, g:.22 * k});
+        bubbles(Math.round(5 * k) + 1, .04, .38, 220, 600, .13 * k);
+      } else if (tex === 'foam'){
+        nz({dur:.6, type:'bandpass', f:2400, f2:450, q:.7, g:.28 * k, a:.05});
+        nz({dur:.5, f:700, f2:200, g:.35 * k, a:.04, brown:true});
+        grains(Math.round(18 * k), 0, .5, 3500, 8000, .05 * k);
+      } else if (tex === 'gel'){
+        nz({dur:.4, f:900, f2:220, q:4, g:.55 * k, a:.02, brown:true});
+        bubbles(Math.round(10 * k) + 2, 0, .42, 380, 1300, .15 * k);
+        tone({f:200, f2:90, dur:.25, g:.12 * k, type:'triangle'});
+      } else {
+        grains(Math.round(40 * k), 0, .38, 1800, 6500, .32 * k);
+        grains(Math.round(10 * k), 0, .2, 600, 1500, .3 * k);
+        nz({dur:.35, f:800, f2:200, g:.35 * k, a:.02, brown:true});
+      }
+    },
+    release(tex){
+      if (!ok()) return;
+      if (tex === 'goo'){ nz({dur:.35, f:350, f2:1000, q:2, g:.22, a:.08, brown:true}); bubbles(3, .05, .25, 300, 700, .1); tone({t:.14, f:280, f2:700, dur:.05, g:.13}); }
+      else if (tex === 'foam'){ nz({dur:2, type:'bandpass', f:450, f2:1600, q:.6, g:.1, a:.5}); grains(14, .2, 1.8, 3500, 8000, .025); }
+      else if (tex === 'gel'){ bubbles(7, 0, .35, 500, 1500, .12); tone({f:150, f2:280, dur:.3, g:.08, type:'triangle'}); }
+      else grains(12, 0, .25, 2500, 7000, .15);
+    },
+    tape(){ if (!ok()) return; rip(.62, 1500, 4500, .55); grains(26, 0, .6, 1500, 5000, .18); nz({t:.6, dur:.08, f:500, g:.25, brown:true}); },
+    flap(){ if (!ok()) return; [0, .15].forEach(t => { nz({t, dur:.16, f:260, g:.6, a:.004, brown:true}); nz({t, dur:.22, type:'bandpass', f:900, f2:400, q:2.5, g:.2}); tone({t, f:85, f2:50, dur:.14, g:.2}); }); },
+    crinkle(d = .8){ if (!ok()) return; grains(Math.round(70 * d), 0, d, 2500, 9000, .32); grains(20, 0, d, 1200, 2500, .18); },
+    tear(){ if (!ok()) return; rip(.32, 2500, 6000, .5); grains(30, 0, .4, 2500, 9000, .28); tone({t:.3, f:220, f2:520, dur:.08, g:.15}); },
+    reveal(rar, shiny){
+      if (!ok()) return;
+      const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5, 1568, 2093];
+      const n = {common:3, rare:4, epic:5, legendary:6, mythic:7}[rar] || 3;
+      tone({f:220, f2:440, dur:.15, g:.12});
+      for (let i = 0; i < n; i++){ tone({t:.05 + i * .085, f:notes[i], dur:.6, type:'triangle', g:.12}); tone({t:.05 + i * .085, f:notes[i] * 2, dur:.3, g:.035}); }
+      if (n >= 5 || shiny) for (let i = 0; i < 16; i++) tone({t:R(.25, 1.2), f:R(2500, 5200), dur:R(.05, .15), g:.04});
+    },
+    coin(){ if (!ok()) return; tone({f:1318.5, dur:.09, type:'square', g:.05}); tone({t:.075, f:1975.5, dur:.45, type:'triangle', g:.14}); grains(6, 0, .1, 5000, 9000, .15); },
+    buy(){ if (!ok()) return; tone({f:300, f2:900, dur:.12, g:.18}); bubbles(3, 0, .1, 600, 1200, .1); },
+    nope(){ if (!ok()) return; tone({f:240, f2:160, dur:.2, type:'triangle', g:.13}); },
+    clack(){ if (!ok()) return; tone({f:1900, f2:1200, dur:.03, type:'square', g:.05}); nz({dur:.02, type:'highpass', f:4000, g:.12, a:.001}); },
+    tick(){ if (!ok()) return; nz({dur:.03, type:'highpass', f:3000, g:.1, a:.001}); },
+  };
+})();
+
+/* ---------- squishy drawing ---------- */
+function starPts(cx, cy, R, r){ const p = []; for (let i = 0; i < 10; i++){ const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r : R; p.push((cx + Math.cos(a) * rr).toFixed(1) + ',' + (cy + Math.sin(a) * rr).toFixed(1)); } return p.join(' '); }
+const SHAPES = {
+  ball:      {body:'<circle cx="100" cy="112" r="74"/>', face:[100,120,1], shine:[66,66]},
+  teenie:    {body:'<circle cx="100" cy="130" r="52"/>', face:[100,136,.72], shine:[80,106]},
+  bun:       {body:'<ellipse cx="100" cy="124" rx="84" ry="58"/>', face:[100,132,.9], shine:[60,96]},
+  toast:     {body:'<path d="M40 176 L40 98 Q20 92 24 66 Q32 30 100 30 Q168 30 176 66 Q180 92 160 98 L160 176 Q100 184 40 176Z"/>', face:[100,124,.9], shine:[60,58]},
+  cube:      {body:'<rect x="32" y="42" width="136" height="136" rx="38"/>', face:[100,118,1], shine:[66,72]},
+  gumdrop:   {body:'<path d="M26 170 C22 92 52 34 100 34 C148 34 178 92 174 170 C132 182 68 182 26 170Z"/>', face:[100,128,1], shine:[70,74]},
+  cat:       {body:'<circle cx="100" cy="122" r="66"/><polygon points="46,90 54,30 96,62"/><polygon points="154,90 146,30 104,62"/>', round:10, face:[100,126,1], shine:[70,88]},
+  bear:      {body:'<circle cx="48" cy="64" r="24"/><circle cx="152" cy="64" r="24"/><circle cx="100" cy="120" r="66"/>', face:[100,112,1], shine:[72,84]},
+  strawberry:{body:'<path d="M100 184 C40 162 20 112 30 82 C40 54 72 50 100 60 C128 50 160 54 170 82 C180 112 160 162 100 184Z"/>', face:[100,118,.9], shine:[58,88]},
+  donut:     {body:'<path fill-rule="evenodd" clip-rule="evenodd" d="M24 108 a76 76 0 1 0 152 0 a76 76 0 1 0 -152 0Z M76 108 a24 24 0 1 0 48 0 a24 24 0 1 0 -48 0Z"/>', face:[100,156,.58], shine:[54,70]},
+  dumpling:  {body:'<path d="M18 156 C16 96 58 58 100 58 C142 58 184 96 182 156 C150 176 50 176 18 156Z"/>', face:[100,132,.85], shine:[62,92]},
+  heart:     {body:'<path d="M100 180 C30 132 16 98 24 70 C34 36 80 30 100 64 C120 30 166 36 176 70 C184 98 170 132 100 180Z"/>', face:[100,112,.9], shine:[56,64]},
+  star:      {body:`<polygon points="${starPts(100, 114, 80, 40)}"/>`, round:20, face:[100,120,.72], shine:[92,60]},
+};
+let gid = 0;
+function extras(shape, c, rnd){
+  if (shape === 'bear') return `<circle cx="48" cy="64" r="12" fill="${light(c,.45)}"/><circle cx="152" cy="64" r="12" fill="${light(c,.45)}"/><ellipse cx="100" cy="132" rx="30" ry="20" fill="${light(c,.5)}"/>`;
+  if (shape === 'cat'){ const l = light(c, .5); return `<g fill="${l}" stroke="${l}" stroke-width="6" stroke-linejoin="round"><polygon points="60,76 63,46 84,62"/><polygon points="140,76 137,46 116,62"/></g>`; }
+  if (shape === 'strawberry'){
+    const seeds = [[62,98],[138,98],[50,126],[150,126],[70,152],[130,152],[100,170],[84,80],[116,80]].map(([x,y]) => `<ellipse cx="${x}" cy="${y}" rx="3" ry="4.5" fill="#ffe680"/>`).join('');
+    return seeds + '<polygon points="100,72 64,54 88,52 78,32 100,46 122,32 112,52 136,54" fill="#5ccf6a" stroke="#2a1838" stroke-width="5" stroke-linejoin="round"/>';
+  }
+  if (shape === 'dumpling'){ const k = dark(c, .18); return `<g stroke="${k}" stroke-width="4" fill="none" stroke-linecap="round"><path d="M60 76 Q66 90 62 102"/><path d="M80 64 Q84 80 80 92"/><path d="M100 60 Q102 76 100 88"/><path d="M120 64 Q116 80 120 92"/><path d="M140 76 Q134 90 138 102"/></g>`; }
+  if (shape === 'toast') return '<path transform="translate(100 108) scale(.78) translate(-100 -108)" d="M40 176 L40 98 Q20 92 24 66 Q32 30 100 30 Q168 30 176 66 Q180 92 160 98 L160 176 Q100 184 40 176Z" fill="#fff1d2"/>';
+  if (shape === 'donut'){
+    let s = `<path fill-rule="evenodd" d="M36 108 a64 64 0 1 0 128 0 a64 64 0 1 0 -128 0Z M70 108 a30 30 0 1 0 60 0 a30 30 0 1 0 -60 0Z" fill="${c}" stroke="${dark(c,.15)}" stroke-width="3"/>`;
+    const cols = ['#ffffff','#ffd447','#6ff0d2','#ff4f9a','#7ed6ff','#c59bff'];
+    for (let i = 0; i < 16; i++){
+      let a = rnd() * Math.PI * 2; if (a > Math.PI * .3 && a < Math.PI * .7) a += Math.PI * .5; // keep the face clear
+      const rr = 38 + rnd() * 20, x = 100 + Math.cos(a) * rr, y = 108 + Math.sin(a) * rr;
+      s += `<rect x="${(x - 5).toFixed(1)}" y="${(y - 1.8).toFixed(1)}" width="10" height="3.6" rx="1.8" fill="${cols[i % cols.length]}" transform="rotate(${(rnd() * 180).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+    }
+    return s;
+  }
+  return '';
+}
+function overlay(p, rnd){
+  let s = '';
+  if (p === 'glitter' || p === 'goldglitter') for (let i = 0; i < 46; i++) s += `<circle cx="${(20 + rnd() * 160).toFixed(1)}" cy="${(30 + rnd() * 160).toFixed(1)}" r="${(1.2 + rnd() * 2.4).toFixed(1)}" fill="${['#fff','#fff6a8','#ffd1f0','#bff4ff'][rnd() * 4 | 0]}" opacity=".9"/>`;
+  if (p === 'speckle') for (let i = 0; i < 80; i++) s += `<circle cx="${(20 + rnd() * 160).toFixed(1)}" cy="${(30 + rnd() * 160).toFixed(1)}" r="${(1.1 + rnd() * 1.8).toFixed(1)}" fill="${rnd() < .7 ? '#ffffff' : '#c9d8ff'}" opacity=".95"/>`;
+  if (p === 'galaxy'){
+    s += '<ellipse cx="120" cy="140" rx="60" ry="26" fill="#ff7ec7" opacity=".22" transform="rotate(-25 120 140)"/>';
+    for (let i = 0; i < 36; i++) s += `<circle cx="${(20 + rnd() * 160).toFixed(1)}" cy="${(30 + rnd() * 160).toFixed(1)}" r="${(.6 + rnd() * 1.6).toFixed(1)}" fill="#fff"/>`;
+    for (let i = 0; i < 4; i++){ const x = 40 + rnd() * 120, y = 50 + rnd() * 120, k = 4 + rnd() * 4; s += `<path d="M${x} ${y - k}L${x + k * .25} ${y - k * .25}L${x + k} ${y}L${x + k * .25} ${y + k * .25}L${x} ${y + k}L${x - k * .25} ${y + k * .25}L${x - k} ${y}L${x - k * .25} ${y - k * .25}Z" fill="#fff6a8"/>`; }
+  }
+  if (p === 'gel' || p === 'crystal' || p === 'rainbow') for (let i = 0; i < 7; i++) s += `<circle cx="${(40 + rnd() * 120).toFixed(1)}" cy="${(60 + rnd() * 110).toFixed(1)}" r="${(3 + rnd() * 7).toFixed(1)}" fill="#fff" fill-opacity=".28" stroke="#fff" stroke-opacity=".7" stroke-width="1.6"/>`;
+  if (p === 'crystal') s += '<path d="M60 60 L100 120 L140 60 M100 120 L100 170" stroke="#fff" stroke-opacity=".45" stroke-width="3" fill="none"/>';
+  return s;
+}
+function face([fx, fy, s], ink){
+  return `<g transform="translate(${fx} ${fy}) scale(${s})">
+    <g class="f-op">
+      <ellipse cx="-40" cy="8" rx="11" ry="6" fill="#ff5f95" opacity=".42"/><ellipse cx="40" cy="8" rx="11" ry="6" fill="#ff5f95" opacity=".42"/>
+      <ellipse cx="-22" cy="-6" rx="6.5" ry="8.5" fill="${ink}"/><ellipse cx="22" cy="-6" rx="6.5" ry="8.5" fill="${ink}"/>
+      <circle cx="-20" cy="-9" r="2.4" fill="#fff"/><circle cx="24" cy="-9" r="2.4" fill="#fff"/>
+      <path d="M-9 8 Q0 17 9 8" stroke="${ink}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </g>
+    <g class="f-sq">
+      <ellipse cx="-40" cy="8" rx="13" ry="7" fill="#ff5f95" opacity=".7"/><ellipse cx="40" cy="8" rx="13" ry="7" fill="#ff5f95" opacity=".7"/>
+      <path d="M-31 -14 L-17 -6 L-31 2 M31 -14 L17 -6 L31 2" stroke="${ink}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse cx="0" cy="11" rx="5.5" ry="6.5" fill="${ink}"/>
+    </g></g>`;
+}
+function svgSquishy(inst){
+  const d = DEF[inst.key], S = SHAPES[d.shape], id = 'q' + (++gid), rnd = rng(inst.seed);
+  const c = inst.color, base = d.shape === 'donut' ? '#e8ad6e' : c;
+  let grad;
+  if (d.pattern === 'galaxy') grad = `<radialGradient id="${id}f" gradientUnits="userSpaceOnUse" cx="78" cy="68" r="150"><stop offset="0" stop-color="#9a6cff"/><stop offset=".45" stop-color="#3a1f7a"/><stop offset="1" stop-color="#140a33"/></radialGradient>`;
+  else if (d.pattern === 'gold' || d.pattern === 'goldglitter') grad = `<linearGradient id="${id}f" gradientUnits="userSpaceOnUse" x1="30" y1="30" x2="180" y2="190"><stop offset="0" stop-color="#fff4b8"/><stop offset=".35" stop-color="#ffd447"/><stop offset=".7" stop-color="#e2a31a"/><stop offset="1" stop-color="#ffe68a"/></linearGradient>`;
+  else if (d.pattern === 'rainbow') grad = `<linearGradient id="${id}f" gradientUnits="userSpaceOnUse" x1="25" y1="40" x2="180" y2="185"><stop offset="0" stop-color="#ff8fc4"/><stop offset=".22" stop-color="#ffb36b"/><stop offset=".42" stop-color="#ffe66d"/><stop offset=".6" stop-color="#8ef08a"/><stop offset=".8" stop-color="#7ed6ff"/><stop offset="1" stop-color="#b98cff"/></linearGradient>`;
+  else grad = `<radialGradient id="${id}f" gradientUnits="userSpaceOnUse" cx="72" cy="62" r="150"><stop offset="0" stop-color="${light(base, d.pattern === 'crystal' ? .85 : .6)}"/><stop offset=".45" stop-color="${base}"/><stop offset="1" stop-color="${dark(base, .22)}"/></radialGradient>`;
+  const r = S.round || 0, [sx, sy] = S.shine;
+  const ink = d.pattern === 'galaxy' ? '#ffffff' : '#2a1838';
+  return `<svg viewBox="0 0 200 200" aria-hidden="true"><defs>${grad}<clipPath id="${id}c">${S.body}</clipPath></defs>
+    <ellipse cx="100" cy="190" rx="62" ry="7" fill="#2a1838" opacity=".14"/>
+    <g fill="#2a1838" stroke="#2a1838" stroke-width="${r + 12}" stroke-linejoin="round">${S.body}</g>
+    <g fill="url(#${id}f)" stroke="${r ? `url(#${id}f)` : 'none'}" stroke-width="${r}" stroke-linejoin="round">${S.body}</g>
+    ${extras(d.shape, c, rnd)}
+    <g clip-path="url(#${id}c)">${overlay(d.pattern, rnd)}
+      <ellipse cx="${sx}" cy="${sy}" rx="22" ry="11" transform="rotate(-32 ${sx} ${sy})" fill="#fff" opacity=".6"/>
+      <circle cx="${sx - 14}" cy="${sy + 20}" r="5" fill="#fff" opacity=".5"/></g>
+    ${face(S.face, ink)}</svg>`;
+}
+
+/* ---------- squish interaction ---------- */
+function squishEl(inst, size, onPress){
+  const d = DEF[inst.key];
+  const el = document.createElement('div');
+  el.className = 'sq' + (inst.shiny ? ' shiny' : '');
+  el.style.setProperty('--sz', size + 'px');
+  el.tabIndex = 0; el.setAttribute('role', 'button'); el.setAttribute('aria-label', 'Squish ' + d.name);
+  el.innerHTML = `<div class="inner">${svgSquishy(inst)}<span class="dent"></span></div>`;
+  const [dur, ease] = RELEASE[d.tex];
+  el.style.setProperty('--rel', dur); el.style.setProperty('--ease', ease);
+  let down = false, x0 = 0, lastKnead = 0;
+  const press = (e, px, py) => {
+    el.style.setProperty('--px', (px * 100) + '%'); el.style.setProperty('--py', (py * 100) + '%');
+    const deep = .9 + Math.random() * .2;
+    el.style.setProperty('--wx', (1 + .22 * deep).toFixed(3)); el.style.setProperty('--wy', (1 - .3 * deep).toFixed(3));
+    el.style.setProperty('--skew', '0deg'); el.style.setProperty('--sx', '0px');
+    el.classList.add('pressed'); sfx.squish(d.tex);
+    onPress && onPress(e, el);
+  };
+  const release = () => { if (!down) return; down = false; el.classList.remove('pressed'); sfx.release(d.tex); };
+  el.addEventListener('pointerdown', e => {
+    if (e.button && e.button !== 0) return;
+    e.preventDefault(); sfx.unlock();
+    try { el.setPointerCapture(e.pointerId); } catch (_){}
+    down = true; x0 = e.clientX;
+    const b = el.getBoundingClientRect();
+    press(e, (e.clientX - b.left) / b.width, (e.clientY - b.top) / b.height);
+  });
+  el.addEventListener('pointermove', e => {
+    if (!down) return;
+    const dx = Math.max(-40, Math.min(40, e.clientX - x0));
+    el.style.setProperty('--skew', (dx * -.35).toFixed(1) + 'deg');
+    el.style.setProperty('--sx', (dx * .25).toFixed(1) + 'px');
+    const b = el.getBoundingClientRect();
+    el.style.setProperty('--px', ((e.clientX - b.left) / b.width * 100) + '%'); el.style.setProperty('--py', ((e.clientY - b.top) / b.height * 100) + '%');
+    const now = performance.now();
+    if (now - lastKnead > 170 && Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) > 3){ lastKnead = now; sfx.squish(d.tex, .4); }
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => el.addEventListener(t, release));
+  el.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !down && !e.repeat){ e.preventDefault(); sfx.unlock(); down = true; press(null, .5, .45); } });
+  el.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') release(); });
+  return el;
+}
+
+/* ---------- state ---------- */
+const KEY = 'squishy-unboxing-v1';
+let state, lastEarn = 0, saveT = 0;
+function makeInst(key, s, o = {}){
+  const d = DEF[key], seed = (Math.random() * 1e9) | 0, r = rng(seed);
+  const color = o.color || d.colors[(r() * d.colors.length) | 0];
+  const shiny = !!o.shiny;
+  const value = o.value != null ? o.value : cents(d.val * (.9 + Math.random() * .25) * (shiny ? 2.5 : 1));
+  return {id: s.nextId++, key, color, seed, shiny, value, sq: 0, t: Date.now()};
+}
+function fresh(){
+  const s = {money: 15, inv: [], sel: null, sound: true, stats: {opened: 0, sold: 0, squishes: 0}, nextId: 1};
+  const i = makeInst('classic', s, {color: '#ff7eb6', value: 4}); s.inv.push(i); s.sel = i.id;
+  return s;
+}
+function load(){ try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.inv) && typeof s.money === 'number'){ s.inv = s.inv.filter(i => DEF[i.key]); return s; } } catch (_){} return null; }
+function save(){ clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_){} }, 250); }
+const boostMult = () => (state.boost && state.boost.until > Date.now()) ? state.boost.mult : 1;
+const selInst = () => state.inv.find(i => i.id === state.sel) || state.inv[0] || null;
+const earnRate = inst => cents(.05 * RAR[DEF[inst.key].rar].mult * (inst.shiny ? 2 : 1));
+
+/* ---------- UI ---------- */
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+function chips(inst){
+  const d = DEF[inst.key];
+  return `<span class="chip" data-r="${d.rar}">${RAR[d.rar].label}</span><span class="chip tex">${TEX[d.tex]}</span>${inst.shiny ? '<span class="chip shiny">✦ Shiny</span>' : ''}`;
+}
+function renderHeader(bump){
+  $('#moneyAmt').textContent = fmt(state.money);
+  $('#stOpened').textContent = state.stats.opened;
+  $('#stSquish').textContent = state.stats.squishes.toLocaleString();
+  $('#collN').textContent = state.inv.length;
+  if (bump){ const m = $('#money'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); }
+  document.querySelectorAll('[data-price]').forEach(b => b.classList.toggle('poor', state.money < +b.dataset.price));
+}
+function floatText(host, e, text){
+  const b = host.getBoundingClientRect(), f = document.createElement('span');
+  f.className = 'float'; f.textContent = text;
+  const x = e && e.clientX != null ? e.clientX - b.left : b.width / 2, y = e && e.clientY != null ? e.clientY - b.top - 20 : b.height / 3;
+  f.style.left = x + 'px'; f.style.top = y + 'px';
+  host.appendChild(f); setTimeout(() => f.remove(), 950);
+}
+function earn(inst, e, host){
+  inst.sq++; state.stats.squishes++;
+  const now = performance.now();
+  if (now - lastEarn > 200 && state.inv.includes(inst)){
+    lastEarn = now; const amt = cents(earnRate(inst) * boostMult());
+    state.money = cents(state.money + amt);
+    floatText(host, e, '+' + fmt(amt));
+  }
+  renderHeader();
+  const c = $('#padCount'); if (c && state.sel === inst.id) c.textContent = inst.sq.toLocaleString();
+  save();
+}
+function renderPad(){
+  const inst = selInst(), stage = $('#padStage'), info = $('#padInfo');
+  stage.replaceChildren(); info.replaceChildren();
+  if (!inst){
+    $('#padEarn').textContent = '';
+    stage.innerHTML = '<div class="empty"><strong>Nothing to squish</strong>Open a mystery box or buy one from the shop.</div>';
+    return;
+  }
+  state.sel = inst.id;
+  const d = DEF[inst.key];
+  $('#padEarn').textContent = '+' + fmt(cents(earnRate(inst) * boostMult())) + ' per squish';
+  stage.appendChild(squishEl(inst, 240, (e) => earn(inst, e, stage)));
+  info.innerHTML = `<h2>${d.name}</h2><div class="meta">${chips(inst)}</div>
+    <div class="pad-line" style="margin-top:10px"><span>Squished <b id="padCount">${inst.sq.toLocaleString()}</b> times</span>
+    <button class="btn sm butter" type="button" id="padSell">Sell for ${fmt(cents(inst.value * boostMult()))}</button></div>`;
+  $('#padSell').onclick = () => sell(inst);
+  document.querySelectorAll('#collGrid .card').forEach(c => c.classList.toggle('sel', +c.dataset.id === inst.id));
+}
+function boxMarkup(b){
+  return `<div class="box" data-look="${b.look}"><div class="flap l"></div><div class="flap r"></div><div class="body"><div class="label">${b.label}</div></div><div class="tape"></div></div>`;
+}
+function renderBoxes(){
+  const g = $('#boxGrid'); g.innerHTML = '';
+  BOXES.forEach(b => {
+    const tot = Object.values(b.w).reduce((a, x) => a + x, 0);
+    const bars = Object.entries(b.w).map(([r, w]) => `<span style="width:${w / tot * 100}%;background:${r === 'mythic' ? 'linear-gradient(90deg,#ff9ecb,#ffd47a,#9fe0ff)' : RAR[r].color}" title="${RAR[r].label} ${Math.round(w / tot * 100)}%"></span>`).join('');
+    const pct = w => { const v = w / tot * 100; return v < 1 ? v.toFixed(1) : Math.round(v); };
+    const txt = Object.entries(b.w).map(([r, w]) => `${pct(w)}% ${RAR[r].label}`).join(' · ') + (b.pool ? '. Only dumplings! Get lucky for a Glitter Dumpling.' : '');
+    const card = document.createElement('div'); card.className = 'boxcard';
+    card.innerHTML = `<div class="mini-box">${boxMarkup(b)}</div><h3>${b.name}</h3><div class="odds" aria-hidden="true">${bars}</div><div class="odds-txt">${txt}</div>
+      <button class="btn pop" type="button" data-price="${b.price}">Open for ${fmt(b.price)}</button>`;
+    card.querySelector('button').onclick = () => openBox(b);
+    g.appendChild(card);
+  });
+}
+const shopPrice = d => cents(d.val * 1.5);
+function renderShop(){
+  const g = $('#shopGrid'); g.innerHTML = '';
+  CAT.filter(d => d.rar !== 'mythic').forEach(d => {
+    const preview = {id: -1, key: d.key, color: d.colors[0], seed: d.key.length * 977 + 13, shiny: false, value: d.val, sq: 0};
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<div class="art"></div><h3>${d.name}</h3><div class="meta">${chips(preview)}</div>
+      <div class="row"><span class="price">${fmt(shopPrice(d))}</span><button class="btn sm pop" type="button" data-price="${shopPrice(d)}">Buy</button></div>`;
+    card.querySelector('.art').appendChild(squishEl(preview, 118));
+    card.querySelector('button').onclick = () => buy(d);
+    g.appendChild(card);
+  });
+}
+function renderCollection(){
+  const g = $('#collGrid'); g.innerHTML = '';
+  const sort = $('#sortSel').value;
+  const list = [...state.inv];
+  if (sort === 'value') list.sort((a, b) => b.value - a.value);
+  else if (sort === 'rarity') list.sort((a, b) => RAR[DEF[b.key].rar].order - RAR[DEF[a.key].rar].order || b.value - a.value);
+  else list.sort((a, b) => b.id - a.id);
+  const total = state.inv.reduce((a, i) => a + i.value, 0);
+  $('#collSum').innerHTML = `<b>${state.inv.length}</b> squishies worth <b>${fmt(total)}</b>`;
+  const commons = state.inv.filter(i => DEF[i.key].rar === 'common' && !i.shiny);
+  const sc = $('#sellCommons'); sc.disabled = !commons.length; sc.textContent = 'Sell all commons'; delete sc.dataset.armed;
+  if (!list.length){ g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin:0 auto"><strong>Your shelf is empty</strong>Open a mystery box to start your collection.</div>'; return; }
+  list.forEach(inst => {
+    const d = DEF[inst.key];
+    const card = document.createElement('div'); card.className = 'card' + (inst.id === state.sel ? ' sel' : ''); card.dataset.id = inst.id;
+    card.innerHTML = `<div class="art"></div><h3>${d.name}</h3><div class="meta">${chips(inst)}</div>
+      <div class="row"><span class="price">${fmt(inst.value)}</span><button class="btn sm butter" type="button">Sell</button></div>`;
+    const art = card.querySelector('.art');
+    art.appendChild(squishEl(inst, 118, (e) => {
+      if (state.sel !== inst.id){ state.sel = inst.id; renderPad(); }
+      earn(inst, e, art);
+    }));
+    card.querySelector('button').onclick = () => sell(inst);
+    g.appendChild(card);
+  });
+}
+function renderAll(){ renderHeader(); renderPad(); renderCollection(); }
+
+/* ---------- actions ---------- */
+function sell(inst){
+  const i = state.inv.indexOf(inst); if (i < 0) return;
+  state.inv.splice(i, 1);
+  const got = cents(inst.value * boostMult());
+  state.money = cents(state.money + got); state.stats.sold++;
+  if (state.sel === inst.id) state.sel = state.inv[0] ? state.inv[0].id : null;
+  sfx.coin(); toast(`Sold ${DEF[inst.key].name} for ${fmt(got)}` + (boostMult() > 1 ? ` (${boostMult()}× boost)` : ''));
+  save(); renderHeader(true); renderPad(); renderCollection();
+}
+function buy(d){
+  const p = shopPrice(d);
+  if (state.money < p){ sfx.nope(); toast(`You need ${fmt(p - state.money)} more. Squish or sell to earn it.`); return; }
+  state.money = cents(state.money - p);
+  const inst = makeInst(d.key, state, {value: d.val}); state.inv.unshift(inst); state.sel = inst.id;
+  sfx.buy(); toast(`${d.name} is on your squish pad`);
+  save(); renderAll();
+}
+function pickRarity(w){ const tot = Object.values(w).reduce((a, x) => a + x, 0); let x = Math.random() * tot; for (const [r, v] of Object.entries(w)){ if ((x -= v) < 0) return r; } return Object.keys(w).pop(); }
+function roll(box){
+  const rar = pickRarity(box.w), pool = CAT.filter(c => c.rar === rar && (!box.pool || box.pool.includes(c.key)));
+  return makeInst(pool[Math.random() * pool.length | 0].key, state, {shiny: Math.random() < .05});
+}
+
+/* ---------- unboxing ---------- */
+const ub = {stage: 0, box: null, inst: null, lock: false};
+function hint(t){ $('#ubHint').textContent = t; }
+function openBox(box, free){
+  if (!free && state.money < box.price){ sfx.nope(); toast(`You need ${fmt(box.price - state.money)} more. Squish or sell to earn it.`); return; }
+  sfx.unlock();
+  if (!free) state.money = cents(state.money - box.price);
+  const inst = roll(box); state.inv.unshift(inst); state.stats.opened++;
+  save(); renderHeader(true); renderCollection();
+  Object.assign(ub, {stage: 0, box, inst, lock: false});
+  const bx = $('#ubBox'); bx.className = 'box wiggle'; bx.dataset.look = box.look; bx.hidden = false;
+  bx.querySelector('.label').textContent = box.label;
+  $('#ubTitle').textContent = box.name;
+  $('#ubReveal').hidden = true; $('#ubReveal').replaceChildren();
+  $('#ubRays').classList.remove('on'); $('#ubActions').hidden = true;
+  hint('Tap the tape to peel it');
+  $('#unbox').hidden = false; bx.focus({preventScroll: true});
+}
+function advance(){
+  if (ub.lock || ub.stage > 3) return;
+  ub.lock = true; setTimeout(() => ub.lock = false, 450);
+  const bx = $('#ubBox'); bx.classList.remove('wiggle');
+  if (ub.stage === 0){ bx.classList.add('peeled'); sfx.tape(); hint('Tap to open the flaps'); }
+  else if (ub.stage === 1){ bx.classList.add('open'); sfx.flap(); hint('Tap to pull out the bag'); }
+  else if (ub.stage === 2){ bx.classList.add('bagout'); sfx.crinkle(.9); hint('Tap to tear the bag open'); }
+  else { sfx.tear(); bx.classList.add('gone'); setTimeout(reveal, 300); }
+  ub.stage++;
+}
+function reveal(){
+  const inst = ub.inst, d = DEF[inst.key], r = $('#ubReveal');
+  $('#ubBox').hidden = true;
+  r.replaceChildren();
+  const wrap = document.createElement('div'); wrap.style.position = 'relative';
+  wrap.appendChild(squishEl(inst, 190, (e) => earn(inst, e, wrap)));
+  r.appendChild(wrap);
+  const t = document.createElement('div');
+  t.innerHTML = `<h2>${d.name}</h2><div class="meta" style="justify-content:center;margin-top:6px">${chips(inst)}<span class="chip">Worth ${fmt(inst.value)}</span></div>`;
+  r.appendChild(t);
+  r.hidden = false;
+  const rays = $('#ubRays'); rays.style.setProperty('--ray', d.rar === 'mythic' ? '#ff9ed2' : RAR[d.rar].color); rays.classList.add('on');
+  sfx.reveal(d.rar, inst.shiny);
+  $('#ubSell').textContent = 'Sell for ' + fmt(cents(inst.value * boostMult()));
+  $('#ubAgain').textContent = 'Open another · ' + fmt(ub.box.price);
+  $('#ubAgain').disabled = state.money < ub.box.price;
+  $('#ubActions').hidden = false;
+  hint(d.rar === 'legendary' || d.rar === 'mythic' ? 'WOW. Squish it! Hold and drag to knead.' : 'Squish it! Hold and drag to knead.');
+  ub.stage = 4;
+}
+function closeUnbox(){ $('#unbox').hidden = true; $('#ubRays').classList.remove('on'); }
+$('#ubBox').addEventListener('click', advance);
+$('#ubBox').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); advance(); } });
+$('#ubKeep').onclick = () => { state.sel = ub.inst.id; closeUnbox(); renderPad(); renderCollection(); save(); };
+$('#ubSell').onclick = () => { closeUnbox(); sell(ub.inst); };
+$('#ubAgain').onclick = () => { closeUnbox(); openBox(ub.box); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#spinOv').hidden && !spinning) $('#spinOv').hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#unbox').hidden && ub.stage === 4) $('#ubKeep').click(); });
+
+/* ---------- misc wiring ---------- */
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  sfx.tick();
+  document.querySelectorAll('.tab').forEach(o => { const on = o === t; o.setAttribute('aria-selected', on); $('#' + o.getAttribute('aria-controls')).hidden = !on; });
+}));
+$('#sortSel').addEventListener('change', renderCollection);
+$('#sellCommons').addEventListener('click', e => {
+  const b = e.currentTarget, commons = state.inv.filter(i => DEF[i.key].rar === 'common' && !i.shiny);
+  if (!commons.length) return;
+  const total = cents(commons.reduce((a, i) => a + i.value, 0) * boostMult());
+  if (!b.dataset.armed){ b.dataset.armed = '1'; b.textContent = `Tap again: sell ${commons.length} for ${fmt(total)}`; setTimeout(() => { if (b.dataset.armed){ delete b.dataset.armed; b.textContent = 'Sell all commons'; } }, 3500); return; }
+  state.inv = state.inv.filter(i => !commons.includes(i));
+  state.money = cents(state.money + total); state.stats.sold += commons.length;
+  if (!state.inv.some(i => i.id === state.sel)) state.sel = state.inv[0] ? state.inv[0].id : null;
+  sfx.coin(); setTimeout(() => sfx.coin(), 120);
+  toast(`Sold ${commons.length} commons for ${fmt(total)}`);
+  save(); renderHeader(true); renderPad(); renderCollection();
+});
+$('#soundBtn').addEventListener('click', e => {
+  state.sound = !state.sound; sfx.on = state.sound;
+  e.currentTarget.textContent = 'Sound: ' + (state.sound ? 'On' : 'Off'); e.currentTarget.setAttribute('aria-pressed', state.sound);
+  if (state.sound) sfx.tick(); save();
+});
+$('#resetBtn').addEventListener('click', e => {
+  const b = e.currentTarget;
+  if (!b.dataset.armed){ b.dataset.armed = '1'; b.textContent = 'Tap again to erase everything'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Start over'; }, 3500); return; }
+  delete b.dataset.armed; b.textContent = 'Start over';
+  state = fresh(); save(); renderAll(); toast('Fresh start. Here is a Classic NeeDoh and $15.');
+});
+document.addEventListener('pointerdown', () => sfx.unlock(), {once: true});
+
+/* ---------- daily spin ---------- */
+const PRIZES = [
+  {label:'$5',               kind:'money', v:5,   w:22},
+  {label:'Cardboard Box',    kind:'box',   v:'card', w:16},
+  {label:'$10',              kind:'money', v:10,  w:18},
+  {label:'2× money 10 min',  kind:'boost', mult:2, mins:10, w:9},
+  {label:'$25',              kind:'money', v:25,  w:12},
+  {label:'Glitter Dumpling', kind:'item',  v:'glitterdump', w:2, lucky:true},
+  {label:'Dumpling Steamer', kind:'box',   v:'steamer', w:12},
+  {label:'$100',             kind:'money', v:100, w:3, lucky:true},
+  {label:'Glitter Crate',    kind:'box',   v:'glitter', w:6, lucky:true},
+];
+const SEG_COLS = ['#ffc2dc','#bfe3ff','#c8f0dd','#e0cbff','#ffe1ee','#d9f1ff'];
+const today = () => new Date().toDateString();
+const canSpin = () => state.lastSpin !== today();
+let wheelRot = 0, spinning = false;
+function drawWheel(){
+  const cv = $('#wheel'), x = cv.getContext('2d'), W = cv.width, c = W / 2, R = c - 8, n = PRIZES.length, a = Math.PI * 2 / n;
+  x.clearRect(0, 0, W, W);
+  x.save(); x.translate(c, c); x.rotate(wheelRot * Math.PI / 180);
+  PRIZES.forEach((p, i) => {
+    const s0 = -Math.PI / 2 + i * a;
+    x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, R, s0, s0 + a); x.closePath();
+    x.fillStyle = p.lucky ? '#ffd447' : SEG_COLS[i % SEG_COLS.length]; x.fill();
+    x.lineWidth = 6; x.strokeStyle = '#2a1838'; x.stroke();
+    x.save(); x.rotate(s0 + a / 2); x.textAlign = 'right'; x.textBaseline = 'middle';
+    x.fillStyle = '#2a1838'; x.font = `800 ${p.label.length > 12 ? 24 : 30}px Figtree, system-ui, sans-serif`;
+    const words = p.label.length > 12 ? p.label.split(' ') : [p.label];
+    if (words.length > 1){ const mid = Math.ceil(words.length / 2); x.fillText(words.slice(0, mid).join(' '), R - 22, -13); x.fillText(words.slice(mid).join(' '), R - 22, 15); }
+    else x.fillText(p.label, R - 22, 0);
+    if (p.lucky){ x.font = '30px sans-serif'; x.fillText('✦', R - 22 - (words.length > 1 ? 150 : 110), 0); }
+    x.restore();
+  });
+  x.restore();
+  x.beginPath(); x.arc(c, c, R, 0, Math.PI * 2); x.lineWidth = 12; x.strokeStyle = '#2a1838'; x.stroke();
+  x.beginPath(); x.arc(c, c, 54, 0, Math.PI * 2); x.fillStyle = '#ff4f9a'; x.fill(); x.lineWidth = 8; x.stroke();
+  x.fillStyle = '#fff'; x.font = '30px "Bagel Fat One", system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('SPIN', c, c + 2);
+}
+function untilMidnight(){
+  const now = new Date(), m = new Date(now); m.setHours(24, 0, 0, 0);
+  const s = Math.max(0, Math.floor((m - now) / 1000));
+  return `${Math.floor(s / 3600)}h ${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}m`;
+}
+function renderSpinBtn(){
+  const b = $('#spinBtn'), ready = canSpin();
+  b.classList.toggle('ready', ready);
+  b.innerHTML = ready ? 'Daily spin<span class="dot"></span>' : 'Next spin ' + untilMidnight();
+  if (!$('#spinOv').hidden && !spinning){
+    $('#spinGo').disabled = !ready;
+    if (!ready && !$('#spinHint').dataset.won) $('#spinHint').textContent = 'Come back tomorrow for another free spin. Next one in ' + untilMidnight() + '.';
+  }
+}
+function openSpin(){
+  sfx.unlock(); sfx.tick();
+  $('#spinHint').textContent = canSpin() ? 'Tap Spin to try your luck!' : ''; delete $('#spinHint').dataset.won;
+  $('#spinOv').hidden = false; drawWheel(); renderSpinBtn();
+  if (document.fonts) document.fonts.ready.then(drawWheel);
+}
+function doSpin(){
+  if (spinning || !canSpin()) return;
+  spinning = true; $('#spinGo').disabled = true; $('#spinClose').disabled = true;
+  state.lastSpin = today(); save();
+  const tot = PRIZES.reduce((a, p) => a + p.w, 0); let r = Math.random() * tot, idx = 0;
+  for (let i = 0; i < PRIZES.length; i++){ if ((r -= PRIZES[i].w) < 0){ idx = i; break; } }
+  const n = PRIZES.length, seg = 360 / n;
+  const target = 360 - (idx * seg + seg / 2) + (Math.random() - .5) * seg * .7;
+  const start = wheelRot, base = start - (start % 360);
+  const end = base + 360 * 6 + ((target % 360) + 360) % 360;
+  const dur = 5200, t0 = performance.now(); let lastSeg = -1;
+  $('#spinHint').textContent = 'Spinning…';
+  const frame = now => {
+    const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 4);
+    wheelRot = start + (end - start) * e; drawWheel();
+    const under = Math.floor((((360 - wheelRot % 360) % 360) + 360) % 360 / seg);
+    if (under !== lastSeg){ if (lastSeg !== -1) sfx.clack(); lastSeg = under; }
+    if (t < 1) requestAnimationFrame(frame); else { wheelRot = end % 360; spinning = false; givePrize(PRIZES[idx]); }
+  };
+  requestAnimationFrame(frame);
+}
+function givePrize(p){
+  $('#spinClose').disabled = false;
+  const h = $('#spinHint'); h.dataset.won = '1';
+  sfx.reveal(p.lucky ? 'legendary' : 'rare', p.lucky);
+  if (p.kind === 'money'){
+    state.money = cents(state.money + p.v); h.textContent = `You won ${fmt(p.v)}!`; setTimeout(() => sfx.coin(), 400);
+  } else if (p.kind === 'boost'){
+    const now = Date.now(), cur = state.boost && state.boost.until > now ? state.boost : null;
+    state.boost = {mult: Math.max(p.mult, cur ? cur.mult : 1), until: (cur ? cur.until : now) + p.mins * 60000};
+    h.textContent = `You won ${p.mult}× money for ${p.mins} minutes!`; tickBoost();
+  } else if (p.kind === 'item'){
+    const inst = makeInst(p.v, state); state.inv.unshift(inst); state.sel = inst.id;
+    h.textContent = `JACKPOT! A ${DEF[p.v].name} is on your squish pad!`; renderPad(); renderCollection();
+  } else if (p.kind === 'box'){
+    const box = BOXES.find(b => b.key === p.v);
+    h.textContent = `You won a free ${box.name}! Opening it…`;
+    setTimeout(() => { $('#spinOv').hidden = true; openBox(box, true); }, 1300);
+  }
+  save(); renderHeader(true); renderPad(); renderSpinBtn();
+}
+$('#spinBtn').addEventListener('click', openSpin);
+$('#spinGo').addEventListener('click', doSpin);
+$('#spinClose').addEventListener('click', () => { if (!spinning) $('#spinOv').hidden = true; });
+setInterval(renderSpinBtn, 30000);
+
+/* ---------- admin code + money boost ---------- */
+$('#adminForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const code = $('#adminCode').value.trim().toUpperCase();
+  if (code === 'PDUMPLING'){
+    $('#adminPanel').hidden = false; $('#adminMsg').textContent = 'Code accepted. Pick a multiplier and a time.';
+    sfx.reveal('rare'); $('#adminCode').value = '';
+  } else {
+    $('#adminPanel').hidden = true; $('#adminMsg').textContent = code ? 'That code does not work.' : 'Type a code first.'; sfx.nope();
+  }
+});
+$('#boostStart').addEventListener('click', () => {
+  const mult = Math.min(1000, Math.max(1, parseFloat($('#boostMult').value) || 1));
+  const mins = Math.min(1440, Math.max(.5, parseFloat($('#boostMin').value) || 1));
+  state.boost = {mult, until: Date.now() + mins * 60000};
+  sfx.coin(); toast(`${mult}× money for ${mins} minute${mins === 1 ? '' : 's'}! Squishing and selling pay ${mult}× more.`);
+  save(); tickBoost(); renderPad();
+});
+$('#boostStop').addEventListener('click', () => { state.boost = null; save(); tickBoost(); renderPad(); toast('Boost stopped.'); });
+let boostWasOn = false;
+function tickBoost(){
+  const b = $('#boostBadge'), m = boostMult();
+  if (m > 1){
+    const left = Math.max(0, Math.ceil((state.boost.until - Date.now()) / 1000));
+    const h = Math.floor(left / 3600), mm = Math.floor(left % 3600 / 60), ss = String(left % 60).padStart(2, '0');
+    b.textContent = `${m}× money · ${h ? h + ':' + String(mm).padStart(2, '0') : mm}:${ss}`;
+    b.hidden = false; boostWasOn = true;
+  } else {
+    b.hidden = true;
+    if (boostWasOn){ boostWasOn = false; state.boost = null; save(); renderPad(); toast('Your money boost ran out.'); }
+  }
+}
+setInterval(tickBoost, 1000);
+
+/* ---------- boot ---------- */
+function boot(data){
+  state = (data && Array.isArray(data.inv)) ? data : (load() || fresh());
+  sfx.on = state.sound !== false;
+  $('#soundBtn').textContent = 'Sound: ' + (sfx.on ? 'On' : 'Off'); $('#soundBtn').setAttribute('aria-pressed', sfx.on);
+  renderBoxes(); renderShop(); renderAll(); tickBoost(); renderSpinBtn();
+}
+try { window.claude?.hot?.snapshot?.(() => state); } catch (_){}
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+})();
+</script>
+</body>
+</html>
