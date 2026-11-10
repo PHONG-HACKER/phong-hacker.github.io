@@ -76,6 +76,17 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px}
 .admin-msg{font-size:13px;color:#ffd1e6}
 .boost{display:flex;align-items:center;gap:8px;background:var(--pop);color:#fff;border:3px solid var(--ink);border-radius:999px;padding:5px 12px;box-shadow:3px 3px 0 var(--ink);font-weight:800;font-variant-numeric:tabular-nums;animation:glow 1.2s ease-in-out infinite alternate}
 @keyframes glow{to{transform:scale(1.05)}}
+/* accounts */
+.players{display:flex;flex-direction:column;gap:10px;text-align:left}
+.player{display:flex;align-items:center;gap:10px;border:3px solid var(--ink);border-radius:16px;padding:10px 12px;background:#fff}
+.player.cur{background:var(--pop-2);box-shadow:inset 0 0 0 3px var(--pop)}
+.player .av{width:40px;height:40px;flex:none;border-radius:50%;border:3px solid var(--ink);display:grid;place-items:center;font-family:var(--f-display);font-size:18px}
+.player .who{flex:1;min-width:0}
+.player .who b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.player .who span{font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.add-player{display:flex;gap:8px;flex-wrap:wrap}
+.add-player input{flex:1;min-width:0;font:inherit;font-weight:600;border:3px solid var(--ink);border-radius:12px;padding:7px 10px;background:#fff;color:var(--ink)}
+.auto-on{background:#c8f0dd}
 /* daily spin */
 .spin-btn{position:relative}
 .spin-btn.ready{background:var(--butter);animation:glow 1s ease-in-out infinite alternate}
@@ -171,12 +182,14 @@ select{font:inherit;font-weight:600;border:3px solid var(--ink);border-radius:12
 .box[data-look=pastel]{--box:#ffc2dc;--box-d:#f49ac1;--tape:#ffffff;--lbl:var(--ink)}
 .box[data-look=glitter]{--box:#c7a4ff;--box-d:#a57ef0;--tape:#ffd447;--lbl:var(--ink)}
 .box[data-look=steamer]{--box:#e6c27a;--box-d:#c99f52;--tape:#e0524f;--lbl:var(--ink)}
+.box[data-look=needoh]{--box:#5fd3c4;--box-d:#36a99b;--tape:#ff7eb6;--lbl:var(--ink)}
 .box[data-look=mega]{--box:#45295f;--box-d:#2f1b42;--tape:#ffd447;--lbl:#ffd447}
 .box .body{position:absolute;inset:0;background:var(--box);border:4px solid var(--ink);border-radius:10px 10px 18px 18px;z-index:2;
   display:grid;place-items:center;box-shadow:inset 0 -16px 0 var(--box-d)}
 .box[data-look=pastel] .body{background:repeating-linear-gradient(90deg, var(--box) 0 18px, #ffd3e6 18px 36px)}
 .box[data-look=glitter] .body{background:radial-gradient(#fff 1.6px, transparent 2.2px) 0 0/16px 16px, radial-gradient(#ffe680 1.3px, transparent 2px) 8px 8px/16px 16px, var(--box)}
 .box[data-look=steamer] .body{background:repeating-linear-gradient(0deg, var(--box) 0 14px, #d4ab5e 14px 17px)}
+.box[data-look=needoh] .body{background:radial-gradient(circle at 30% 40%, #ffd447 0 9px, transparent 10px) 0 0/44px 44px, radial-gradient(circle at 70% 70%, #ff7eb6 0 7px, transparent 8px) 0 0/44px 44px, var(--box)}
 .box[data-look=mega] .body{background:radial-gradient(#ffd447 1.4px, transparent 2px) 0 0/20px 20px, var(--box)}
 .box .label{font-family:var(--f-display);font-size:17px;color:var(--lbl);letter-spacing:.06em;margin-top:52px;background:color-mix(in srgb, var(--box) 70%, #fff);padding:1px 10px;border:2px solid var(--ink);border-radius:6px;transform:rotate(-3deg)}
 .box[data-look=mega] .label{background:var(--box-d)}
@@ -239,9 +252,9 @@ footer{text-align:center;color:var(--ink-2);font-size:12px}
 
 <div class="wrap">
   <form class="admin" id="adminForm" autocomplete="off">
-    <label for="adminCode">Admin code</label>
-    <input id="adminCode" type="text" placeholder="Enter code" autocapitalize="characters" spellcheck="false">
-    <button class="btn sm butter" type="submit">Enter</button>
+    <label for="adminCode">Codes</label>
+    <input id="adminCode" type="text" placeholder="Enter a code" autocapitalize="characters" spellcheck="false">
+    <button class="btn sm butter" type="submit">Redeem</button>
     <span class="admin-msg" id="adminMsg" aria-live="polite"></span>
     <div class="admin-panel" id="adminPanel" hidden>
       <label for="boostMult">Money ×</label>
@@ -261,6 +274,8 @@ footer{text-align:center;color:var(--ink-2);font-size:12px}
     <div class="stat"><b id="stSquish">0</b>squishes</div>
     <div class="boost" id="boostBadge" hidden></div>
     <div class="money" id="money" aria-live="polite"><span class="coin">$</span><b id="moneyAmt">$0.00</b></div>
+    <button class="btn sm" id="playerBtn" type="button">Player</button>
+    <button class="btn sm" id="autoBtn" type="button" hidden>Auto squish: On</button>
     <button class="btn sm spin-btn" id="spinBtn" type="button">Daily spin</button>
     <button class="btn sm" id="soundBtn" type="button" aria-pressed="true">Sound: On</button>
   </header>
@@ -289,7 +304,7 @@ footer{text-align:center;color:var(--ink-2);font-size:12px}
       </div>
 
       <div id="p-shop" role="tabpanel" hidden>
-        <p class="lede">Want a specific one? Buy it straight off the shelf. Shop prices are higher than unboxing odds, but you get exactly what you pick. Squish to test before you buy.</p>
+        <p class="lede">Want a specific one? Buy it straight off the shelf. Shop prices are higher than unboxing odds, but you get exactly what you pick. Some NeeDohs are never sold here: Rainbow, Galaxy Cat, Diamond and 12 more only come out of mystery boxes. Squish to test before you buy.</p>
         <div class="grid" id="shopGrid"></div>
       </div>
 
@@ -308,7 +323,7 @@ footer{text-align:center;color:var(--ink-2);font-size:12px}
       </div>
     </section>
   </div>
-  <footer>Progress saves in this browser. <button class="linkish" id="resetBtn" type="button">Start over</button></footer>
+  <footer>Each player's progress saves in this browser. <button class="linkish" id="resetBtn" type="button">Start this player over</button></footer>
 </div>
 
 <div class="overlay" id="unbox" hidden>
@@ -330,6 +345,20 @@ footer{text-align:center;color:var(--ink-2);font-size:12px}
       <button class="btn butter" id="ubSell" type="button">Sell</button>
       <button class="btn" id="ubAgain" type="button">Open another</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="acctOv" hidden>
+  <div class="stage" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+    <h2 class="stage-title" id="acctTitle">Who's playing?</h2>
+    <p class="prize-legend">Everyone on this device gets their own money, squishies and daily spin.</p>
+    <div class="players" id="playerList"></div>
+    <form class="add-player" id="addPlayerForm" autocomplete="off">
+      <label class="eyebrow" for="newPlayer" hidden>New player name</label>
+      <input id="newPlayer" type="text" maxlength="16" placeholder="New player name">
+      <button class="btn pop" type="submit">Add player</button>
+    </form>
+    <div class="ub-actions"><button class="btn" id="acctClose" type="button">Close</button></div>
   </div>
 </div>
 
@@ -386,12 +415,29 @@ const CAT = [
   {key:'golddump',  name:'Golden Glitter Dumpling',shape:'dumpling',  tex:'gel',    rar:'mythic',    val:260, colors:['#ffd447'], pattern:'goldglitter'},
   {key:'heart',     name:'Crystal Heart',         shape:'heart',      tex:'gel',    rar:'mythic',    val:250, colors:['#ff8fd0'], pattern:'crystal'},
   {key:'cosmic',    name:'Cosmic Crunch Cube',    shape:'cube',       tex:'crunch', rar:'mythic',    val:300, colors:['#7b5cf0'], pattern:'galaxy'},
+  // box-only NeeDohs: never sold in the shop, you have to unbox them
+  {key:'dreamy',    name:'Dreamy NeeDoh',         shape:'ball',       tex:'goo',    rar:'common',    val:5,   colors:['#ffd6ec','#d6ecff','#e6ffd6','#fff2c2'], gamble:true},
+  {key:'minigum',   name:'Mini Gumdrop NeeDoh',   shape:'teenie',     tex:'goo',    rar:'common',    val:5,   colors:['#ff8fab','#8fe3c0','#ffc46b'], gamble:true},
+  {key:'bubblegum', name:'Bubble Gum NeeDoh',     shape:'ball',       tex:'gel',    rar:'rare',      val:13,  colors:['#ff8cc6','#ffa8d6'], pattern:'gel', gamble:true},
+  {key:'panda',     name:'Panda Bear NeeDoh',     shape:'bear',       tex:'goo',    rar:'rare',      val:14,  colors:['#f4f4f4','#e9e4ef'], gamble:true},
+  {key:'fuzz',      name:'Fuzz Ball NeeDoh',      shape:'ball',       tex:'foam',   rar:'rare',      val:12,  colors:['#ffb3d1','#b3e5ff','#d7b3ff'], pattern:'speckle', gamble:true},
+  {key:'jellycube', name:'Jelly Cube NeeDoh',     shape:'cube',       tex:'gel',    rar:'rare',      val:13,  colors:['#8ff0e0','#ffb38f','#c7a8ff'], pattern:'gel', gamble:true},
+  {key:'snowcat',   name:'Crunchy Snow Cat NeeDoh',shape:'cat',       tex:'crunch', rar:'epic',      val:32,  colors:['#eef7ff','#f5eeff'], pattern:'speckle', gamble:true},
+  {key:'berrycrunch',name:'Berry Crunch NeeDoh',  shape:'strawberry', tex:'crunch', rar:'epic',      val:30,  colors:['#ff4f6e','#ff6f91'], pattern:'speckle', gamble:true},
+  {key:'sparkheart',name:'Sparkle Heart NeeDoh',  shape:'heart',      tex:'goo',    rar:'epic',      val:34,  colors:['#ff6fb5','#c48bff'], pattern:'glitter', gamble:true},
+  {key:'glittercube',name:'Glitter Cube NeeDoh',  shape:'cube',       tex:'gel',    rar:'epic',      val:33,  colors:['#5fd3ff','#ff7ec7','#ffd447'], pattern:'glitter', gamble:true},
+  {key:'rainbowdoh',name:'Rainbow NeeDoh',        shape:'ball',       tex:'goo',    rar:'legendary', val:115, colors:['#ff9ecb'], pattern:'rainbow', gamble:true},
+  {key:'galaxycat', name:'Galaxy Cat NeeDoh',     shape:'cat',        tex:'goo',    rar:'legendary', val:125, colors:['#7b5cf0'], pattern:'galaxy', gamble:true},
+  {key:'goldcrunch',name:'Golden Crunch NeeDoh',  shape:'ball',       tex:'crunch', rar:'legendary', val:120, colors:['#ffd447'], pattern:'goldglitter', gamble:true},
+  {key:'rainbowstar',name:'Rainbow Star NeeDoh',  shape:'star',       tex:'gel',    rar:'legendary', val:130, colors:['#ff9ecb'], pattern:'rainbow', gamble:true},
+  {key:'diamond',   name:'Diamond NeeDoh',        shape:'cube',       tex:'gel',    rar:'mythic',    val:320, colors:['#bfe9ff'], pattern:'crystal', gamble:true},
 ];
 const DEF = Object.fromEntries(CAT.map(c => [c.key, c]));
 const BOXES = [
   {key:'card',    name:'Cardboard Box',    price:5,   look:'card',    label:'FRAGILE',  w:{common:80, rare:18, epic:2}},
   {key:'pastel',  name:'Pastel Gift Box',  price:15,  look:'pastel',  label:'with love', w:{common:30, rare:48, epic:18, legendary:4}},
   {key:'steamer', name:'Dumpling Steamer', price:10,  look:'steamer', label:'DUMPLINGS', pool:['dumpling','crunchdump','glitterdump','golddump'], w:{common:70, rare:25, legendary:4.5, mythic:.5}},
+  {key:'needoh',  name:'NeeDoh Vault',     price:30,  look:'needoh',  label:'NEEDOH', pool:CAT.filter(c => c.gamble).map(c => c.key), w:{common:30, rare:40, epic:22, legendary:7, mythic:1}},
   {key:'glitter', name:'Glitter Crate',    price:40,  look:'glitter', label:'SPARKLE',  w:{common:4, rare:36, epic:42, legendary:15, mythic:3}},
   {key:'mega',    name:'Mega Mystery Box', price:100, look:'mega',    label:'MEGA',     w:{epic:40, legendary:44, mythic:16}},
 ];
@@ -607,12 +653,12 @@ function squishEl(inst, size, onPress){
   const [dur, ease] = RELEASE[d.tex];
   el.style.setProperty('--rel', dur); el.style.setProperty('--ease', ease);
   let down = false, x0 = 0, lastKnead = 0;
-  const press = (e, px, py) => {
+  const press = (e, px, py, k = 1) => {
     el.style.setProperty('--px', (px * 100) + '%'); el.style.setProperty('--py', (py * 100) + '%');
     const deep = .9 + Math.random() * .2;
     el.style.setProperty('--wx', (1 + .22 * deep).toFixed(3)); el.style.setProperty('--wy', (1 - .3 * deep).toFixed(3));
     el.style.setProperty('--skew', '0deg'); el.style.setProperty('--sx', '0px');
-    el.classList.add('pressed'); sfx.squish(d.tex);
+    el.classList.add('pressed'); sfx.squish(d.tex, k);
     onPress && onPress(e, el);
   };
   const release = () => { if (!down) return; down = false; el.classList.remove('pressed'); sfx.release(d.tex); };
@@ -637,12 +683,14 @@ function squishEl(inst, size, onPress){
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => el.addEventListener(t, release));
   el.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !down && !e.repeat){ e.preventDefault(); sfx.unlock(); down = true; press(null, .5, .45); } });
   el.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') release(); });
+  el.autoPress = () => { if (down) return; press(null, .5, .45, .45); setTimeout(() => { if (!down) el.classList.remove('pressed'); }, 320); };
   return el;
 }
 
 /* ---------- state ---------- */
 const KEY = 'squishy-unboxing-v1';
-let state, lastEarn = 0, saveT = 0;
+const ACC_KEY = 'squishy-unboxing-accounts';
+let state, accts, lastEarn = 0, saveT = 0, padSq = null;
 function makeInst(key, s, o = {}){
   const d = DEF[key], seed = (Math.random() * 1e9) | 0, r = rng(seed);
   const color = o.color || d.colors[(r() * d.colors.length) | 0];
@@ -656,7 +704,16 @@ function fresh(){
   return s;
 }
 function load(){ try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.inv) && typeof s.money === 'number'){ s.inv = s.inv.filter(i => DEF[i.key]); return s; } } catch (_){} return null; }
-function save(){ clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_){} }, 250); }
+function saveNow(){
+  clearTimeout(saveT);
+  const me = accts.players.find(p => p.id === accts.cur); if (me) me.state = state;
+  try { localStorage.setItem(ACC_KEY, JSON.stringify(accts)); } catch (_){}
+}
+function save(){ clearTimeout(saveT); saveT = setTimeout(saveNow, 250); }
+function loadAccounts(){
+  try { const a = JSON.parse(localStorage.getItem(ACC_KEY)); if (a && Array.isArray(a.players) && a.players.length){ a.players.forEach(p => { if (!p.state || !Array.isArray(p.state.inv)) p.state = fresh(); p.state.inv = p.state.inv.filter(i => DEF[i.key]); }); if (!a.players.some(p => p.id === a.cur)) a.cur = a.players[0].id; return a; } } catch (_){}
+  return {cur: 1, nextId: 2, players: [{id: 1, name: 'Player 1', state: load() || fresh()}]};
+}
 const boostMult = () => (state.boost && state.boost.until > Date.now()) ? state.boost.mult : 1;
 const selInst = () => state.inv.find(i => i.id === state.sel) || state.inv[0] || null;
 const earnRate = inst => cents(.05 * RAR[DEF[inst.key].rar].mult * (inst.shiny ? 2 : 1));
@@ -669,7 +726,7 @@ function toast(msg){
 }
 function chips(inst){
   const d = DEF[inst.key];
-  return `<span class="chip" data-r="${d.rar}">${RAR[d.rar].label}</span><span class="chip tex">${TEX[d.tex]}</span>${inst.shiny ? '<span class="chip shiny">✦ Shiny</span>' : ''}`;
+  return `<span class="chip" data-r="${d.rar}">${RAR[d.rar].label}</span><span class="chip tex">${TEX[d.tex]}</span>${inst.shiny ? '<span class="chip shiny">✦ Shiny</span>' : ''}${d.gamble ? '<span class="chip">Box only</span>' : ''}`;
 }
 function renderHeader(bump){
   $('#moneyAmt').textContent = fmt(state.money);
@@ -709,7 +766,8 @@ function renderPad(){
   state.sel = inst.id;
   const d = DEF[inst.key];
   $('#padEarn').textContent = '+' + fmt(cents(earnRate(inst) * boostMult())) + ' per squish';
-  stage.appendChild(squishEl(inst, 240, (e) => earn(inst, e, stage)));
+  padSq = squishEl(inst, 240, (e) => earn(inst, e, stage));
+  stage.appendChild(padSq);
   info.innerHTML = `<h2>${d.name}</h2><div class="meta">${chips(inst)}</div>
     <div class="pad-line" style="margin-top:10px"><span>Squished <b id="padCount">${inst.sq.toLocaleString()}</b> times</span>
     <button class="btn sm butter" type="button" id="padSell">Sell for ${fmt(cents(inst.value * boostMult()))}</button></div>`;
@@ -725,7 +783,7 @@ function renderBoxes(){
     const tot = Object.values(b.w).reduce((a, x) => a + x, 0);
     const bars = Object.entries(b.w).map(([r, w]) => `<span style="width:${w / tot * 100}%;background:${r === 'mythic' ? 'linear-gradient(90deg,#ff9ecb,#ffd47a,#9fe0ff)' : RAR[r].color}" title="${RAR[r].label} ${Math.round(w / tot * 100)}%"></span>`).join('');
     const pct = w => { const v = w / tot * 100; return v < 1 ? v.toFixed(1) : Math.round(v); };
-    const txt = Object.entries(b.w).map(([r, w]) => `${pct(w)}% ${RAR[r].label}`).join(' · ') + (b.pool ? '. Only dumplings! Get lucky for a Glitter Dumpling.' : '');
+    const txt = Object.entries(b.w).map(([r, w]) => `${pct(w)}% ${RAR[r].label}`).join(' · ') + (b.key === 'steamer' ? '. Only dumplings! Get lucky for a Glitter Dumpling.' : b.key === 'needoh' ? '. Only box-only NeeDohs you can\'t buy in the shop!' : '');
     const card = document.createElement('div'); card.className = 'boxcard';
     card.innerHTML = `<div class="mini-box">${boxMarkup(b)}</div><h3>${b.name}</h3><div class="odds" aria-hidden="true">${bars}</div><div class="odds-txt">${txt}</div>
       <button class="btn pop" type="button" data-price="${b.price}">Open for ${fmt(b.price)}</button>`;
@@ -736,7 +794,7 @@ function renderBoxes(){
 const shopPrice = d => cents(d.val * 1.5);
 function renderShop(){
   const g = $('#shopGrid'); g.innerHTML = '';
-  CAT.filter(d => d.rar !== 'mythic').forEach(d => {
+  CAT.filter(d => d.rar !== 'mythic' && !d.gamble).forEach(d => {
     const preview = {id: -1, key: d.key, color: d.colors[0], seed: d.key.length * 977 + 13, shiny: false, value: d.val, sq: 0};
     const card = document.createElement('div'); card.className = 'card';
     card.innerHTML = `<div class="art"></div><h3>${d.name}</h3><div class="meta">${chips(preview)}</div>
@@ -880,9 +938,9 @@ $('#soundBtn').addEventListener('click', e => {
 });
 $('#resetBtn').addEventListener('click', e => {
   const b = e.currentTarget;
-  if (!b.dataset.armed){ b.dataset.armed = '1'; b.textContent = 'Tap again to erase everything'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Start over'; }, 3500); return; }
-  delete b.dataset.armed; b.textContent = 'Start over';
-  state = fresh(); save(); renderAll(); toast('Fresh start. Here is a Classic NeeDoh and $15.');
+  if (!b.dataset.armed){ b.dataset.armed = '1'; b.textContent = 'Tap again to erase this player'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Start this player over'; }, 3500); return; }
+  delete b.dataset.armed; b.textContent = 'Start this player over';
+  state = fresh(); saveNow(); applyPlayer(); toast('Fresh start. Here is a Classic NeeDoh and $15.');
 });
 document.addEventListener('pointerdown', () => sfx.unlock(), {once: true});
 
@@ -994,6 +1052,15 @@ setInterval(renderSpinBtn, 30000);
 $('#adminForm').addEventListener('submit', e => {
   e.preventDefault();
   const code = $('#adminCode').value.trim().toUpperCase();
+  state.redeemed = state.redeemed || [];
+  if (code === 'AUTOHELP'){
+    $('#adminPanel').hidden = true; $('#adminCode').value = '';
+    if (state.redeemed.includes(code)){ $('#adminMsg').textContent = 'You already redeemed AUTOHELP.'; sfx.nope(); return; }
+    state.redeemed.push(code); state.auto = {on: true};
+    $('#adminMsg').textContent = 'Auto clicker unlocked! It squishes your squish pad once a second.';
+    sfx.reveal('legendary', true); renderAuto(); saveNow();
+    return;
+  }
   if (code === 'PDUMPLING'){
     $('#adminPanel').hidden = false; $('#adminMsg').textContent = 'Code accepted. Pick a multiplier and a time.';
     sfx.reveal('rare'); $('#adminCode').value = '';
@@ -1024,15 +1091,82 @@ function tickBoost(){
 }
 setInterval(tickBoost, 1000);
 
-/* ---------- boot ---------- */
-function boot(data){
-  state = (data && Array.isArray(data.inv)) ? data : (load() || fresh());
+/* ---------- auto clicker (code AUTOHELP) ---------- */
+function renderAuto(){
+  const b = $('#autoBtn'), owned = !!state.auto;
+  b.hidden = !owned; if (!owned) return;
+  b.textContent = 'Auto squish: ' + (state.auto.on ? 'On' : 'Off');
+  b.classList.toggle('auto-on', state.auto.on); b.setAttribute('aria-pressed', state.auto.on);
+}
+$('#autoBtn').addEventListener('click', () => { state.auto.on = !state.auto.on; sfx.tick(); renderAuto(); save(); });
+setInterval(() => {
+  if (!state || !state.auto || !state.auto.on || !padSq || !padSq.isConnected) return;
+  if (!$('#unbox').hidden || !$('#spinOv').hidden || !$('#acctOv').hidden || document.hidden) return;
+  padSq.autoPress();
+}, 1000);
+
+/* ---------- player accounts ---------- */
+const AV_COLS = ['#ffc2dc','#bfe3ff','#c8f0dd','#e0cbff','#ffe17a','#ffd1b8'];
+function applyPlayer(){
+  const me = accts.players.find(p => p.id === accts.cur);
+  state = me.state;
   sfx.on = state.sound !== false;
   $('#soundBtn').textContent = 'Sound: ' + (sfx.on ? 'On' : 'Off'); $('#soundBtn').setAttribute('aria-pressed', sfx.on);
-  renderBoxes(); renderShop(); renderAll(); tickBoost(); renderSpinBtn();
+  $('#playerBtn').textContent = 'Player: ' + me.name;
+  $('#adminPanel').hidden = true; $('#adminMsg').textContent = ''; $('#adminCode').value = '';
+  $('#unbox').hidden = true; $('#spinOv').hidden = true;
+  boostWasOn = false;
+  renderAll(); tickBoost(); renderSpinBtn(); renderAuto();
 }
-try { window.claude?.hot?.snapshot?.(() => state); } catch (_){}
-window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+function renderPlayers(){
+  const list = $('#playerList'); list.replaceChildren();
+  accts.players.forEach((p, i) => {
+    const row = document.createElement('div'); row.className = 'player' + (p.id === accts.cur ? ' cur' : '');
+    const av = document.createElement('span'); av.className = 'av'; av.style.background = AV_COLS[i % AV_COLS.length]; av.textContent = (p.name[0] || '?').toUpperCase();
+    const who = document.createElement('div'); who.className = 'who';
+    const nm = document.createElement('b'); nm.textContent = p.name;
+    const info = document.createElement('span'); info.textContent = `${fmt(p.state.money)} · ${p.state.inv.length} squishies`;
+    who.append(nm, info);
+    const play = document.createElement('button'); play.type = 'button'; play.className = 'btn sm pop';
+    play.textContent = p.id === accts.cur ? 'Playing' : 'Play'; play.disabled = p.id === accts.cur;
+    play.onclick = () => { saveNow(); accts.cur = p.id; applyPlayer(); saveNow(); sfx.buy(); $('#acctOv').hidden = true; toast(`Hi ${p.name}! Let's squish.`); };
+    row.append(av, who, play);
+    if (accts.players.length > 1){
+      const del = document.createElement('button'); del.type = 'button'; del.className = 'btn sm'; del.textContent = 'Delete';
+      del.onclick = () => {
+        if (!del.dataset.armed){ del.dataset.armed = '1'; del.textContent = 'Sure?'; setTimeout(() => { delete del.dataset.armed; del.textContent = 'Delete'; }, 3000); return; }
+        accts.players = accts.players.filter(x => x.id !== p.id);
+        if (accts.cur === p.id){ accts.cur = accts.players[0].id; applyPlayer(); }
+        saveNow(); renderPlayers(); toast(`Deleted ${p.name}.`);
+      };
+      row.append(del);
+    }
+    list.appendChild(row);
+  });
+}
+function openPlayers(){ saveNow(); renderPlayers(); $('#acctOv').hidden = false; }
+$('#playerBtn').addEventListener('click', () => { sfx.tick(); openPlayers(); });
+$('#acctClose').addEventListener('click', () => { $('#acctOv').hidden = true; });
+$('#addPlayerForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#newPlayer').value.trim().slice(0, 16);
+  if (!name){ toast('Type a name for the new player.'); return; }
+  if (accts.players.some(p => p.name.toLowerCase() === name.toLowerCase())){ toast(`There is already a player named ${name}.`); return; }
+  saveNow();
+  const id = accts.nextId || (Math.max(...accts.players.map(p => p.id)) + 1);
+  accts.nextId = id + 1;
+  accts.players.push({id, name, state: fresh()});
+  accts.cur = id; $('#newPlayer').value = '';
+  applyPlayer(); saveNow(); $('#acctOv').hidden = true; sfx.reveal('rare');
+  toast(`Welcome ${name}! Here is a Classic NeeDoh and $15.`);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#acctOv').hidden) $('#acctOv').hidden = true; });
+window.addEventListener('pagehide', () => { if (accts) saveNow(); });
+
+/* ---------- boot ---------- */
+accts = loadAccounts();
+renderBoxes(); renderShop(); applyPlayer(); saveNow();
+if (accts.players.length > 1) openPlayers();
 })();
 </script>
 </body>
